@@ -1,0 +1,214 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Alert,
+  Snackbar,
+  CircularProgress,
+  TextField,
+  InputAdornment,
+} from '@mui/material';
+import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
+import api from '../services/api';
+import GameCard from '../components/GameCard';
+import GameForm from '../components/GameForm';
+
+const Games = () => {
+  const [games, setGames] = useState([]);
+  const [filteredGames, setFilteredGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [openForm, setOpenForm] = useState(false);
+  const [editingGame, setEditingGame] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  useEffect(() => {
+    fetchGames();
+  }, []);
+
+  useEffect(() => {
+    // Filter games based on search query
+    if (searchQuery.trim() === '') {
+      setFilteredGames(games);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = games.filter(
+        (game) =>
+          game.name?.toLowerCase().includes(query) ||
+          game.description?.toLowerCase().includes(query) ||
+          game.category?.toLowerCase().includes(query)
+      );
+      setFilteredGames(filtered);
+    }
+  }, [searchQuery, games]);
+
+  const fetchGames = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await api.get('/games');
+      if (response.data.success) {
+        setGames(response.data.data || []);
+        setFilteredGames(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching games:', err);
+      setError(err.response?.data?.message || 'Failed to load games');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenForm = (game = null) => {
+    setEditingGame(game);
+    setOpenForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setOpenForm(false);
+    setEditingGame(null);
+  };
+
+  const handleSaveGame = async (gameData) => {
+    try {
+      if (editingGame) {
+        // Update existing game
+        const response = await api.put(`/games/${editingGame._id}`, gameData);
+        if (response.data.success) {
+          setGames(games.map((g) => (g._id === editingGame._id ? response.data.data : g)));
+          showSnackbar('Game updated successfully', 'success');
+        }
+      } else {
+        // Create new game
+        const response = await api.post('/games', gameData);
+        if (response.data.success) {
+          setGames([...games, response.data.data]);
+          showSnackbar('Game created successfully', 'success');
+        }
+      }
+      handleCloseForm();
+    } catch (err) {
+      console.error('Error saving game:', err);
+      showSnackbar(err.response?.data?.message || 'Failed to save game', 'error');
+    }
+  };
+
+  const handleDeleteGame = async (gameId) => {
+    if (!window.confirm('Are you sure you want to delete this game?')) {
+      return;
+    }
+
+    try {
+      const response = await api.delete(`/games/${gameId}`);
+      if (response.data.success) {
+        setGames(games.filter((g) => g._id !== gameId));
+        showSnackbar('Game deleted successfully', 'success');
+      }
+    } catch (err) {
+      console.error('Error deleting game:', err);
+      showSnackbar(err.response?.data?.message || 'Failed to delete game', 'error');
+    }
+  };
+
+  const showSnackbar = (message, severity) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            Games Management
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage all games in the system
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenForm()}
+          size="large"
+        >
+          Add Game
+        </Button>
+      </Box>
+
+      <TextField
+        fullWidth
+        placeholder="Search games by name, description, or category..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        sx={{ mb: 3 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : filteredGames.length === 0 ? (
+        <Alert severity="info">
+          {searchQuery ? 'No games found matching your search' : 'No games available. Create your first game!'}
+        </Alert>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredGames.map((game) => (
+            <Grid item xs={12} sm={6} md={4} key={game._id}>
+              <GameCard
+                game={game}
+                onEdit={() => handleOpenForm(game)}
+                onDelete={() => handleDeleteGame(game._id)}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <GameForm
+        open={openForm}
+        onClose={handleCloseForm}
+        onSave={handleSaveGame}
+        game={editingGame}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default Games;
