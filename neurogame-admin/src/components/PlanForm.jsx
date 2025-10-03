@@ -15,21 +15,22 @@ import {
   Switch,
   Box,
   Chip,
-  IconButton,
+  IconButton
 } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 
-const PlanForm = ({ open, onClose, onSave, plan }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    billingCycle: 'monthly',
-    features: [],
-    isActive: true,
-    featured: false,
-  });
+const defaultState = {
+  name: '',
+  description: '',
+  price: '',
+  durationDays: 30,
+  features: [],
+  gameIds: [],
+  isActive: true
+};
 
+const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
+  const [formData, setFormData] = useState(defaultState);
   const [featureInput, setFeatureInput] = useState('');
   const [errors, setErrors] = useState({});
 
@@ -38,89 +39,91 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
       setFormData({
         name: plan.name || '',
         description: plan.description || '',
-        price: plan.price || '',
-        billingCycle: plan.billingCycle || 'monthly',
+        price: plan.price ?? '',
+        durationDays: plan.durationDays || 30,
         features: plan.features || [],
-        isActive: plan.isActive !== undefined ? plan.isActive : true,
-        featured: plan.featured || false,
+        gameIds: plan.games?.map((game) => game.id) || [],
+        isActive: plan.isActive ?? true
       });
     } else {
-      setFormData({
-        name: '',
-        description: '',
-        price: '',
-        billingCycle: 'monthly',
-        features: [],
-        isActive: true,
-        featured: false,
-      });
+      setFormData(defaultState);
     }
     setErrors({});
     setFeatureInput('');
   }, [plan, open]);
 
-  const handleChange = (e) => {
-    const { name, value, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === 'isActive' || name === 'featured' ? checked : value,
-    });
-    // Clear error for this field
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleGamesChange = (event) => {
+    const { value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      gameIds: typeof value === 'string' ? value.split(',') : value
+    }));
   };
 
   const handleAddFeature = () => {
     if (featureInput.trim()) {
-      setFormData({
-        ...formData,
-        features: [...formData.features, featureInput.trim()],
-      });
+      setFormData((prev) => ({
+        ...prev,
+        features: [...prev.features, featureInput.trim()]
+      }));
       setFeatureInput('');
     }
   };
 
   const handleRemoveFeature = (index) => {
-    setFormData({
-      ...formData,
-      features: formData.features.filter((_, i) => i !== index),
-    });
+    setFormData((prev) => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index)
+    }));
   };
 
-  const handleFeatureKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
+  const handleFeatureKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
       handleAddFeature();
     }
   };
 
   const validate = () => {
-    const newErrors = {};
+    const nextErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Plan name is required';
+      nextErrors.name = 'Plan name is required';
     }
 
-    if (!formData.price || formData.price <= 0) {
-      newErrors.price = 'Valid price is required';
+    if (!formData.price || Number(formData.price) <= 0) {
+      nextErrors.price = 'Valid price is required';
     }
 
-    if (!formData.billingCycle) {
-      newErrors.billingCycle = 'Billing cycle is required';
+    if (!formData.durationDays || Number(formData.durationDays) <= 0) {
+      nextErrors.durationDays = 'Duration must be at least 1 day';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (validate()) {
-      onSave({
-        ...formData,
-        price: parseFloat(formData.price),
-      });
-    }
+    if (!validate()) return;
+
+    onSave({
+      ...formData,
+      price: Number(formData.price),
+      durationDays: Number(formData.durationDays)
+    });
   };
 
   return (
@@ -128,16 +131,46 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
       <DialogTitle>{plan ? 'Edit Subscription Plan' : 'Create New Subscription Plan'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Plan Name"
+              label="Plan name"
               name="name"
               value={formData.name}
               onChange={handleChange}
               error={Boolean(errors.name)}
               helperText={errors.name}
               required
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Price"
+              name="price"
+              type="number"
+              value={formData.price}
+              onChange={handleChange}
+              error={Boolean(errors.price)}
+              helperText={errors.price}
+              required
+              inputProps={{ min: 0, step: 0.01 }}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Duration (days)"
+              name="durationDays"
+              type="number"
+              value={formData.durationDays}
+              onChange={handleChange}
+              error={Boolean(errors.durationDays)}
+              helperText={errors.durationDays}
+              required
+              inputProps={{ min: 1 }}
             />
           </Grid>
 
@@ -153,35 +186,29 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleChange}
-              error={Boolean(errors.price)}
-              helperText={errors.price}
-              required
-              InputProps={{
-                startAdornment: <Box sx={{ mr: 1 }}>$</Box>,
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth error={Boolean(errors.billingCycle)} required>
-              <InputLabel>Billing Cycle</InputLabel>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel>Included games</InputLabel>
               <Select
-                name="billingCycle"
-                value={formData.billingCycle}
-                onChange={handleChange}
-                label="Billing Cycle"
+                multiple
+                name="gameIds"
+                value={formData.gameIds}
+                onChange={handleGamesChange}
+                label="Included games"
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => {
+                      const game = availableGames.find((item) => item.id === value);
+                      return <Chip key={value} label={game?.name || value} size="small" />;
+                    })}
+                  </Box>
+                )}
               >
-                <MenuItem value="monthly">Monthly</MenuItem>
-                <MenuItem value="yearly">Yearly</MenuItem>
-                <MenuItem value="weekly">Weekly</MenuItem>
+                {availableGames.map((game) => (
+                  <MenuItem key={game.id} value={game.id}>
+                    {game.name}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -190,9 +217,9 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
             <Box>
               <TextField
                 fullWidth
-                label="Add Feature"
+                label="Add feature"
                 value={featureInput}
-                onChange={(e) => setFeatureInput(e.target.value)}
+                onChange={(event) => setFeatureInput(event.target.value)}
                 onKeyPress={handleFeatureKeyPress}
                 placeholder="Type a feature and press Enter or click Add"
                 InputProps={{
@@ -205,13 +232,13 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
                     >
                       Add
                     </Button>
-                  ),
+                  )
                 }}
               />
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
                 {formData.features.map((feature, index) => (
                   <Chip
-                    key={index}
+                    key={feature + index}
                     label={feature}
                     onDelete={() => handleRemoveFeature(index)}
                     deleteIcon={<CloseIcon />}
@@ -221,7 +248,7 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
             </Box>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <FormControlLabel
               control={
                 <Switch
@@ -231,19 +258,6 @@ const PlanForm = ({ open, onClose, onSave, plan }) => {
                 />
               }
               label="Active"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.featured}
-                  onChange={handleChange}
-                  name="featured"
-                />
-              }
-              label="Featured Plan"
             />
           </Grid>
         </Grid>

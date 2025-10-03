@@ -7,12 +7,13 @@ import {
   Button,
   Box,
   Chip,
-  IconButton,
+  IconButton
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   SportsEsports as GameIcon,
+  Folder as FolderIcon
 } from '@mui/icons-material';
 
 const GameCard = ({ game, onEdit, onDelete }) => {
@@ -26,8 +27,8 @@ const GameCard = ({ game, onEdit, onDelete }) => {
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: 4,
-        },
+          boxShadow: 4
+        }
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
@@ -40,7 +41,7 @@ const GameCard = ({ game, onEdit, onDelete }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              mr: 2,
+              mr: 2
             }}
           >
             <GameIcon sx={{ color: 'primary.main' }} />
@@ -59,7 +60,7 @@ const GameCard = ({ game, onEdit, onDelete }) => {
             WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            minHeight: '60px',
+            minHeight: '60px'
           }}
         >
           {game.description || 'No description available'}
@@ -69,18 +70,28 @@ const GameCard = ({ game, onEdit, onDelete }) => {
           {game.category && (
             <Chip label={game.category} size="small" color="primary" variant="outlined" />
           )}
-          {game.difficulty && (
-            <Chip label={game.difficulty} size="small" color="secondary" variant="outlined" />
+          {game.slug && (
+            <Chip label={game.slug} size="small" variant="outlined" />
+          )}
+          {game.folderPath && (
+            <Chip
+              icon={<FolderIcon />}
+              label={game.folderPath}
+              size="small"
+              variant="outlined"
+            />
           )}
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Version: {game.version || 'N/A'}
+            Order: {game.order ?? 0}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Status: {game.isActive ? 'Active' : 'Inactive'}
-          </Typography>
+          <Chip
+            label={game.isActive ? 'Active' : 'Inactive'}
+            size="small"
+            color={game.isActive ? 'success' : 'default'}
+          />
         </Box>
       </CardContent>
 
@@ -95,7 +106,7 @@ const GameCard = ({ game, onEdit, onDelete }) => {
         </Button>
         <IconButton
           size="small"
-          onClick={() => onDelete(game._id)}
+          onClick={() => onDelete(game.id)}
           color="error"
           sx={{ ml: 1 }}
         >

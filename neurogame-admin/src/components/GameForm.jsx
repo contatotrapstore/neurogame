@@ -7,84 +7,91 @@ import {
   TextField,
   Button,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormControlLabel,
-  Switch,
+  Switch
 } from '@mui/material';
 
-const GameForm = ({ open, onClose, onSave, game }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    difficulty: '',
-    version: '',
-    isActive: true,
-  });
+const defaultState = {
+  name: '',
+  slug: '',
+  description: '',
+  category: '',
+  folderPath: '',
+  coverImage: '',
+  order: 0,
+  isActive: true
+};
 
+const GameForm = ({ open, onClose, onSave, game }) => {
+  const [formData, setFormData] = useState(defaultState);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (game) {
       setFormData({
         name: game.name || '',
+        slug: game.slug || '',
         description: game.description || '',
         category: game.category || '',
-        difficulty: game.difficulty || '',
-        version: game.version || '',
-        isActive: game.isActive !== undefined ? game.isActive : true,
+        folderPath: game.folderPath || '',
+        coverImage: game.coverImage || '',
+        order: game.order ?? 0,
+        isActive: game.isActive ?? true
       });
     } else {
-      setFormData({
-        name: '',
-        description: '',
-        category: '',
-        difficulty: '',
-        version: '',
-        isActive: true,
-      });
+      setFormData(defaultState);
     }
     setErrors({});
   }, [game, open]);
 
-  const handleChange = (e) => {
-    const { name, value, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === 'isActive' ? checked : value,
-    });
-    // Clear error for this field
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
   const validate = () => {
-    const newErrors = {};
+    const nextErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Game name is required';
+      nextErrors.name = 'Game name is required';
     }
 
-    if (!formData.category.trim()) {
-      newErrors.category = 'Category is required';
+    if (!formData.slug.trim()) {
+      nextErrors.slug = 'Slug is required';
+    } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
+      nextErrors.slug = 'Use only lowercase letters, numbers, and hyphens';
     }
 
-    if (!formData.difficulty) {
-      newErrors.difficulty = 'Difficulty is required';
+    if (!formData.folderPath.trim()) {
+      nextErrors.folderPath = 'Folder path is required';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (validate()) {
-      onSave(formData);
-    }
+    if (!validate()) return;
+
+    const payload = {
+      name: formData.name.trim(),
+      slug: formData.slug.trim(),
+      description: formData.description.trim(),
+      category: formData.category.trim(),
+      folderPath: formData.folderPath.trim(),
+      coverImage: formData.coverImage.trim(),
+      order: Number(formData.order) || 0,
+      isActive: formData.isActive
+    };
+
+    onSave(payload);
   };
 
   return (
@@ -92,15 +99,28 @@ const GameForm = ({ open, onClose, onSave, game }) => {
       <DialogTitle>{game ? 'Edit Game' : 'Create New Game'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Game Name"
+              label="Game name"
               name="name"
               value={formData.name}
               onChange={handleChange}
               error={Boolean(errors.name)}
               helperText={errors.name}
+              required
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Slug"
+              name="slug"
+              value={formData.slug}
+              onChange={handleChange}
+              error={Boolean(errors.slug)}
+              helperText={errors.slug || 'Lowercase letters, numbers, hyphen'}
               required
             />
           </Grid>
@@ -124,41 +144,44 @@ const GameForm = ({ open, onClose, onSave, game }) => {
               name="category"
               value={formData.category}
               onChange={handleChange}
-              error={Boolean(errors.category)}
-              helperText={errors.category}
-              required
-              placeholder="e.g., Memory, Attention, Logic"
             />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth error={Boolean(errors.difficulty)} required>
-              <InputLabel>Difficulty</InputLabel>
-              <Select
-                name="difficulty"
-                value={formData.difficulty}
-                onChange={handleChange}
-                label="Difficulty"
-              >
-                <MenuItem value="Easy">Easy</MenuItem>
-                <MenuItem value="Medium">Medium</MenuItem>
-                <MenuItem value="Hard">Hard</MenuItem>
-              </Select>
-            </FormControl>
           </Grid>
 
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Version"
-              name="version"
-              value={formData.version}
+              label="Folder path"
+              name="folderPath"
+              value={formData.folderPath}
               onChange={handleChange}
-              placeholder="e.g., 1.0.0"
+              error={Boolean(errors.folderPath)}
+              helperText={errors.folderPath || 'Ex: Jogos/autorama'}
+              required
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Cover image URL"
+              name="coverImage"
+              value={formData.coverImage}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Order"
+              name="order"
+              type="number"
+              value={formData.order}
+              onChange={handleChange}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
             <FormControlLabel
               control={
                 <Switch

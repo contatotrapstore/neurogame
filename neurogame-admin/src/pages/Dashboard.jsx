@@ -6,15 +6,15 @@ import {
   CardContent,
   Typography,
   CircularProgress,
-  Alert,
+  Alert
 } from '@mui/material';
 import {
   People as PeopleIcon,
   SportsEsports as GamesIcon,
   CardMembership as SubscriptionIcon,
-  TrendingUp as TrendingUpIcon,
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
-import api from '../services/api';
+import { usersAPI, gamesAPI, subscriptionsAPI } from '../services/api';
 
 const StatCard = ({ title, value, icon: Icon, color, loading }) => (
   <Card elevation={2} sx={{ height: '100%' }}>
@@ -39,7 +39,7 @@ const StatCard = ({ title, value, icon: Icon, color, loading }) => (
             p: 1.5,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'center'
           }}
         >
           <Icon sx={{ fontSize: 32, color: `${color}.main` }} />
@@ -53,8 +53,8 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalGames: 0,
-    totalSubscriptions: 0,
-    activeSubscriptions: 0,
+    totalPlans: 0,
+    activeSubscriptions: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,30 +68,22 @@ const Dashboard = () => {
     setError('');
 
     try {
-      const [usersRes, gamesRes, subscriptionsRes] = await Promise.all([
-        api.get('/users'),
-        api.get('/games'),
-        api.get('/subscriptions/plans'),
+      const [usersRes, gamesRes, plansRes, activeSubsRes] = await Promise.all([
+        usersAPI.getAll({ limit: 1 }),
+        gamesAPI.getAll({ limit: 1 }),
+        subscriptionsAPI.getAllPlans({ limit: 1 }),
+        subscriptionsAPI.getAll({ isActive: true, limit: 1 })
       ]);
 
-      // Calculate stats
-      const totalUsers = usersRes.data.data?.length || 0;
-      const totalGames = gamesRes.data.data?.length || 0;
-      const totalSubscriptions = subscriptionsRes.data.data?.length || 0;
-
-      // For active subscriptions, we'd need a specific endpoint
-      // For now, using total subscriptions as placeholder
-      const activeSubscriptions = totalSubscriptions;
-
       setStats({
-        totalUsers,
-        totalGames,
-        totalSubscriptions,
-        activeSubscriptions,
+        totalUsers: usersRes.pagination.total,
+        totalGames: gamesRes.count,
+        totalPlans: plansRes.count,
+        activeSubscriptions: activeSubsRes.pagination.total
       });
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
-      setError(err.response?.data?.message || 'Failed to load dashboard statistics');
+      setError(err.response?.data?.message || err.message || 'Failed to load dashboard statistics');
     } finally {
       setLoading(false);
     }
@@ -136,7 +128,7 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Subscription Plans"
-            value={stats.totalSubscriptions}
+            value={stats.totalPlans}
             icon={SubscriptionIcon}
             color="warning"
             loading={loading}
@@ -175,7 +167,7 @@ const Dashboard = () => {
                 Quick Actions
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Use the sidebar to manage games, users, and subscriptions
+                Use the sidebar to manage games, users, and subscription plans
               </Typography>
             </CardContent>
           </Card>

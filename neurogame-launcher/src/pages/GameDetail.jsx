@@ -18,11 +18,31 @@ import {
   ArrowBack,
   Info,
   Folder,
-  Category
+  Category,
+  Lock
 } from '@mui/icons-material';
 import GameWebView from '../components/GameWebView';
 import api from '../services/api';
 import { getGamesPath } from '../services/storage';
+
+const normalizeGame = (rawGame) => {
+  if (!rawGame) return null;
+
+  return {
+    id: rawGame.id,
+    name: rawGame.name || rawGame.title || 'Untitled Game',
+    description: rawGame.description || '',
+    instructions: rawGame.instructions || '',
+    controls: rawGame.controls || '',
+    category: rawGame.category || null,
+    coverImage: rawGame.cover_image || rawGame.thumbnail_url || '',
+    folderPath: rawGame.folder_path || rawGame.folderPath || '',
+    slug: rawGame.slug || '',
+    order: rawGame.order ?? rawGame.order_index ?? null,
+    hasAccess: rawGame.hasAccess ?? rawGame.has_access ?? false,
+    accessType: rawGame.accessType || rawGame.access_type || null
+  };
+};
 
 function GameDetail() {
   const { id } = useParams();
@@ -43,10 +63,16 @@ function GameDetail() {
     setError('');
 
     try {
-      // Fetch game details from backend
       const response = await api.get(`/games/${id}`);
-      const gameData = response.data.game || response.data;
-      setGame(gameData);
+      const fetchedGame = normalizeGame(response.data?.data?.game || response.data?.game);
+
+      if (!fetchedGame) {
+        setError('Game not found');
+        setGame(null);
+        return;
+      }
+
+      setGame(fetchedGame);
     } catch (err) {
       console.error('Error fetching game details:', err);
       setError(err.message || 'Failed to load game details');
@@ -56,23 +82,30 @@ function GameDetail() {
   };
 
   const handlePlayGame = async () => {
+    if (!game) return;
+
     setValidating(true);
     setError('');
 
     try {
-      // Validate access with backend
       const response = await api.get(`/games/${id}/validate`);
+      const payload = response.data?.data || {};
+      const hasAccess = payload.hasAccess ?? payload.has_access ?? false;
 
-      if (response.data.hasAccess) {
-        // Get local games path
-        const gamesBasePath = await getGamesPath();
-        const fullGamePath = `${gamesBasePath}/${game.folder_path}/index.html`;
-
-        setGamePath(fullGamePath);
-        setIsPlaying(true);
-      } else {
-        setError('You do not have access to this game. Please contact your administrator.');
+      if (!hasAccess) {
+        setError(payload.message || 'You do not have access to this game. Please contact your administrator.');
+        return;
       }
+
+      const gamesBasePath = await getGamesPath();
+      if (!gamesBasePath) {
+        setError('Unable to resolve the local games directory.');
+        return;
+      }
+
+      const targetPath = `${gamesBasePath}/${game.folderPath}/index.html`;
+      setGamePath(targetPath);
+      setIsPlaying(true);
     } catch (err) {
       console.error('Error validating game access:', err);
       setError(err.message || 'Failed to validate game access');
@@ -124,7 +157,7 @@ function GameDetail() {
     return <GameWebView gamePath={gamePath} onExit={handleExitGame} />;
   }
 
-  const thumbnailUrl = game.thumbnail_url || `https://via.placeholder.com/800x450/667eea/ffffff?text=${encodeURIComponent(game.title)}`;
+  const thumbnailUrl = game.coverImage || `https://via.placeholder.com/800x450/667eea/ffffff?text=${encodeURIComponent(game.name)}`;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -147,7 +180,7 @@ function GameDetail() {
           component="img"
           height="400"
           image={thumbnailUrl}
-          alt={game.title}
+          alt={game.name}
           sx={{
             objectFit: 'cover',
             bgcolor: 'grey.800'
@@ -165,7 +198,7 @@ function GameDetail() {
           >
             <Box>
               <Typography variant="h3" gutterBottom fontWeight="bold">
-                {game.title}
+                {game.name}
               </Typography>
 
               <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
@@ -176,11 +209,18 @@ function GameDetail() {
                     color="primary"
                   />
                 )}
-                {game.folder_path && (
+                {game.folderPath && (
                   <Chip
                     icon={<Folder />}
-                    label={game.folder_path}
+                    label={game.folderPath}
                     variant="outlined"
+                  />
+                )}
+                {game.hasAccess === false && (
+                  <Chip
+                    icon={<Lock />}
+                    label="Access required"
+                    color="warning"
                   />
                 )}
               </Stack>
@@ -199,7 +239,7 @@ function GameDetail() {
                 fontWeight: 600
               }}
             >
-              {validating ? 'Validating...' : 'Play Now'}
+              {validating ? 'Validating...' : game.hasAccess === false ? 'Request Access' : 'Play Now'}
             </Button>
           </Box>
 
@@ -218,7 +258,7 @@ function GameDetail() {
           </Box>
 
           {game.instructions && (
-            <Box>
+            <Box sx={{ mt: 2 }}>
               <Typography variant="h6" gutterBottom fontWeight="600">
                 How to Play
               </Typography>

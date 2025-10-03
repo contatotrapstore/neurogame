@@ -44,6 +44,8 @@ const Header = ({ onMenuClick, drawerWidth }) => {
       sx={{
         width: { sm: `calc(100% - ${drawerWidth}px)` },
         ml: { sm: `${drawerWidth}px` },
+        bgcolor: '#2D5F2E', // Verde da marca NeuroGame
+        backgroundImage: 'linear-gradient(135deg, #2D5F2E 0%, #3A7D3C 100%)',
       }}
     >
       <Toolbar>
@@ -56,9 +58,16 @@ const Header = ({ onMenuClick, drawerWidth }) => {
           <MenuIcon />
         </IconButton>
 
-        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          NeuroGame Admin
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+          <img
+            src="/logo-branca.png"
+            alt="NeuroGame"
+            style={{ height: '40px', marginRight: '12px' }}
+          />
+          <Typography variant="h6" noWrap component="div">
+            Admin Dashboard
+          </Typography>
+        </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>

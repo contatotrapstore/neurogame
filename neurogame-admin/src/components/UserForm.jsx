@@ -7,23 +7,21 @@ import {
   TextField,
   Button,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 
-const UserForm = ({ open, onClose, onSave, user, subscriptionPlans }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    role: 'user',
-    subscriptionPlanId: '',
-  });
+const defaultState = {
+  username: '',
+  email: '',
+  fullName: '',
+  password: '',
+  isAdmin: false,
+  isActive: true
+};
 
+const UserForm = ({ open, onClose, onSave, user }) => {
+  const [formData, setFormData] = useState(defaultState);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -31,70 +29,68 @@ const UserForm = ({ open, onClose, onSave, user, subscriptionPlans }) => {
       setFormData({
         username: user.username || '',
         email: user.email || '',
-        password: '', // Don't populate password for editing
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        role: user.role || 'user',
-        subscriptionPlanId: user.subscriptionPlanId || '',
+        fullName: user.fullName || '',
+        password: '',
+        isAdmin: user.isAdmin || false,
+        isActive: user.isActive !== undefined ? user.isActive : true
       });
     } else {
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        firstName: '',
-        lastName: '',
-        role: 'user',
-        subscriptionPlanId: '',
-      });
+      setFormData(defaultState);
     }
     setErrors({});
   }, [user, open]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    // Clear error for this field
+  const handleChange = (event) => {
+    const { name, value, checked, type } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
+      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
   const validate = () => {
-    const newErrors = {};
+    const nextErrors = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      nextErrors.username = 'Username is required';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      nextErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      nextErrors.email = 'Email is invalid';
     }
 
     if (!user && !formData.password) {
-      newErrors.password = 'Password is required for new users';
+      nextErrors.password = 'Password is required for new users';
     } else if (formData.password && formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      nextErrors.password = 'Password must be at least 6 characters';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (validate()) {
-      // Don't send password if it's empty (for edit mode)
-      const dataToSend = { ...formData };
-      if (!dataToSend.password) {
-        delete dataToSend.password;
-      }
-      onSave(dataToSend);
+    if (!validate()) return;
+
+    const payload = {
+      username: formData.username.trim(),
+      email: formData.email.trim(),
+      fullName: formData.fullName.trim(),
+      isAdmin: formData.isAdmin,
+      isActive: formData.isActive
+    };
+
+    if (formData.password) {
+      payload.password = formData.password;
     }
+
+    onSave(payload);
   };
 
   return (
@@ -112,6 +108,7 @@ const UserForm = ({ open, onClose, onSave, user, subscriptionPlans }) => {
               error={Boolean(errors.username)}
               helperText={errors.username}
               required
+              disabled={Boolean(user)}
             />
           </Grid>
 
@@ -129,22 +126,12 @@ const UserForm = ({ open, onClose, onSave, user, subscriptionPlans }) => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
-              label="First Name"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
+              label="Full name"
+              name="fullName"
+              value={formData.fullName}
               onChange={handleChange}
             />
           </Grid>
@@ -158,45 +145,34 @@ const UserForm = ({ open, onClose, onSave, user, subscriptionPlans }) => {
               value={formData.password}
               onChange={handleChange}
               error={Boolean(errors.password)}
-              helperText={errors.password || (user ? 'Leave blank to keep current password' : '')}
+              helperText={
+                errors.password || (user ? 'Leave blank to keep the current password' : '')
+              }
               required={!user}
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel>Role</InputLabel>
-              <Select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                label="Role"
-              >
-                <MenuItem value="user">User</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel>Subscription Plan</InputLabel>
-              <Select
-                name="subscriptionPlanId"
-                value={formData.subscriptionPlanId}
-                onChange={handleChange}
-                label="Subscription Plan"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {subscriptionPlans.map((plan) => (
-                  <MenuItem key={plan._id} value={plan._id}>
-                    {plan.name} - ${plan.price}/{plan.billingCycle}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isAdmin}
+                  onChange={handleChange}
+                  name="isAdmin"
+                />
+              }
+              label="Administrator"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  name="isActive"
+                />
+              }
+              label="Active"
+            />
           </Grid>
         </Grid>
       </DialogContent>

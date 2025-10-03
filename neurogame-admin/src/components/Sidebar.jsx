@@ -9,20 +9,20 @@ import {
   ListItemText,
   Toolbar,
   Box,
-  Typography,
+  Typography
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   SportsEsports as GamesIcon,
   People as PeopleIcon,
-  CardMembership as SubscriptionIcon,
+  CardMembership as SubscriptionIcon
 } from '@mui/icons-material';
 
 const menuItems = [
-  { text: 'Dashboard', icon: DashboardIcon, path: '/dashboard' },
+  { text: 'Dashboard', icon: DashboardIcon, path: '/' },
   { text: 'Games', icon: GamesIcon, path: '/games' },
   { text: 'Users', icon: PeopleIcon, path: '/users' },
-  { text: 'Subscriptions', icon: SubscriptionIcon, path: '/subscriptions' },
+  { text: 'Subscriptions', icon: SubscriptionIcon, path: '/subscriptions' }
 ];
 
 const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
@@ -40,21 +40,29 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
     <Box>
       <Toolbar
         sx={{
-          backgroundColor: 'primary.main',
+          backgroundColor: '#2D5F2E', // Verde da marca NeuroGame
+          backgroundImage: 'linear-gradient(135deg, #2D5F2E 0%, #3A7D3C 100%)',
           color: 'white',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          py: 2
         }}
       >
-        <Typography variant="h6" noWrap component="div" fontWeight="bold">
-          NeuroGame
+        <img
+          src="/logo-branca.png"
+          alt="NeuroGame"
+          style={{ width: '80%', maxWidth: '180px', marginBottom: '8px' }}
+        />
+        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>
+          Admin Panel
         </Typography>
       </Toolbar>
       <List sx={{ pt: 2 }}>
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/');
 
           return (
             <ListItem key={item.text} disablePadding sx={{ px: 2, mb: 0.5 }}>
@@ -64,24 +72,24 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
                 sx={{
                   borderRadius: 2,
                   '&.Mui-selected': {
-                    backgroundColor: 'primary.main',
+                    backgroundColor: '#2D5F2E', // Verde da marca
                     color: 'white',
                     '&:hover': {
-                      backgroundColor: 'primary.dark',
+                      backgroundColor: '#3A7D3C'
                     },
                     '& .MuiListItemIcon-root': {
-                      color: 'white',
-                    },
+                      color: 'white'
+                    }
                   },
                   '&:hover': {
-                    backgroundColor: 'action.hover',
-                  },
+                    backgroundColor: 'rgba(45, 95, 46, 0.08)' // Verde suave no hover
+                  }
                 }}
               >
                 <ListItemIcon
                   sx={{
                     color: isActive ? 'white' : 'text.secondary',
-                    minWidth: 40,
+                    minWidth: 40
                   }}
                 >
                   <Icon />
@@ -89,7 +97,7 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 400,
+                    fontWeight: isActive ? 600 : 400
                   }}
                 />
               </ListItemButton>
@@ -105,34 +113,30 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
       component="nav"
       sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
     >
-      {/* Mobile drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={onDrawerToggle}
-        ModalProps={{
-          keepMounted: true, // Better mobile performance
-        }}
+        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth,
-          },
+            width: drawerWidth
+          }
         }}
       >
         {drawer}
       </Drawer>
 
-      {/* Desktop drawer */}
       <Drawer
         variant="permanent"
         sx={{
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth,
-          },
+            width: drawerWidth
+          }
         }}
         open
       >

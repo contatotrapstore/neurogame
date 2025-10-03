@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
     "dev:react": "vite",
-    "dev:electron": "wait-on tcp:5173 && electron .",
+    "dev:electron": "wait-on tcp:5174 && cross-env NODE_ENV=development npx electron .",
+    "start": "electron .",
     "build": "vite build",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
@@ -30,7 +31,8 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "concurrently": "^8.2.2",
-    "electron": "^29.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^29.4.6",
     "electron-builder": "^24.13.3",
     "vite": "^5.2.8",
     "wait-on": "^7.2.0"

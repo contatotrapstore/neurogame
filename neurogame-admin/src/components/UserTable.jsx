@@ -20,11 +20,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  CardMembership as SubscriptionIcon,
+  CardMembership as SubscriptionIcon
 } from '@mui/icons-material';
 
 const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscription }) => {
@@ -33,6 +34,7 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [durationDays, setDurationDays] = useState('');
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -45,7 +47,14 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
 
   const handleOpenAssignDialog = (user) => {
     setSelectedUser(user);
-    setSelectedPlanId(user.subscriptionPlanId || '');
+    const planId = user.subscription?.planId || '';
+    setSelectedPlanId(planId);
+
+    const defaultDuration = planId
+      ? subscriptionPlans.find((plan) => plan.id === planId)?.durationDays || ''
+      : '';
+
+    setDurationDays(defaultDuration ? String(defaultDuration) : '');
     setAssignDialogOpen(true);
   };
 
@@ -53,16 +62,32 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
     setAssignDialogOpen(false);
     setSelectedUser(null);
     setSelectedPlanId('');
+    setDurationDays('');
   };
 
   const handleAssignSubmit = () => {
     if (selectedUser && selectedPlanId) {
-      onAssignSubscription(selectedUser._id, selectedPlanId);
+      const parsedDuration = durationDays ? parseInt(durationDays, 10) : undefined;
+      onAssignSubscription(selectedUser.id, selectedPlanId, parsedDuration);
     }
     handleCloseAssignDialog();
   };
 
   const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const renderSubscription = (user) => {
+    if (!user.subscription) {
+      return <Chip label="None" size="small" variant="outlined" />;
+    }
+
+    return (
+      <Chip
+        label={`${user.subscription.planName}`}
+        size="small"
+        color={user.subscription.isActive ? 'success' : 'default'}
+      />
+    );
+  };
 
   return (
     <>
@@ -72,8 +97,9 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
             <TableRow sx={{ backgroundColor: 'grey.100' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Full name</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Subscription</TableCell>
               <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
@@ -81,70 +107,61 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
           <TableBody>
             {paginatedUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} align="center">
+                <TableCell colSpan={7} align="center">
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedUsers.map((user) => {
-                const userPlan = subscriptionPlans.find(
-                  (plan) => plan._id === user.subscriptionPlanId
-                );
-
-                return (
-                  <TableRow key={user._id} hover>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.email || 'N/A'}</TableCell>
-                    <TableCell>
-                      {user.firstName && user.lastName
-                        ? `${user.firstName} ${user.lastName}`
-                        : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={user.role || 'user'}
+              paginatedUsers.map((user) => (
+                <TableRow key={user.id} hover>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email || '—'}</TableCell>
+                  <TableCell>{user.fullName || '—'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.isAdmin ? 'Admin' : 'User'}
+                      size="small"
+                      color={user.isAdmin ? 'primary' : 'default'}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.isActive ? 'Active' : 'Inactive'}
+                      size="small"
+                      color={user.isActive ? 'success' : 'default'}
+                    />
+                  </TableCell>
+                  <TableCell>{renderSubscription(user)}</TableCell>
+                  <TableCell align="center">
+                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                      <IconButton
                         size="small"
-                        color={user.role === 'admin' ? 'primary' : 'default'}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {userPlan ? (
-                        <Chip label={userPlan.name} size="small" color="success" />
-                      ) : (
-                        <Chip label="None" size="small" variant="outlined" />
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => onEdit(user)}
-                          title="Edit User"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="info"
-                          onClick={() => handleOpenAssignDialog(user)}
-                          title="Assign Subscription"
-                        >
-                          <SubscriptionIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => onDelete(user._id)}
-                          title="Delete User"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+                        color="primary"
+                        onClick={() => onEdit(user)}
+                        title="Edit User"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="info"
+                        onClick={() => handleOpenAssignDialog(user)}
+                        title="Assign Subscription"
+                      >
+                        <SubscriptionIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => onDelete(user.id)}
+                        title="Delete User"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
@@ -166,23 +183,38 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
             <InputLabel>Subscription Plan</InputLabel>
             <Select
               value={selectedPlanId}
-              onChange={(e) => setSelectedPlanId(e.target.value)}
+              onChange={(event) => setSelectedPlanId(event.target.value)}
               label="Subscription Plan"
             >
               <MenuItem value="">
                 <em>None</em>
               </MenuItem>
               {subscriptionPlans.map((plan) => (
-                <MenuItem key={plan._id} value={plan._id}>
-                  {plan.name} - ${plan.price}/{plan.billingCycle}
+                <MenuItem key={plan.id} value={plan.id}>
+                  {plan.name} • ${plan.price} / {plan.durationDays}d
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
+          <TextField
+            fullWidth
+            sx={{ mt: 2 }}
+            label="Duration (days)"
+            type="number"
+            value={durationDays}
+            onChange={(event) => setDurationDays(event.target.value)}
+            placeholder="Defaults to plan duration"
+            inputProps={{ min: 1 }}
+          />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleCloseAssignDialog}>Cancel</Button>
-          <Button onClick={handleAssignSubmit} variant="contained">
+          <Button
+            onClick={handleAssignSubmit}
+            variant="contained"
+            disabled={!selectedPlanId}
+          >
             Assign
           </Button>
         </DialogActions>

@@ -6,15 +6,16 @@ import {
   Grid,
   Alert,
   Snackbar,
-  CircularProgress,
+  CircularProgress
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import api from '../services/api';
+import { subscriptionsAPI, gamesAPI } from '../services/api';
 import PlanCard from '../components/PlanCard';
 import PlanForm from '../components/PlanForm';
 
 const Subscriptions = () => {
   const [plans, setPlans] = useState([]);
+  const [availableGames, setAvailableGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [openForm, setOpenForm] = useState(false);
@@ -22,11 +23,12 @@ const Subscriptions = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success',
+    severity: 'success'
   });
 
   useEffect(() => {
     fetchPlans();
+    fetchGames();
   }, []);
 
   const fetchPlans = async () => {
@@ -34,15 +36,22 @@ const Subscriptions = () => {
     setError('');
 
     try {
-      const response = await api.get('/subscriptions/plans');
-      if (response.data.success) {
-        setPlans(response.data.data || []);
-      }
+      const { plans: fetchedPlans } = await subscriptionsAPI.getAllPlans();
+      setPlans(fetchedPlans);
     } catch (err) {
       console.error('Error fetching subscription plans:', err);
-      setError(err.response?.data?.message || 'Failed to load subscription plans');
+      setError(err.response?.data?.message || err.message || 'Failed to load subscription plans');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGames = async () => {
+    try {
+      const { games } = await gamesAPI.getAll({ isActive: true });
+      setAvailableGames(games);
+    } catch (err) {
+      console.error('Error fetching games for plans:', err);
     }
   };
 
@@ -59,24 +68,18 @@ const Subscriptions = () => {
   const handleSavePlan = async (planData) => {
     try {
       if (editingPlan) {
-        // Update existing plan
-        const response = await api.put(`/subscriptions/plans/${editingPlan._id}`, planData);
-        if (response.data.success) {
-          setPlans(plans.map((p) => (p._id === editingPlan._id ? response.data.data : p)));
-          showSnackbar('Subscription plan updated successfully', 'success');
-        }
+        const updatedPlan = await subscriptionsAPI.updatePlan(editingPlan.id, planData);
+        setPlans((prev) => prev.map((plan) => (plan.id === updatedPlan.id ? updatedPlan : plan)));
+        showSnackbar('Subscription plan updated successfully', 'success');
       } else {
-        // Create new plan
-        const response = await api.post('/subscriptions/plans', planData);
-        if (response.data.success) {
-          setPlans([...plans, response.data.data]);
-          showSnackbar('Subscription plan created successfully', 'success');
-        }
+        const newPlan = await subscriptionsAPI.createPlan(planData);
+        setPlans((prev) => [...prev, newPlan]);
+        showSnackbar('Subscription plan created successfully', 'success');
       }
       handleCloseForm();
     } catch (err) {
       console.error('Error saving subscription plan:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to save subscription plan', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to save subscription plan', 'error');
     }
   };
 
@@ -86,14 +89,12 @@ const Subscriptions = () => {
     }
 
     try {
-      const response = await api.delete(`/subscriptions/plans/${planId}`);
-      if (response.data.success) {
-        setPlans(plans.filter((p) => p._id !== planId));
-        showSnackbar('Subscription plan deleted successfully', 'success');
-      }
+      await subscriptionsAPI.deletePlan(planId);
+      setPlans((prev) => prev.filter((plan) => plan.id !== planId));
+      showSnackbar('Subscription plan deleted successfully', 'success');
     } catch (err) {
       console.error('Error deleting subscription plan:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to delete subscription plan', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to delete subscription plan', 'error');
     }
   };
 
@@ -102,7 +103,7 @@ const Subscriptions = () => {
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -143,11 +144,11 @@ const Subscriptions = () => {
       ) : (
         <Grid container spacing={3}>
           {plans.map((plan) => (
-            <Grid item xs={12} sm={6} md={4} key={plan._id}>
+            <Grid item xs={12} sm={6} md={4} key={plan.id}>
               <PlanCard
                 plan={plan}
                 onEdit={() => handleOpenForm(plan)}
-                onDelete={() => handleDeletePlan(plan._id)}
+                onDelete={() => handleDeletePlan(plan.id)}
               />
             </Grid>
           ))}
@@ -159,6 +160,7 @@ const Subscriptions = () => {
         onClose={handleCloseForm}
         onSave={handleSavePlan}
         plan={editingPlan}
+        availableGames={availableGames}
       />
 
       <Snackbar

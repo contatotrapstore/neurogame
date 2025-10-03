@@ -10,35 +10,34 @@ import {
   Alert,
   Container,
   InputAdornment,
-  IconButton,
+  IconButton
 } from '@mui/material';
 import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material';
-import api from '../services/api';
-import { setAuthToken, setUser } from '../utils/auth';
+import { authAPI } from '../services/api';
+import { setAuthData } from '../utils/auth';
 
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
-    password: '',
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (event) => {
+    setFormData((prev) => ({
+      ...prev,
+      [event.target.name]: event.target.value
+    }));
     setError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
 
-    // Validation
     if (!formData.username || !formData.password) {
       setError('Please fill in all fields');
       return;
@@ -47,17 +46,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', formData);
-
-      if (response.data.success) {
-        const { token, refreshToken, user } = response.data.data;
-        setAuthToken(token, refreshToken, user);
-        navigate('/');
-      } else {
-        setError(response.data.message || 'Login failed');
-      }
+      const { token, refreshToken, user } = await authAPI.login(formData);
+      setAuthData(token, refreshToken, user);
+      navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.response?.data?.message || err.message || 'An error occurred during login');
     } finally {
       setLoading(false);
     }
@@ -70,19 +63,23 @@ const Login = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #2D5F2E 0%, #3A7D3C 100%)' // Verde da marca NeuroGame
       }}
     >
       <Container maxWidth="sm">
         <Card elevation={10} sx={{ borderRadius: 2 }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <LoginIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-                NeuroGame Admin
+              <img
+                src="/logo-verde.png"
+                alt="NeuroGame"
+                style={{ width: '200px', marginBottom: '16px' }}
+              />
+              <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ color: '#2D5F2E' }}>
+                Admin Dashboard
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Sign in to access the admin dashboard
+                Sign in to access the admin panel
               </Typography>
             </Box>
 
@@ -121,13 +118,13 @@ const Login = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowPassword((prev) => !prev)}
                         edge="end"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
-                  ),
+                  )
                 }}
               />
 
@@ -137,7 +134,15 @@ const Login = () => {
                 variant="contained"
                 size="large"
                 disabled={loading}
-                sx={{ mt: 3, mb: 2, py: 1.5 }}
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                  py: 1.5,
+                  bgcolor: '#2D5F2E', // Verde da marca
+                  '&:hover': {
+                    bgcolor: '#3A7D3C'
+                  }
+                }}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>

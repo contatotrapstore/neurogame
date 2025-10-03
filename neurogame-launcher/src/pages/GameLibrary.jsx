@@ -15,6 +15,21 @@ import { Search, CloudOff } from '@mui/icons-material';
 import GameCard from '../components/GameCard';
 import api from '../services/api';
 
+const normalizeGame = (rawGame) => {
+  if (!rawGame) return null;
+
+  return {
+    id: rawGame.id,
+    name: rawGame.name || rawGame.title || 'Untitled Game',
+    description: rawGame.description || '',
+    category: rawGame.category || null,
+    coverImage: rawGame.cover_image || rawGame.thumbnail_url || '',
+    folderPath: rawGame.folder_path || rawGame.folderPath || '',
+    hasAccess: rawGame.hasAccess ?? rawGame.has_access ?? false,
+    accessType: rawGame.accessType || rawGame.access_type || null
+  };
+};
+
 function GameLibrary() {
   const [games, setGames] = useState([]);
   const [filteredGames, setFilteredGames] = useState([]);
@@ -27,18 +42,15 @@ function GameLibrary() {
   useEffect(() => {
     fetchGames();
 
-    // Listen for refresh events from menu
     if (window.electronAPI) {
-      window.electronAPI.on('refresh-library', () => {
-        fetchGames();
-      });
+      const refreshListener = () => fetchGames();
+      window.electronAPI.on('refresh-library', refreshListener);
+      return () => {
+        window.electronAPI.removeListener('refresh-library', refreshListener);
+      };
     }
 
-    return () => {
-      if (window.electronAPI) {
-        window.electronAPI.removeListener('refresh-library', () => {});
-      }
-    };
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -50,14 +62,22 @@ function GameLibrary() {
     setError('');
 
     try {
-      const response = await api.get('/games/my-games');
-      const gamesData = response.data.games || response.data;
+      const response = await api.get('/games/user/games');
+      const payload = response.data?.data || {};
+      const gamesData = payload.games || [];
 
-      setGames(gamesData);
+      const normalized = gamesData
+        .map(normalizeGame)
+        .filter(Boolean);
 
-      // Extract unique categories
+      setGames(normalized);
+
       const uniqueCategories = [
-        ...new Set(gamesData.map((game) => game.category).filter(Boolean))
+        ...new Set(
+          normalized
+            .map((game) => game.category)
+            .filter(Boolean)
+        )
       ];
       setCategories(uniqueCategories);
     } catch (err) {
@@ -75,17 +95,17 @@ function GameLibrary() {
   const filterGames = () => {
     let filtered = [...games];
 
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (game) =>
-          game.title.toLowerCase().includes(query) ||
-          game.description?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((game) => {
+        return (
+          game.name.toLowerCase().includes(query) ||
+          game.description.toLowerCase().includes(query) ||
+          game.category?.toLowerCase().includes(query)
+        );
+      });
     }
 
-    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter((game) => game.category === selectedCategory);
     }

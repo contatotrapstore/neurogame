@@ -9,22 +9,26 @@ import {
   Box,
   CardActionArea
 } from '@mui/material';
-import { PlayArrow, Folder } from '@mui/icons-material';
+import { PlayArrow, Folder, Lock } from '@mui/icons-material';
+
+const buildFallbackCover = (name) => {
+  const label = encodeURIComponent(name || 'NeuroGame');
+  return `https://via.placeholder.com/400x225/667eea/ffffff?text=${label}`;
+};
 
 function GameCard({ game }) {
   const navigate = useNavigate();
+  const coverImage = game.coverImage || buildFallbackCover(game.name);
+  const hasAccess = game.hasAccess !== false;
 
-  const handlePlayClick = (e) => {
-    e.stopPropagation();
+  const handlePlayClick = (event) => {
+    event.stopPropagation();
     navigate(`/game/${game.id}`);
   };
 
   const handleCardClick = () => {
     navigate(`/game/${game.id}`);
   };
-
-  // Generate placeholder image if no thumbnail
-  const thumbnailUrl = game.thumbnail_url || `https://via.placeholder.com/400x225/667eea/ffffff?text=${encodeURIComponent(game.title)}`;
 
   return (
     <Card
@@ -40,8 +44,8 @@ function GameCard({ game }) {
         <CardMedia
           component="img"
           height="180"
-          image={thumbnailUrl}
-          alt={game.title}
+          image={coverImage}
+          alt={game.name}
           sx={{
             objectFit: 'cover',
             bgcolor: 'grey.800'
@@ -55,7 +59,7 @@ function GameCard({ game }) {
             noWrap
             sx={{ fontWeight: 600 }}
           >
-            {game.title}
+            {game.name}
           </Typography>
 
           <Typography
@@ -82,12 +86,20 @@ function GameCard({ game }) {
                 variant="outlined"
               />
             )}
-            {game.folder_path && (
+            {game.folderPath && (
               <Chip
                 icon={<Folder />}
                 label="Local"
                 size="small"
                 variant="outlined"
+              />
+            )}
+            {!hasAccess && (
+              <Chip
+                icon={<Lock />}
+                label="Access required"
+                size="small"
+                color="warning"
               />
             )}
           </Box>
@@ -105,7 +117,7 @@ function GameCard({ game }) {
             fontWeight: 600
           }}
         >
-          Play Now
+          {hasAccess ? 'Play Now' : 'Request Access'}
         </Button>
       </Box>
     </Card>

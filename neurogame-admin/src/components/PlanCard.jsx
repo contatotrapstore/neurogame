@@ -12,16 +12,18 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
+  ListItemText
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   CheckCircle as CheckIcon,
-  CardMembership as PlanIcon,
+  CardMembership as PlanIcon
 } from '@mui/icons-material';
 
 const PlanCard = ({ plan, onEdit, onDelete }) => {
+  const includedGames = plan.games || [];
+
   return (
     <Card
       elevation={2}
@@ -32,22 +34,11 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: 4,
-        },
-        border: plan.featured ? '2px solid' : 'none',
-        borderColor: plan.featured ? 'primary.main' : 'transparent',
+          boxShadow: 4
+        }
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
-        {plan.featured && (
-          <Chip
-            label="Popular"
-            color="primary"
-            size="small"
-            sx={{ mb: 2 }}
-          />
-        )}
-
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Box
             sx={{
@@ -57,7 +48,7 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              mr: 2,
+              mr: 2
             }}
           >
             <PlanIcon sx={{ color: 'primary.main' }} />
@@ -69,10 +60,10 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="h3" component="div" fontWeight="bold" color="primary">
-            ${plan.price}
+            ${plan.price.toFixed(2)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            per {plan.billingCycle}
+            Every {plan.durationDays} day{plan.durationDays !== 1 ? 's' : ''}
           </Typography>
         </Box>
 
@@ -83,13 +74,13 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          Features:
+          Features
         </Typography>
 
         {plan.features && plan.features.length > 0 ? (
           <List dense>
             {plan.features.map((feature, index) => (
-              <ListItem key={index} disableGutters>
+              <ListItem key={feature + index} disableGutters>
                 <ListItemIcon sx={{ minWidth: 32 }}>
                   <CheckIcon sx={{ fontSize: 18, color: 'success.main' }} />
                 </ListItemIcon>
@@ -104,6 +95,24 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
           <Typography variant="body2" color="text.secondary">
             No features listed
           </Typography>
+        )}
+
+        <Divider sx={{ my: 2 }} />
+
+        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+          Included games ({includedGames.length})
+        </Typography>
+
+        {includedGames.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No games assigned to this plan yet
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {includedGames.map((game) => (
+              <Chip key={game.id} label={game.name} size="small" />
+            ))}
+          </Box>
         )}
 
         <Box sx={{ mt: 2 }}>
@@ -126,7 +135,7 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
         </Button>
         <IconButton
           size="small"
-          onClick={() => onDelete(plan._id)}
+          onClick={() => onDelete(plan.id)}
           color="error"
           sx={{ ml: 1 }}
         >

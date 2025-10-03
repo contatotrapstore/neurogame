@@ -2,10 +2,9 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
-const store = new Store();
+let store;
 let mainWindow;
-
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+let isDev;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -26,7 +25,7 @@ function createWindow() {
 
   // Load app
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL('http://localhost:5174');
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
@@ -95,53 +94,62 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-// IPC Handlers
-ipcMain.handle('store-get', (event, key) => {
-  return store.get(key);
-});
+function registerIpcHandlers() {
+  // IPC Handlers
+  ipcMain.handle('store-get', (event, key) => {
+    return store.get(key);
+  });
 
-ipcMain.handle('store-set', (event, key, value) => {
-  store.set(key, value);
-  return true;
-});
+  ipcMain.handle('store-set', (event, key, value) => {
+    store.set(key, value);
+    return true;
+  });
 
-ipcMain.handle('store-delete', (event, key) => {
-  store.delete(key);
-  return true;
-});
+  ipcMain.handle('store-delete', (event, key) => {
+    store.delete(key);
+    return true;
+  });
 
-ipcMain.handle('store-clear', () => {
-  store.clear();
-  return true;
-});
+  ipcMain.handle('store-clear', () => {
+    store.clear();
+    return true;
+  });
 
-ipcMain.handle('get-app-path', () => {
-  return app.getAppPath();
-});
+  ipcMain.handle('get-app-path', () => {
+    return app.getAppPath();
+  });
 
-ipcMain.handle('get-games-path', () => {
-  const appPath = app.getAppPath();
-  const gamesPath = isDev
-    ? path.join(path.dirname(appPath), 'Jogos')
-    : path.join(path.dirname(path.dirname(appPath)), 'Jogos');
-  return gamesPath;
-});
+  ipcMain.handle('get-games-path', () => {
+    const appPath = app.getAppPath();
+    const gamesPath = isDev
+      ? path.join(path.dirname(appPath), 'Jogos')
+      : path.join(path.dirname(path.dirname(appPath)), 'Jogos');
+    return gamesPath;
+  });
 
-ipcMain.handle('get-user-data-path', () => {
-  return app.getPath('userData');
-});
+  ipcMain.handle('get-user-data-path', () => {
+    return app.getPath('userData');
+  });
 
-// Auto-updater placeholder
-ipcMain.handle('check-for-updates', async () => {
-  // TODO: Implement auto-updater with electron-updater
-  return {
-    available: false,
-    version: app.getVersion()
-  };
-});
+  // Auto-updater placeholder
+  ipcMain.handle('check-for-updates', async () => {
+    // TODO: Implement auto-updater with electron-updater
+    return {
+      available: false,
+      version: app.getVersion()
+    };
+  });
+}
 
 // App lifecycle
 app.whenReady().then(() => {
+  // Initialize store after app is ready
+  store = new Store();
+
+  // Check if running in development mode
+  isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+  registerIpcHandlers();
   createWindow();
 
   app.on('activate', () => {

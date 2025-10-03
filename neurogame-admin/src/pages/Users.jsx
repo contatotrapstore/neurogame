@@ -7,10 +7,10 @@ import {
   Snackbar,
   CircularProgress,
   TextField,
-  InputAdornment,
+  InputAdornment
 } from '@mui/material';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
-import api from '../services/api';
+import { usersAPI, subscriptionsAPI } from '../services/api';
 import UserTable from '../components/UserTable';
 import UserForm from '../components/UserForm';
 
@@ -26,7 +26,7 @@ const Users = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success',
+    severity: 'success'
   });
 
   useEffect(() => {
@@ -35,20 +35,20 @@ const Users = () => {
   }, []);
 
   useEffect(() => {
-    // Filter users based on search query
-    if (searchQuery.trim() === '') {
+    if (!searchQuery.trim()) {
       setFilteredUsers(users);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = users.filter(
-        (user) =>
-          user.username?.toLowerCase().includes(query) ||
-          user.email?.toLowerCase().includes(query) ||
-          user.firstName?.toLowerCase().includes(query) ||
-          user.lastName?.toLowerCase().includes(query)
-      );
-      setFilteredUsers(filtered);
+      return;
     }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = users.filter((user) => {
+      return (
+        user.username.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.fullName.toLowerCase().includes(query)
+      );
+    });
+    setFilteredUsers(filtered);
   }, [searchQuery, users]);
 
   const fetchUsers = async () => {
@@ -56,14 +56,12 @@ const Users = () => {
     setError('');
 
     try {
-      const response = await api.get('/users');
-      if (response.data.success) {
-        setUsers(response.data.data || []);
-        setFilteredUsers(response.data.data || []);
-      }
+      const { users: fetchedUsers } = await usersAPI.getAll({ limit: 500 });
+      setUsers(fetchedUsers);
+      setFilteredUsers(fetchedUsers);
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError(err.response?.data?.message || 'Failed to load users');
+      setError(err.response?.data?.message || err.message || 'Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -71,10 +69,8 @@ const Users = () => {
 
   const fetchSubscriptionPlans = async () => {
     try {
-      const response = await api.get('/subscriptions/plans');
-      if (response.data.success) {
-        setSubscriptionPlans(response.data.data || []);
-      }
+      const { plans } = await subscriptionsAPI.getAllPlans({ isActive: true, limit: 100 });
+      setSubscriptionPlans(plans);
     } catch (err) {
       console.error('Error fetching subscription plans:', err);
     }
@@ -93,24 +89,18 @@ const Users = () => {
   const handleSaveUser = async (userData) => {
     try {
       if (editingUser) {
-        // Update existing user
-        const response = await api.put(`/users/${editingUser._id}`, userData);
-        if (response.data.success) {
-          setUsers(users.map((u) => (u._id === editingUser._id ? response.data.data : u)));
-          showSnackbar('User updated successfully', 'success');
-        }
+        const updatedUser = await usersAPI.update(editingUser.id, userData);
+        setUsers((prev) => prev.map((user) => (user.id === updatedUser.id ? updatedUser : user)));
+        showSnackbar('User updated successfully', 'success');
       } else {
-        // Create new user
-        const response = await api.post('/users', userData);
-        if (response.data.success) {
-          setUsers([...users, response.data.data]);
-          showSnackbar('User created successfully', 'success');
-        }
+        const newUser = await usersAPI.create(userData);
+        setUsers((prev) => [...prev, newUser]);
+        showSnackbar('User created successfully', 'success');
       }
       handleCloseForm();
     } catch (err) {
       console.error('Error saving user:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to save user', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to save user', 'error');
     }
   };
 
@@ -120,29 +110,23 @@ const Users = () => {
     }
 
     try {
-      const response = await api.delete(`/users/${userId}`);
-      if (response.data.success) {
-        setUsers(users.filter((u) => u._id !== userId));
-        showSnackbar('User deleted successfully', 'success');
-      }
+      await usersAPI.delete(userId);
+      setUsers((prev) => prev.filter((user) => user.id !== userId));
+      showSnackbar('User deleted successfully', 'success');
     } catch (err) {
       console.error('Error deleting user:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to delete user', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to delete user', 'error');
     }
   };
 
-  const handleAssignSubscription = async (userId, subscriptionPlanId) => {
+  const handleAssignSubscription = async (userId, planId, durationDays) => {
     try {
-      const response = await api.put(`/users/${userId}`, {
-        subscriptionPlanId,
-      });
-      if (response.data.success) {
-        setUsers(users.map((u) => (u._id === userId ? response.data.data : u)));
-        showSnackbar('Subscription assigned successfully', 'success');
-      }
+      await subscriptionsAPI.assignSubscription({ userId, planId, durationDays });
+      await fetchUsers();
+      showSnackbar('Subscription assigned successfully', 'success');
     } catch (err) {
       console.error('Error assigning subscription:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to assign subscription', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to assign subscription', 'error');
     }
   };
 
@@ -151,7 +135,7 @@ const Users = () => {
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -186,7 +170,7 @@ const Users = () => {
             <InputAdornment position="start">
               <SearchIcon />
             </InputAdornment>
-          ),
+          )
         }}
       />
 
@@ -215,7 +199,6 @@ const Users = () => {
         onClose={handleCloseForm}
         onSave={handleSaveUser}
         user={editingUser}
-        subscriptionPlans={subscriptionPlans}
       />
 
       <Snackbar

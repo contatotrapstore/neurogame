@@ -8,10 +8,10 @@ import {
   Snackbar,
   CircularProgress,
   TextField,
-  InputAdornment,
+  InputAdornment
 } from '@mui/material';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
-import api from '../services/api';
+import { gamesAPI } from '../services/api';
 import GameCard from '../components/GameCard';
 import GameForm from '../components/GameForm';
 
@@ -26,7 +26,7 @@ const Games = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success',
+    severity: 'success'
   });
 
   useEffect(() => {
@@ -34,19 +34,20 @@ const Games = () => {
   }, []);
 
   useEffect(() => {
-    // Filter games based on search query
-    if (searchQuery.trim() === '') {
+    if (!searchQuery.trim()) {
       setFilteredGames(games);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = games.filter(
-        (game) =>
-          game.name?.toLowerCase().includes(query) ||
-          game.description?.toLowerCase().includes(query) ||
-          game.category?.toLowerCase().includes(query)
-      );
-      setFilteredGames(filtered);
+      return;
     }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = games.filter((game) => {
+      return (
+        game.name.toLowerCase().includes(query) ||
+        game.description.toLowerCase().includes(query) ||
+        game.category.toLowerCase().includes(query)
+      );
+    });
+    setFilteredGames(filtered);
   }, [searchQuery, games]);
 
   const fetchGames = async () => {
@@ -54,14 +55,12 @@ const Games = () => {
     setError('');
 
     try {
-      const response = await api.get('/games');
-      if (response.data.success) {
-        setGames(response.data.data || []);
-        setFilteredGames(response.data.data || []);
-      }
+      const { games: fetchedGames } = await gamesAPI.getAll();
+      setGames(fetchedGames);
+      setFilteredGames(fetchedGames);
     } catch (err) {
       console.error('Error fetching games:', err);
-      setError(err.response?.data?.message || 'Failed to load games');
+      setError(err.response?.data?.message || err.message || 'Failed to load games');
     } finally {
       setLoading(false);
     }
@@ -73,31 +72,25 @@ const Games = () => {
   };
 
   const handleCloseForm = () => {
-    setOpenForm(false);
     setEditingGame(null);
+    setOpenForm(false);
   };
 
   const handleSaveGame = async (gameData) => {
     try {
       if (editingGame) {
-        // Update existing game
-        const response = await api.put(`/games/${editingGame._id}`, gameData);
-        if (response.data.success) {
-          setGames(games.map((g) => (g._id === editingGame._id ? response.data.data : g)));
-          showSnackbar('Game updated successfully', 'success');
-        }
+        const updatedGame = await gamesAPI.update(editingGame.id, gameData);
+        setGames((prev) => prev.map((game) => (game.id === updatedGame.id ? updatedGame : game)));
+        showSnackbar('Game updated successfully', 'success');
       } else {
-        // Create new game
-        const response = await api.post('/games', gameData);
-        if (response.data.success) {
-          setGames([...games, response.data.data]);
-          showSnackbar('Game created successfully', 'success');
-        }
+        const newGame = await gamesAPI.create(gameData);
+        setGames((prev) => [...prev, newGame]);
+        showSnackbar('Game created successfully', 'success');
       }
       handleCloseForm();
     } catch (err) {
       console.error('Error saving game:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to save game', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to save game', 'error');
     }
   };
 
@@ -107,14 +100,12 @@ const Games = () => {
     }
 
     try {
-      const response = await api.delete(`/games/${gameId}`);
-      if (response.data.success) {
-        setGames(games.filter((g) => g._id !== gameId));
-        showSnackbar('Game deleted successfully', 'success');
-      }
+      await gamesAPI.delete(gameId);
+      setGames((prev) => prev.filter((game) => game.id !== gameId));
+      showSnackbar('Game deleted successfully', 'success');
     } catch (err) {
       console.error('Error deleting game:', err);
-      showSnackbar(err.response?.data?.message || 'Failed to delete game', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Failed to delete game', 'error');
     }
   };
 
@@ -123,7 +114,7 @@ const Games = () => {
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -151,14 +142,14 @@ const Games = () => {
         fullWidth
         placeholder="Search games by name, description, or category..."
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={(event) => setSearchQuery(event.target.value)}
         sx={{ mb: 3 }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
               <SearchIcon />
             </InputAdornment>
-          ),
+          )
         }}
       />
 
@@ -179,11 +170,11 @@ const Games = () => {
       ) : (
         <Grid container spacing={3}>
           {filteredGames.map((game) => (
-            <Grid item xs={12} sm={6} md={4} key={game._id}>
+            <Grid item xs={12} sm={6} md={4} key={game.id}>
               <GameCard
                 game={game}
                 onEdit={() => handleOpenForm(game)}
-                onDelete={() => handleDeleteGame(game._id)}
+                onDelete={() => handleDeleteGame(game.id)}
               />
             </Grid>
           ))}
