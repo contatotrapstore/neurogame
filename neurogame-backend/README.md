@@ -1,284 +1,139 @@
 # NeuroGame Backend API
 
-Backend API para a plataforma NeuroGame - Sistema de distribui√ß√£o de jogos educacionais.
+API REST em Node.js/Express respons·vel pela autenticaÁ„o, cat·logo de jogos e gest„o de assinaturas da plataforma NeuroGame.
 
-## üöÄ Tecnologias
+## Tecnologias
 
 - Node.js 18+
 - Express.js
-- PostgreSQL 15+
-- Sequelize ORM
-- JWT Authentication
-- Bcrypt para criptografia
+- Supabase (PostgreSQL gerenciado)
+- JWT para autenticaÁ„o
+- Bcrypt para hash de senhas
+- Helmet, CORS e rate limiting para seguranÁa
 
-## üì¶ Instala√ß√£o
+## PrÈ-requisitos
 
-### 1. Instalar depend√™ncias
+1. Conta e projeto ativo no [Supabase](https://supabase.com)
+2. Node.js 18 ou superior instalado
+3. Clonar este repositÛrio e instalar dependÍncias
 
 ```bash
 npm install
 ```
 
-### 2. Configurar banco de dados PostgreSQL
+## ConfiguraÁ„o
 
-Certifique-se de ter o PostgreSQL instalado e rodando. Crie um banco de dados:
-
-```sql
-CREATE DATABASE neurogame_db;
-```
-
-### 3. Configurar vari√°veis de ambiente
-
-Copie o arquivo `.env.example` para `.env`:
+1. Copie o arquivo de exemplo e preencha com as credenciais do Supabase e chaves JWT:
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o arquivo `.env` com suas configura√ß√µes:
+2. Abra `.env` e informe:
+   - `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_KEY`
+   - `JWT_SECRET` e `JWT_REFRESH_SECRET`
+   - Ajuste `CORS_ORIGIN` se necess·rio (j· inclui o dashboard em `http://localhost:3001` e o launcher em `http://localhost:5174`)
 
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=neurogame_db
-DB_USER=postgres
-DB_PASSWORD=sua_senha
+3. No painel do Supabase, execute os arquivos `supabase-schema.sql` e `supabase-seeds.sql` (pasta raiz do projeto) usando o SQL Editor para criar tabelas, polÌticas RLS e dados iniciais (admin, demo, jogos e planos).
 
-# JWT
-JWT_SECRET=sua_chave_secreta_aqui
-JWT_REFRESH_SECRET=sua_refresh_secret_aqui
+## Executando
 
-# Admin
-ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@neurogame.com
-ADMIN_PASSWORD=Admin@123456
-```
-
-### 4. Executar migra√ß√µes
-
-```bash
-npm run migrate
-```
-
-### 5. Popular banco de dados com dados iniciais
-
-```bash
-npm run seed
-```
-
-Isso criar√°:
-- 1 usu√°rio admin
-- 1 usu√°rio demo
-- 13 jogos
-- 3 planos de assinatura
-
-## üéÆ Executar
-
-### Modo desenvolvimento
+### Desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-### Modo produ√ß√£o
+### ProduÁ„o
 
 ```bash
 npm start
 ```
 
-O servidor estar√° rodando em `http://localhost:3000`
+Por padr„o o servidor escuta em `http://localhost:3000` e expıe os jogos est·ticos via `/games` apontando para `../Jogos`.
 
-## üìö Endpoints da API
+## Principais Endpoints
 
-### Autentica√ß√£o (`/api/v1/auth`)
+| MÈtodo | Endpoint | DescriÁ„o | AutenticaÁ„o |
+|--------|----------|-----------|--------------|
+| POST   | `/api/v1/auth/login`         | Login de usu·rio | N„o |
+| POST   | `/api/v1/auth/refresh-token` | Renovar token    | N„o |
+| GET    | `/api/v1/auth/profile`       | Perfil do usu·rio autenticado | JWT |
+| GET    | `/api/v1/games`              | Lista de jogos (admin) | JWT |
+| GET    | `/api/v1/games/user/games`   | Jogos acessÌveis ao usu·rio atual | JWT |
+| GET    | `/api/v1/games/:id/validate` | Valida acesso a um jogo | JWT |
+| GET    | `/api/v1/users`              | Gest„o de usu·rios (admin) | JWT + admin |
+| GET    | `/api/v1/subscriptions`      | Gest„o de assinaturas (admin) | JWT + admin |
 
-| M√©todo | Endpoint | Descri√ß√£o | Auth |
-|--------|----------|-----------|------|
-| POST | `/register` | Registrar novo usu√°rio | N√£o |
-| POST | `/login` | Login de usu√°rio | N√£o |
-| POST | `/refresh-token` | Renovar token | N√£o |
-| GET | `/profile` | Obter perfil do usu√°rio | Sim |
-| POST | `/logout` | Logout | Sim |
+A pasta `src/controllers` contÈm o detalhamento de cada operaÁ„o.
 
-### Jogos (`/api/v1/games`)
-
-| M√©todo | Endpoint | Descri√ß√£o | Auth |
-|--------|----------|-----------|------|
-| GET | `/` | Listar todos os jogos | Sim |
-| GET | `/user/games` | Jogos acess√≠veis ao usu√°rio | Sim |
-| GET | `/:id` | Obter jogo por ID | Sim |
-| GET | `/:id/validate` | Validar acesso ao jogo | Sim |
-| GET | `/categories` | Listar categorias | Sim |
-| POST | `/` | Criar novo jogo | Admin |
-| PUT | `/:id` | Atualizar jogo | Admin |
-| DELETE | `/:id` | Deletar jogo | Admin |
-
-### Usu√°rios (`/api/v1/users`)
-
-| M√©todo | Endpoint | Descri√ß√£o | Auth |
-|--------|----------|-----------|------|
-| GET | `/` | Listar todos os usu√°rios | Admin |
-| GET | `/:id` | Obter usu√°rio por ID | Admin |
-| POST | `/` | Criar novo usu√°rio | Admin |
-| PUT | `/:id` | Atualizar usu√°rio | Admin |
-| DELETE | `/:id` | Deletar usu√°rio | Admin |
-| POST | `/game-access` | Conceder acesso a jogo | Admin |
-| DELETE | `/:userId/game-access/:gameId` | Revogar acesso | Admin |
-| GET | `/:id/history` | Hist√≥rico de acessos | Admin |
-
-### Assinaturas (`/api/v1/subscriptions`)
-
-| M√©todo | Endpoint | Descri√ß√£o | Auth |
-|--------|----------|-----------|------|
-| GET | `/plans` | Listar planos | N√£o |
-| GET | `/plans/:id` | Obter plano por ID | N√£o |
-| GET | `/user/:userId` | Assinatura do usu√°rio | Sim |
-| POST | `/plans` | Criar plano | Admin |
-| PUT | `/plans/:id` | Atualizar plano | Admin |
-| DELETE | `/plans/:id` | Deletar plano | Admin |
-| GET | `/` | Listar assinaturas | Admin |
-| POST | `/assign` | Atribuir assinatura | Admin |
-| PUT | `/:id/cancel` | Cancelar assinatura | Admin |
-
-## üîê Autentica√ß√£o
-
-A API usa JWT (JSON Web Tokens) para autentica√ß√£o.
-
-### Login
+## Teste r·pido da API
 
 ```bash
-POST /api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "admin",
-  "password": "Admin@123456"
-}
+curl http://localhost:3000/api/v1/health
 ```
 
-**Resposta:**
+Resposta esperada:
 
 ```json
 {
   "success": true,
-  "message": "Login successful",
-  "data": {
-    "user": { ... },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
+  "message": "NeuroGame API is running",
+  "timestamp": "2025-10-03T12:34:56.789Z"
 }
 ```
 
-### Usar token nas requisi√ß√µes
+## Scripts disponÌveis
 
-Inclua o token no header `Authorization`:
+- `npm start` ñ inicia o servidor
+- `npm run dev` ñ inicia com recarga autom·tica via nodemon
+- `npm test` ñ executa testes (placeholder)
 
-```bash
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+## Credenciais de exemplo
+
+As seeds criam dois usu·rios padr„o (lembre-se de trocar em produÁ„o):
+
+| Perfil | Usu·rio | Senha |
+|--------|---------|-------|
+| Admin  | `admin` | `Admin@123456` |
+| Demo   | `demo`  | `Demo@123456`  |
+
+## Estrutura do projeto
+
+```
+src/
+  config/
+    supabase.js
+  controllers/
+  middleware/
+  routes/
+  services/
+  utils/
+server.js
 ```
 
-## üß™ Testes
+- `config/supabase.js` inicializa clientes com service/anon key
+- `controllers` concentram a lÛgica de negÛcio usando Supabase
+- `middleware/auth.js` valida tokens JWT e privilÈgios de admin
 
-```bash
-npm test
-```
+## SeguranÁa
 
-## üìä Estrutura do Banco de Dados
+- JWT com expiraÁ„o (24h) e refresh tokens (7 dias)
+- Rate limiting (100 requisiÁıes / 15 min)
+- Helmet para headers de seguranÁa
+- CORS configur·vel via `.env`
+- Criptografia de senha com bcrypt (salt rounds = 10)
 
-### Users
-- id (UUID)
-- username
-- email
-- password (hash)
-- full_name
-- is_active
-- is_admin
-- last_login
+## Supabase
 
-### Games
-- id (UUID)
-- name
-- slug
-- description
-- cover_image
-- folder_path
-- category
-- is_active
-- order
+Scripts auxiliares na raiz:
 
-### SubscriptionPlans
-- id (UUID)
-- name
-- description
-- price
-- duration_days
-- features (JSONB)
-- is_active
+- `supabase-schema.sql` ñ cria tabelas, RLS e funÁıes
+- `supabase-seeds.sql` ñ popula dados iniciais
+- `generate-password-hashes.js` / `update-passwords.js` ñ utilidades para ajustar hashes no Supabase
 
-### UserSubscriptions
-- id (UUID)
-- user_id
-- plan_id
-- start_date
-- end_date
-- is_active
-- auto_renew
+Execute-os conforme necess·rio pelo SQL Editor ou via script `node update-passwords.js` apÛs definir as credenciais.
 
-### PlanGames (Many-to-Many)
-- plan_id
-- game_id
-
-### UserGameAccess (Individual access)
-- user_id
-- game_id
-- granted_at
-- expires_at
-- granted_by
-
-### AccessHistory
-- id (UUID)
-- user_id
-- game_id
-- accessed_at
-- session_duration
-- ip_address
-
-## üîß Scripts Dispon√≠veis
-
-- `npm start` - Inicia o servidor em produ√ß√£o
-- `npm run dev` - Inicia em modo desenvolvimento com nodemon
-- `npm run migrate` - Executa migra√ß√µes do banco
-- `npm run seed` - Popula banco com dados iniciais
-- `npm test` - Executa testes
-
-## üìù Credenciais Padr√£o
-
-### Admin
-- **Username:** admin
-- **Password:** Admin@123456
-
-### Demo
-- **Username:** demo
-- **Password:** Demo@123456
-
-‚ö†Ô∏è **IMPORTANTE:** Altere essas credenciais em produ√ß√£o!
-
-## üõ°Ô∏è Seguran√ßa
-
-- Senhas criptografadas com bcrypt (10 salt rounds)
-- JWT com expira√ß√£o de 24h
-- Refresh tokens com expira√ß√£o de 7 dias
-- Rate limiting (100 requisi√ß√µes por 15 minutos)
-- CORS configur√°vel
-- Helmet.js para headers de seguran√ßa
-- Valida√ß√£o de inputs com express-validator
-
-## üìÑ Licen√ßa
+## LicenÁa
 
 MIT
-
-## üë• Suporte
-
-Para suporte, entre em contato atrav√©s de: admin@neurogame.com

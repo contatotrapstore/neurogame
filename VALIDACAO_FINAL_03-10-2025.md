@@ -82,7 +82,7 @@
 ---
 
 #### 3. **Banco de Dados Supabase - VALIDADO ✅**
-- **Projeto**: btsarxzpiroprpdcrpcx.supabase.co
+- **Projeto**: seu-projeto-id.supabase.co
 - **Status**: 🟢 Operacional
 
 **Estrutura:**
@@ -269,7 +269,7 @@ SUPABASE_SERVICE_KEY=your_service_role_key_here
 ```
 
 **Ação Manual Necessária:**
-1. Acessar: https://supabase.com/dashboard/project/btsarxzpiroprpdcrpcx/settings/api
+1. Acessar: https://supabase.com/dashboard/project/<seu-projeto-id>/settings/api
 2. Copiar "service_role key" (secret)
 3. Substituir no `.env`
 
@@ -305,7 +305,7 @@ SUPABASE_SERVICE_KEY=your_service_role_key_here
 | Backend API | 25 | ~3.500 | 🟢 100% | http://localhost:3000 |
 | Admin Dashboard | 16 | 983 (add) | 🟢 100% | http://localhost:3001 |
 | Launcher Desktop | 7 | 176 (add) | 🟡 95% | Requer início limpo |
-| Supabase DB | 7 tabelas | 13 jogos | 🟢 100% | btsarxzpiroprpdcrpcx |
+| Supabase DB | 7 tabelas | 13 jogos | 🟢 100% | seu-projeto-id |
 | Jogos HTML5 | 13 jogos | ~15.000 | 🟢 100% | /Jogos/ |
 | Documentação | 20 docs | ~5.000 | 🟢 100% | *.md |
 | **TOTAL** | **88** | **~25.000** | **95%** | - |
@@ -555,8 +555,8 @@ Launcher (Demo):
   Password: Demo@123456
 
 Supabase:
-  URL: https://btsarxzpiroprpdcrpcx.supabase.co
-  Project: btsarxzpiroprpdcrpcx
+  URL: https://seu-projeto.supabase.co
+  Project: seu-projeto-id
 ```
 
 ---
@@ -633,3 +633,5 @@ Database:
 ---
 
 **Fim do Relatório de Validação** ✅
+
+

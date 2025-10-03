@@ -7,8 +7,8 @@
 ## 📋 Resumo da Implementação
 
 ### 1. Banco de Dados Supabase ✅
-- **Project ID**: `btsarxzpiroprpdcrpcx`
-- **URL**: https://btsarxzpiroprpdcrpcx.supabase.co
+- **Project ID**: `seu-projeto-id`
+- **URL**: https://seu-projeto.supabase.co
 - **Region**: sa-east-1 (São Paulo)
 - **Status**: ACTIVE_HEALTHY
 
@@ -158,7 +158,7 @@
 | Demo | `demo` | `Demo@123456` | User | ✅ Ativo |
 
 ### Supabase
-- **URL**: https://btsarxzpiroprpdcrpcx.supabase.co
+- **URL**: https://seu-projeto.supabase.co
 - **Anon Key**: (configurado no .env)
 - **Service Key**: ⚠️ Você precisa obter do dashboard Supabase
 
@@ -418,3 +418,5 @@ Se encontrar algum problema:
 
 **Desenvolvido com ❤️ para NeuroGame Platform**
 **Status**: ✅ PRONTO PARA PRODUÇÃO
+
+

@@ -37,7 +37,7 @@
 
 **IMPORTANTE**: Você precisa obter a `SUPABASE_SERVICE_KEY`:
 
-1. Acesse: https://supabase.com/dashboard/project/btsarxzpiroprpdcrpcx
+1. Acesse: https://supabase.com/dashboard/project/<seu-projeto-id>
 2. Vá em **Settings** → **API**
 3. Copie a **service_role key** (secret)
 4. Cole em `neurogame-backend/.env` na variável `SUPABASE_SERVICE_KEY`
@@ -170,8 +170,8 @@ NeuroGame/
 ## 🔑 Credenciais de Acesso
 
 ### Supabase Project
-- **Project ID**: `btsarxzpiroprpdcrpcx`
-- **URL**: https://btsarxzpiroprpdcrpcx.supabase.co
+- **Project ID**: `seu-projeto-id`
+- **URL**: https://seu-projeto.supabase.co
 - **Anon Key**: (já configurado no .env)
 - **Service Key**: ⚠️ **VOCÊ PRECISA CONFIGURAR NO .ENV**
 
@@ -275,7 +275,7 @@ npm run build:linux  # Build para Linux
 
 ### Erro de conexão com Supabase
 - Verifique se `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` estão corretos no `.env`
-- Teste a conexão: https://btsarxzpiroprpdcrpcx.supabase.co
+- Teste a conexão: https://seu-projeto.supabase.co
 
 ### Erro de autenticação
 - Execute `node update-passwords.js` para atualizar as senhas
@@ -295,3 +295,5 @@ npm run build:linux  # Build para Linux
 Todos os componentes foram criados e configurados. O sistema está 100% funcional e pronto para uso!
 
 **Desenvolvido com ❤️ para NeuroGame Platform**
+
+

@@ -501,8 +501,8 @@ Password: Demo@123456
 
 ### Supabase
 ```
-URL: https://btsarxzpiroprpdcrpcx.supabase.co
-Project: btsarxzpiroprpdcrpcx
+URL: https://seu-projeto.supabase.co
+Project: seu-projeto-id
 ✅ SERVICE_KEY: Configurada
 ✅ ANON_KEY: Configurada
 ```
@@ -540,3 +540,5 @@ Project: btsarxzpiroprpdcrpcx
 ---
 
 **Fim do Relatório Final Completo** ✅
+
+

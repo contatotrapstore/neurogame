@@ -1,8 +1,10 @@
-// Wrapper for electron-store operations
+// Wrapper for electron-store operations with localStorage fallback
 
 export const setStoredToken = async (token) => {
   if (window.electronAPI) {
     await window.electronAPI.store.set('auth_token', token);
+  } else {
+    localStorage.setItem('auth_token', token);
   }
 };
 
@@ -10,18 +12,22 @@ export const getStoredToken = async () => {
   if (window.electronAPI) {
     return await window.electronAPI.store.get('auth_token');
   }
-  return null;
+  return localStorage.getItem('auth_token');
 };
 
 export const removeToken = async () => {
   if (window.electronAPI) {
     await window.electronAPI.store.delete('auth_token');
+  } else {
+    localStorage.removeItem('auth_token');
   }
 };
 
 export const setStoredUser = async (user) => {
   if (window.electronAPI) {
     await window.electronAPI.store.set('user', user);
+  } else {
+    localStorage.setItem('user', JSON.stringify(user));
   }
 };
 
@@ -29,12 +35,15 @@ export const getStoredUser = async () => {
   if (window.electronAPI) {
     return await window.electronAPI.store.get('user');
   }
-  return null;
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
 };
 
 export const setStoredSettings = async (settings) => {
   if (window.electronAPI) {
     await window.electronAPI.store.set('settings', settings);
+  } else {
+    localStorage.setItem('settings', JSON.stringify(settings));
   }
 };
 
@@ -44,7 +53,8 @@ export const getStoredSettings = async () => {
       apiUrl: 'http://localhost:3000/api/v1'
     };
   }
-  return {
+  const settings = localStorage.getItem('settings');
+  return settings ? JSON.parse(settings) : {
     apiUrl: 'http://localhost:3000/api/v1'
   };
 };
@@ -52,6 +62,8 @@ export const getStoredSettings = async () => {
 export const clearAllStorage = async () => {
   if (window.electronAPI) {
     await window.electronAPI.store.clear();
+  } else {
+    localStorage.clear();
   }
 };
 

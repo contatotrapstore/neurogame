@@ -57,10 +57,10 @@ npm run build:linux
 1. Start your backend API (must be running!)
 2. Launch the app: `npm run dev`
 3. Login with your credentials:
-   - Email: `your-email@example.com`
-   - Password: `your-password`
+   - Username: `demo`
+   - Password: `Demo@123456`
 
-Default API: `http://localhost:3000/api/v1`
+Default API: `http://localhost:3000/api/v1` (configur�vel via `.env` ou ajustes internos)
 
 ## 🎲 Adding Games
 
@@ -110,12 +110,7 @@ mkdir ../Jogos/my-game
 ## 🔧 Configuration
 
 ### Change API URL
-Edit `src/services/storage.js`:
-```javascript
-return {
-  apiUrl: 'http://your-server:3000/api/v1'
-};
-```
+Defina `VITE_API_URL` no `.env` ou utilize o painel de configura��es do launcher.
 
 ### Change Window Size
 Edit `main.js`:

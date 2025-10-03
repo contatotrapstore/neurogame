@@ -1,576 +1,110 @@
-# Guia de Implementa√ß√£o - Launcher Desktop (Electron)
+# Guia de ImplementaÁ„o - Launcher Desktop (Electron + React)
 
-Este documento cont√©m toda a implementa√ß√£o do launcher desktop para usu√°rios finais.
+Este documento descreve a estrutura atual do launcher NeuroGame, os pontos principais do cÛdigo e como executar o projeto.
 
 ## Estrutura de Arquivos
 
 ```
 neurogame-launcher/
-‚îú‚îÄ‚îÄ package.json
-‚îú‚îÄ‚îÄ electron.js (main process)
-‚îú‚îÄ‚îÄ public/
-‚îÇ   ‚îî‚îÄ‚îÄ index.html
-‚îî‚îÄ‚îÄ src/
-    ‚îú‚îÄ‚îÄ index.js
-    ‚îú‚îÄ‚îÄ App.jsx
-    ‚îú‚îÄ‚îÄ components/
-    ‚îÇ   ‚îú‚îÄ‚îÄ Login.jsx
-    ‚îÇ   ‚îú‚îÄ‚îÄ GameLibrary.jsx
-    ‚îÇ   ‚îú‚îÄ‚îÄ GameCard.jsx
-    ‚îÇ   ‚îî‚îÄ‚îÄ GamePlayer.jsx
-    ‚îî‚îÄ‚îÄ services/
-        ‚îî‚îÄ‚îÄ api.js
++- main.js               # Processo principal do Electron
++- preload.js            # Bridge segura entre Electron e o renderer
++- vite.config.js        # ConfiguraÁ„o Vite (porta 5174)
++- package.json
++- .env                  # (opcional) override de API URL/local dos jogos
++- src/
+   +- main.jsx           # Entrada React
+   +- App.jsx            # Rotas e layout principal
+   +- index.css
+   +- components/
+   ¶  +- GameCard.jsx
+   ¶  +- GameWebView.jsx
+   ¶  +- Header.jsx
+   +- pages/
+   ¶  +- GameDetail.jsx
+   ¶  +- GameLibrary.jsx
+   ¶  +- Login.jsx
+   +- services/
+   ¶  +- api.js         # Cliente Axios com interceptores
+   ¶  +- storage.js     # Wrapper para electron-store
+   +- utils/
+      +- auth.js        # Helpers de autenticaÁ„o
 ```
 
-## package.json
+## Processo Principal (`main.js`)
 
-```json
-{
-  "name": "neurogame-launcher",
-  "version": "1.0.0",
-  "description": "NeuroGame Desktop Launcher",
-  "main": "electron.js",
-  "scripts": {
-    "start": "concurrently \"npm run react\" \"wait-on http://localhost:3002 && electron .\"",
-    "react": "vite --port 3002",
-    "build": "vite build",
-    "electron": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
-  },
-  "build": {
-    "appId": "com.neurogame.launcher",
-    "productName": "NeuroGame",
-    "files": [
-      "dist/**/*",
-      "electron.js",
-      "package.json"
-    ],
-    "directories": {
-      "buildResources": "assets",
-      "output": "release"
-    },
-    "win": {
-      "target": ["nsis"],
-      "icon": "assets/icon.ico"
-    },
-    "mac": {
-      "target": ["dmg"],
-      "icon": "assets/icon.icns"
-    },
-    "linux": {
-      "target": ["AppImage"],
-      "icon": "assets/icon.png"
-    }
-  },
-  "dependencies": {
-    "electron-updater": "^6.1.7",
-    "axios": "^1.6.2"
-  },
-  "devDependencies": {
-    "electron": "^28.1.0",
-    "electron-builder": "^24.9.1",
-    "concurrently": "^8.2.2",
-    "wait-on": "^7.2.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.8",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  }
-}
-```
+- Verifica se o processo est· rodando como Node puro (quando `ELECTRON_RUN_AS_NODE=1`) e reexecuta o bin·rio do Electron removendo a flag. Esse workaround evita o erro `app.whenReady is not a function` em ambientes Windows.
+- Cria a janela principal com `BrowserWindow`, carregando `http://localhost:5174` em desenvolvimento ou `dist/index.html` apÛs build.
+- Registra handlers IPC (`store-*`, `get-games-path`, etc.) usando `electron-store` para persistir tokens e configuraÁıes.
+- Restringe navegaÁ„o e abertura de novas janelas por seguranÁa.
 
-## electron.js (Main Process)
+## Preload (`preload.js`)
 
-```javascript
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const { autoUpdater } = require('electron-updater');
+Expıe uma API controlada em `window.electronAPI` com operaÁıes de storage, paths e listeners. A renderizaÁ„o React usa esses mÈtodos para persistir dados sem abrir m„o do `contextIsolation`.
 
-let mainWindow;
+## Front-end (React)
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    minWidth: 1024,
-    minHeight: 600,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webviewTag: true
-    },
-    autoHideMenuBar: true,
-    icon: path.join(__dirname, 'assets/icon.png')
-  });
+- `App.jsx` gerencia autenticaÁ„o e rotas (`/login`, `/library`, `/game/:id`).
+- `pages/Login.jsx` realiza login e salva token/usu·rio via `storage.js`.
+- `pages/GameLibrary.jsx` busca os jogos do usu·rio autenticado em `/api/v1/games/user/games`, com filtros e pesquisa.
+- `pages/GameDetail.jsx` busca detalhes do jogo e, ao clicar em ìPlay Nowî, valida o acesso (`/api/v1/games/:id/validate`) antes de montar o caminho local (`../Jogos/{folderPath}/index.html`). Pagina exibe o jogo via `<webview>`.
+- `components/GameWebView.jsx` encapsula o `<webview>` e oferece controles de fullscreen/exit, exibindo mensagem de erro quando o arquivo local n„o È encontrado.
 
-  // Development
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:3002');
-    mainWindow.webContents.openDevTools();
-  } else {
-    // Production
-    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
-  }
+## ConfiguraÁ„o e Scripts
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+- Porta Vite: `5174` (`vite.config.js`).
+- Scripts principais (`package.json`):
+  - `npm run dev`: inicia Vite + Electron (usa `wait-on` e `cross-env`)
+  - `npm run start`: roda Electron carregando arquivos de build
+  - `npm run build`: gera `dist/`
+  - `npm run build:win|mac|linux|all`: empacota via `electron-builder`
+- Vari·veis opcionais (`.env`):
+  - `VITE_API_URL` ñ base da API (default `http://localhost:3000/api/v1`)
+  - `VITE_GAMES_PATH` ñ caminho relativo dos jogos (default `../Jogos`)
 
-  // Auto-updater
-  if (!process.env.NODE_ENV === 'development') {
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
+## DependÍncias externas
 
-app.whenReady().then(() => {
-  createWindow();
+- `electron-store`: armazenamento persistente de tokens/usu·rio
+- `axios`: comunicaÁ„o com o backend
+- `@mui/material` e `@emotion/*`: UI
+- `react-router-dom`: roteamento
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
+## Fluxo de ExecuÁ„o
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+1. `npm run dev`
+2. Vite sobe `http://localhost:5174`
+3. Script aguarda a porta (`wait-on tcp:5174`) e inicia `npx electron .`
+4. Electron carrega `main.js`, cria janela e abre DevTools em modo dev
+5. React renderiza tela de login; ao autenticar, biblioteca e jogos s„o consumidos da API
 
-// IPC Handlers
-ipcMain.handle('get-version', () => {
-  return app.getVersion();
-});
+## Requisitos para os jogos
 
-// Auto-updater events
-autoUpdater.on('update-available', () => {
-  mainWindow.webContents.send('update-available');
-});
+- Pasta `Jogos/<folder>/index.html`
+- Assets incluÌdos na mesma pasta
+- O backend retorna `folder_path` compatÌvel com essa estrutura
 
-autoUpdater.on('update-downloaded', () => {
-  mainWindow.webContents.send('update-downloaded');
-});
-```
+## Dicas de Debug
 
-## src/services/api.js
+- Use `npm run dev` para ter DevTools abertos automaticamente
+- Logs do processo principal aparecem no terminal (`console.log` em `main.js`)
+- Logs do renderer podem ser vistos no DevTools ou capturados por `mainWindow.webContents.on('console-message', ...)`
+- Se o WebView mostrar tela preta, valide o caminho retornado por `getGamesPath` e se o arquivo existe
 
-```javascript
-import axios from 'axios';
+## Build
 
-const API_BASE_URL = 'http://localhost:3000/api/v1'; // Ou URL de produ√ß√£o
+Antes de `npm run build:win`, execute `npm run build` para gerar os assets React. Os execut·veis ficam em `dist-electron/`.
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+## SeguranÁa
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+- `contextIsolation: true`, `nodeIntegration: false`
+- NavegaÁ„o limitada a `localhost` (dev) ou arquivos `file://`
+- Novas janelas bloqueadas com `setWindowOpenHandler`
 
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      localStorage.clear();
-      window.location.reload();
-    }
-    return Promise.reject(error);
-  }
-);
+## Troubleshooting r·pido
 
-export const auth = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  logout: () => api.post('/auth/logout'),
-  getProfile: () => api.get('/auth/profile')
-};
+| Sintoma | Causa prov·vel | AÁ„o |
+|--------|----------------|------|
+| Janela totalmente branca em dev | Vite n„o iniciou ou build ausente | Verifique terminal do `npm run dev`; rode `npm run build` para uso com `npm start` |
+| Erro CORS ao logar | Backend n„o permite origem do launcher | Ajuste `CORS_ORIGIN` no backend (`.env`) para incluir `http://localhost:5174` |
+| Jogo n„o abre (webview) | Caminho local inexistente | Verifique pasta `Jogos/<folder>` e se `folder_path` est· correto no Supabase |
+| `app.whenReady` undefined | `ELECTRON_RUN_AS_NODE=1` ativo | Corrigido no bootstrap; se persistir, zerar var ambiente e reinstalar deps |
 
-export const games = {
-  getUserGames: () => api.get('/games/user/games'),
-  validateAccess: (gameId) => api.get(`/games/${gameId}/validate`)
-};
-
-export default api;
-```
-
-## src/App.jsx
-
-```jsx
-import { useState, useEffect } from 'react';
-import Login from './components/Login';
-import GameLibrary from './components/GameLibrary';
-import GamePlayer from './components/GamePlayer';
-import './App.css';
-
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [currentGame, setCurrentGame] = useState(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-
-    if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  const handleLogin = (userData, token) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    setUser(null);
-    setIsAuthenticated(false);
-    setCurrentGame(null);
-  };
-
-  const handlePlayGame = (game) => {
-    setCurrentGame(game);
-  };
-
-  const handleBackToLibrary = () => {
-    setCurrentGame(null);
-  };
-
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
-  }
-
-  if (currentGame) {
-    return <GamePlayer game={currentGame} onBack={handleBackToLibrary} />;
-  }
-
-  return <GameLibrary user={user} onPlayGame={handlePlayGame} onLogout={handleLogout} />;
-}
-
-export default App;
-```
-
-## src/components/Login.jsx
-
-```jsx
-import { useState } from 'react';
-import { auth } from '../services/api';
-import './Login.css';
-
-export default function Login({ onLogin }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await auth.login({ username, password });
-      const { user, token, refreshToken } = response.data.data;
-
-      localStorage.setItem('refreshToken', refreshToken);
-      onLogin(user, token);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao fazer login');
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="login-container">
-      <div className="login-box">
-        <img src="/logo.png" alt="NeuroGame" className="logo" />
-        <h1>NeuroGame</h1>
-        <p>Fa√ßa login para acessar seus jogos</p>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Usu√°rio"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoFocus
-          />
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-```
-
-## src/components/GameLibrary.jsx
-
-```jsx
-import { useState, useEffect } from 'react';
-import { games as gamesAPI } from '../services/api';
-import GameCard from './GameCard';
-import './GameLibrary.css';
-
-export default function GameLibrary({ user, onPlayGame, onLogout }) {
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    loadGames();
-    // Sync every 5 minutes
-    const interval = setInterval(loadGames, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadGames = async () => {
-    try {
-      const response = await gamesAPI.getUserGames();
-      setGames(response.data.data.games || []);
-      setError('');
-    } catch (err) {
-      setError('Erro ao carregar jogos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Carregando jogos...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="library-container">
-      <header className="library-header">
-        <div>
-          <img src="/logo.png" alt="NeuroGame" className="header-logo" />
-          <h1>NeuroGame</h1>
-        </div>
-        <div className="user-info">
-          <span>{user.fullName || user.username}</span>
-          <button onClick={onLogout} className="logout-btn">Sair</button>
-        </div>
-      </header>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      <main className="games-grid">
-        {games.length === 0 ? (
-          <div className="no-games">
-            <p>Nenhum jogo dispon√≠vel no momento</p>
-            <p>Entre em contato com o administrador</p>
-          </div>
-        ) : (
-          games.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              onPlay={onPlayGame}
-            />
-          ))
-        )}
-      </main>
-    </div>
-  );
-}
-```
-
-## src/components/GameCard.jsx
-
-```jsx
-import './GameCard.css';
-
-export default function GameCard({ game, onPlay }) {
-  const handlePlay = async () => {
-    if (!game.hasAccess) {
-      alert('Voc√™ n√£o tem acesso a este jogo. Verifique sua assinatura.');
-      return;
-    }
-    onPlay(game);
-  };
-
-  return (
-    <div className={`game-card ${!game.hasAccess ? 'locked' : ''}`}>
-      <div className="game-cover">
-        <img
-          src={game.coverImage || '/placeholder-game.png'}
-          alt={game.name}
-        />
-        {!game.hasAccess && (
-          <div className="locked-overlay">
-            <span>üîí Bloqueado</span>
-          </div>
-        )}
-      </div>
-      <div className="game-info">
-        <h3>{game.name}</h3>
-        <p>{game.category}</p>
-        <button
-          onClick={handlePlay}
-          disabled={!game.hasAccess}
-          className="play-button"
-        >
-          {game.hasAccess ? 'Jogar' : 'Bloqueado'}
-        </button>
-      </div>
-    </div>
-  );
-}
-```
-
-## src/components/GamePlayer.jsx
-
-```jsx
-import { useEffect, useState } from 'react';
-import { games as gamesAPI } from '../services/api';
-import './GamePlayer.css';
-
-export default function GamePlayer({ game, onBack }) {
-  const [validated, setValidated] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    validateAccess();
-  }, [game.id]);
-
-  const validateAccess = async () => {
-    try {
-      const response = await gamesAPI.validateAccess(game.id);
-      if (response.data.data.hasAccess) {
-        setValidated(true);
-      } else {
-        setError('Acesso negado a este jogo');
-        setTimeout(onBack, 3000);
-      }
-    } catch (err) {
-      setError('Erro ao validar acesso');
-      setTimeout(onBack, 3000);
-    }
-  };
-
-  if (error) {
-    return (
-      <div className="player-container">
-        <div className="error-screen">
-          <h2>Erro</h2>
-          <p>{error}</p>
-          <button onClick={onBack}>Voltar</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!validated) {
-    return (
-      <div className="player-container">
-        <div className="loading-screen">
-          <div className="spinner"></div>
-          <p>Validando acesso...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const gameUrl = `http://localhost:3000/games/${game.folderPath}/index.html`;
-
-  return (
-    <div className="player-container">
-      <div className="player-header">
-        <button onClick={onBack} className="back-button">
-          ‚Üê Voltar √† Biblioteca
-        </button>
-        <h2>{game.name}</h2>
-      </div>
-      <webview
-        src={gameUrl}
-        className="game-webview"
-        allowFullScreen
-      />
-    </div>
-  );
-}
-```
-
-## CSS B√°sico (src/App.css)
-
-```css
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  color: #fff;
-}
-
-#root {
-  width: 100vw;
-  height: 100vh;
-}
-
-.spinner {
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top: 4px solid #4caf50;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-```
-
-## Comandos para executar:
-
-```bash
-cd neurogame-launcher
-npm install
-npm start
-```
-
-## Build para distribui√ß√£o:
-
-```bash
-npm run dist
-```
-
-Isso gerar√° execut√°veis para Windows (.exe), Mac (.dmg) e Linux (.AppImage).

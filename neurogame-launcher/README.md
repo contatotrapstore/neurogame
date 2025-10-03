@@ -1,125 +1,99 @@
 # NeuroGame Launcher
 
-Desktop application for managing and playing NeuroGame library games.
+Desktop application for browsing and playing the NeuroGame library.
 
 ## Features
 
-- **User Authentication**: Secure login with persistent sessions
-- **Game Library**: Browse and search your game collection
-- **Game Player**: Play games directly in the launcher using WebView
-- **Offline Support**: Graceful handling of network issues
-- **Auto-Updates**: Built-in update mechanism (placeholder)
-- **Cross-Platform**: Build for Windows, macOS, and Linux
+- Secure login with persisted sessions (JWT + electron-store)
+- Library view with search, categories and access badges
+- Embedded HTML5 player using Electron `<webview>`
+- Auto-handling of network/offline errors
+- Cross-platform packaging with `electron-builder`
 
 ## Tech Stack
 
-- **Electron**: Desktop application framework
-- **React**: UI framework
-- **Material-UI**: Component library
-- **Vite**: Build tool
-- **Axios**: HTTP client
+- Electron 29 (main process)
+- React 18 + Vite 5 (renderer)
+- Material UI 5
+- Axios for HTTP requests
+- Electron Store for local persistence
 
-## Installation
+## Setup
 
-1. Install dependencies:
 ```bash
 npm install
 ```
 
-2. Set up your games folder structure:
+Optional `.env` overrides:
+
+```
+VITE_API_URL=http://localhost:3000/api/v1
+VITE_GAMES_PATH=../Jogos
+```
+
+The default expects the folder structure:
+
 ```
 NeuroGame/
-├── neurogame-launcher/
-└── Jogos/
-    ├── game-folder-1/
-    │   └── index.html
-    ├── game-folder-2/
-    │   └── index.html
-    └── ...
++- neurogame-launcher/
++- Jogos/
+   +- autorama/
+   �  +- index.html
+   +- balao/
+   �  +- index.html
+   +- ...
 ```
 
 ## Development
-
-Run the app in development mode:
 
 ```bash
 npm run dev
 ```
 
-This will start both the React dev server and Electron.
+- Vite serves the renderer at `http://localhost:5174`
+- `wait-on` blocks until the port is ready
+- `npx electron .` launches Electron with DevTools enabled
+- `main.js` relaunches Electron if `ELECTRON_RUN_AS_NODE` is detected (Windows safeguard)
 
-## Building
-
-Build for your current platform:
-
-```bash
-npm run build:win   # Windows
-npm run build:mac   # macOS
-npm run build:linux # Linux
-```
-
-Build for all platforms:
+## Production / Packaging
 
 ```bash
-npm run build:all
+npm run build        # build React (dist/)
+npm run start        # run Electron pointing to dist/
+
+npm run build:win    # Windows installer
+npm run build:mac    # macOS dmg/zip
+npm run build:linux  # AppImage/deb
+npm run build:all    # All platforms
 ```
 
-Executables will be in the `dist-electron` folder.
+Artifacts are emitted to `dist-electron/`.
 
-## Configuration
+## API usage
 
-The launcher connects to the backend API. Default URL is `http://localhost:3000/api/v1`.
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST   | `/api/v1/auth/login`         | Authenticate user |
+| GET    | `/api/v1/auth/validate`      | Validate stored token |
+| GET    | `/api/v1/games/user/games`   | Fetch library available to the user |
+| GET    | `/api/v1/games/:id`          | Game details |
+| GET    | `/api/v1/games/:id/validate` | Validate access before launching |
 
-### API Endpoints Used
-
-- `POST /api/v1/auth/login` - User authentication
-- `GET /api/v1/auth/validate` - Token validation
-- `GET /api/v1/games/my-games` - Fetch user's game library
-- `GET /api/v1/games/:id` - Get game details
-- `GET /api/v1/games/:id/validate` - Validate game access
-
-## Game Requirements
-
-Each game should be a self-contained folder with:
-
-- `index.html` - Entry point
-- All assets (images, sounds, scripts) in the same folder
-- No external dependencies (or properly bundled)
-
-## Security
-
-- Context isolation enabled
-- Node integration disabled in renderer
-- Content Security Policy enforced
-- Secure IPC communication via preload script
-- Navigation and window opening restricted
+The base URL comes from `electron-store` settings (`storage.js`) and defaults to `http://localhost:3000/api/v1`.
 
 ## Storage
 
-The launcher uses `electron-store` for local data persistence:
-
-- Authentication tokens
-- User information
-- Application settings
-
-Data is stored in the OS-specific user data directory.
+`electron-store` keeps:
+- `auth_token`
+- `user`
+- `settings` (API URL override)
 
 ## Troubleshooting
 
-### Games won't load
-- Verify the game folder exists in `../Jogos/[folder_path]/`
-- Check that `index.html` exists in the game folder
-- Check DevTools console for errors
-
-### Can't connect to backend
-- Verify backend is running
-- Check API URL in settings
-- Verify network connection
-
-### Authentication issues
-- Clear stored data (Help > Reset Settings)
-- Re-login with correct credentials
-- Check backend logs
+- **Blank screen (dev):** ensure Vite compiled without errors and `npm run dev` prints the local URL.
+- **Blank screen (start/build):** run `npm run build` to regenerate `dist/`.
+- **CORS error during login:** add `http://localhost:5174` to `CORS_ORIGIN` in the backend `.env`.
+- **"Failed to load game" message:** confirm `Jogos/<folder>/index.html` exists and the `folder_path` stored no Supabase matches the directory name.
 
 ## License
 

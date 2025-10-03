@@ -18,7 +18,7 @@ import { setStoredToken, setStoredUser } from '../services/storage';
 function Login({ onLogin }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -39,11 +39,11 @@ function Login({ onLogin }) {
 
     try {
       const response = await api.post('/auth/login', {
-        email: formData.email,
+        username: formData.username,
         password: formData.password
       });
 
-      const { token, user } = response.data;
+      const { token, user } = response.data.data;
 
       // Store token and user info
       await setStoredToken(token);
@@ -107,14 +107,14 @@ function Login({ onLogin }) {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
+                label="Username"
+                name="username"
+                type="text"
+                value={formData.username}
                 onChange={handleChange}
                 margin="normal"
                 required
-                autoComplete="email"
+                autoComplete="username"
                 autoFocus
               />
 

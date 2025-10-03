@@ -123,7 +123,7 @@ timeout /t 5
 
 #### 1.2. Configurar SUPABASE_SERVICE_KEY
 ```bash
-# 1. Acessar: https://supabase.com/dashboard/project/btsarxzpiroprpdcrpcx
+# 1. Acessar: https://supabase.com/dashboard/project/<seu-projeto-id>
 # 2. Ir em Settings → API
 # 3. Copiar "service_role key" (secret)
 # 4. Colar em neurogame-backend/.env na variável SUPABASE_SERVICE_KEY
@@ -403,3 +403,5 @@ curl http://localhost:3000/api/v1/games -H "Authorization: Bearer <TOKEN>"
 
 **Desenvolvido com ❤️ para NeuroGame Platform**
 *Última atualização: 03/10/2025 - Sessão de Validação*
+
+

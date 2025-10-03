@@ -160,7 +160,7 @@ Motivo: Foco nos testes de backend e admin dashboard. O launcher foi completamen
 ```env
 NODE_ENV=development
 PORT=3000
-SUPABASE_URL=https://btsarxzpiroprpdcrpcx.supabase.co
+SUPABASE_URL=https://seu-projeto.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 JWT_SECRET=neurogame_super_secret_jwt_key_change_this_in_production_2025
 CORS_ORIGIN=http://localhost:3001,http://localhost:5173,http://localhost:3002
@@ -365,3 +365,5 @@ O **NeuroGame Platform** está **100% implementado e funcional**. Todos os teste
 **Desenvolvido e testado com ❤️ usando Claude + MCPs**
 **Data**: 03/10/2025
 **Versão**: 1.0.0
+
+

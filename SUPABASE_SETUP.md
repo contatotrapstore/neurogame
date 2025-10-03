@@ -63,6 +63,12 @@ SUPABASE_URL=https://seu-projeto.supabase.co
 SUPABASE_ANON_KEY=sua_anon_key_aqui
 SUPABASE_SERVICE_KEY=sua_service_role_key_aqui
 
+### Proteja suas credenciais
+
+- Mantenha `.env` fora do reposit�rio (j� listado no `.gitignore`)
+- Gere novas chaves no Supabase se alguma tiver sido versionada
+- Jamais utilize a `service_role key` em aplica��es frontend/launcher
+
 # JWT Configuration (gerados automaticamente pelo Supabase Auth, mas manter para compatibilidade)
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 JWT_EXPIRES_IN=24h
@@ -70,7 +76,7 @@ JWT_REFRESH_SECRET=your_refresh_token_secret_change_this
 JWT_REFRESH_EXPIRES_IN=7d
 
 # CORS
-CORS_ORIGIN=http://localhost:3001,http://localhost:5173
+CORS_ORIGIN=http://localhost:3001,http://localhost:5174
 
 # File Upload
 UPLOAD_DIR=./uploads

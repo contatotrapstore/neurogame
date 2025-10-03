@@ -185,6 +185,38 @@ exports.refreshToken = async (req, res, next) => {
   }
 };
 
+// Validate token
+exports.validateToken = async (req, res, next) => {
+  try {
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, username, email, full_name, is_active, is_admin')
+      .eq('id', req.user.id)
+      .single();
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account is inactive'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Get current user profile
 exports.getProfile = async (req, res, next) => {
   try {

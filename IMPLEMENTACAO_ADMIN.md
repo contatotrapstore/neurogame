@@ -1,464 +1,120 @@
-# Guia de ImplementaÃ§Ã£o - Dashboard Admin
+# Guia de Implementação – Dashboard Admin (React + Vite)
 
-Este documento contÃ©m todos os arquivos necessÃ¡rios para completar o Dashboard Admin React.
+Resumo da estrutura atual do painel administrativo NeuroGame.
 
-## Estrutura de Arquivos
+## Estrutura de diretórios
 
 ```
 neurogame-admin/
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ components/
-â”‚   â”‚   â”œâ”€â”€ Layout.jsx
-â”‚   â”‚   â”œâ”€â”€ ProtectedRoute.jsx
-â”‚   â”‚   â””â”€â”€ LoadingSpinner.jsx
-â”‚   â”œâ”€â”€ pages/
-â”‚   â”‚   â”œâ”€â”€ Login.jsx
-â”‚   â”‚   â”œâ”€â”€ Dashboard.jsx
-â”‚   â”‚   â”œâ”€â”€ Users.jsx
-â”‚   â”‚   â”œâ”€â”€ Games.jsx
-â”‚   â”‚   â”œâ”€â”€ Plans.jsx
-â”‚   â”‚   â””â”€â”€ Subscriptions.jsx
-â”‚   â”œâ”€â”€ App.jsx
-â”‚   â””â”€â”€ main.jsx (jÃ¡ criado)
++- src/
+¦  +- App.jsx
+¦  +- main.jsx
+¦  +- assets/
+¦  +- components/
+¦  ¦  +- GameCard.jsx
+¦  ¦  +- GameForm.jsx
+¦  ¦  +- Header.jsx
+¦  ¦  +- Layout.jsx
+¦  ¦  +- PlanCard.jsx
+¦  ¦  +- PlanForm.jsx
+¦  ¦  +- Sidebar.jsx
+¦  ¦  +- UserForm.jsx
+¦  ¦  +- UserTable.jsx
+¦  +- contexts/
+¦  ¦  +- AuthContext.jsx
+¦  +- pages/
+¦  ¦  +- Dashboard.jsx
+¦  ¦  +- Games.jsx
+¦  ¦  +- Login.jsx
+¦  ¦  +- Subscriptions.jsx
+¦  ¦  +- Users.jsx
+¦  +- services/
+¦  ¦  +- api.js
+¦  +- utils/
+¦     +- auth.js
++- vite.config.js
++- package.json
++- .env (opcional)
 ```
 
-## src/App.jsx
+## Fluxo principal (`App.jsx`)
 
-```jsx
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { isAuthenticated } from './utils/auth';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Users from './pages/Users';
-import Games from './pages/Games';
-import Plans from './pages/Plans';
-import Subscriptions from './pages/Subscriptions';
+- Estado global (`user`, `setUser`) armazenado pelo `AuthContext`.
+- `useEffect` inicial busca `localStorage` via `getUser()`.
+- Componente `ProtectedRoute` é definido dentro de `App.jsx` e verifica:
+  1. `loading` (exibe spinner);
+  2. existência de usuário logado;
+  3. flag `is_admin`.
+- Rotas:
+  - `/login` ? `pages/Login.jsx`
+  - `/` (dentro do `Layout`) ? `Dashboard`, `Games`, `Users`, `Subscriptions`.
 
-function App() {
-  return (
-    <Routes>
-      <Route path="/login" element={
-        isAuthenticated() ? <Navigate to="/" replace /> : <Login />
-      } />
+## Autenticação
 
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Dashboard />} />
-        <Route path="users" element={<Users />} />
-        <Route path="games" element={<Games />} />
-        <Route path="plans" element={<Plans />} />
-        <Route path="subscriptions" element={<Subscriptions />} />
-      </Route>
+- `pages/Login.jsx` chama `authAPI.login` (em `services/api.js`).
+- Resposta populada com `token`, `refreshToken` e `user`.
+- Persistência feita por `utils/auth` (`setAuthData` usa `localStorage`).
+- Interceptor Axios renova tokens via `/api/v1/auth/refresh-token` quando recebe 401.
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
+## Serviços (`services/api.js`)
 
-export default App;
-```
+- `API_BASE_URL` vem de `import.meta.env.VITE_API_URL` (por padrão `http://localhost:3000/api/v1`).
+- Interceptores cuidam de anexar `Authorization: Bearer <token>` e tentam refresh automático.
+- Objetos helpers (`authAPI`, `usersAPI`, `gamesAPI`, `subscriptionsAPI`) normalizam respostas do Supabase para a UI (campos como `isAdmin`, `folderPath`, `durationDays`).
 
-## src/components/ProtectedRoute.jsx
+## Componentes-chave
 
-```jsx
-import { Navigate } from 'react-router-dom';
-import { isAuthenticated, isAdmin } from '../utils/auth';
+- `Layout.jsx`: combina `Sidebar`, `Header` e `Outlet` do React Router.
+- `Sidebar.jsx`: navegação entre seções, destaca rota ativa.
+- `Header.jsx`: exibe usuário logado e botão de logout (limpa storage e redireciona para `/login`).
+- `GameForm.jsx`, `PlanForm.jsx`, `UserForm.jsx`: formulários com validação básica para CRUD.
+- `UserTable.jsx`: tabela de usuários com paginação e ações.
 
-export default function ProtectedRoute({ children }) {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
+## Páginas
 
-  if (!isAdmin()) {
-    return (
-      <div style={{ padding: 20, textAlign: 'center' }}>
-        <h2>Acesso Negado</h2>
-        <p>VocÃª precisa ser um administrador para acessar esta pÃ¡gina.</p>
-      </div>
-    );
-  }
+- `Dashboard.jsx`: métricas resumidas (usuários ativos, jogos, planos, etc.).
+- `Games.jsx`: listagem com filtros, modal de criação/edição, acionando `gamesAPI`.
+- `Users.jsx`: gerenciamento de usuários e concessão de acesso individual.
+- `Subscriptions.jsx`: CRUD de planos + associação de jogos ao plano.
+- `Login.jsx`: tela estilizada com MUI, ícones e toggles de visibilidade de senha.
 
-  return children;
-}
-```
+## Ambiente e scripts
 
-## src/components/Layout.jsx
+- Copiar `.env.example` ? `.env` para definir `VITE_API_URL` e `VITE_API_TIMEOUT`.
+- Scripts (`package.json`):
+  - `npm run dev` – Vite em `http://localhost:3001`
+  - `npm run build` – build produção em `dist/`
+  - `npm run preview` – serve build gerado
 
-```jsx
-import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import {
-  AppBar, Box, Drawer, IconButton, List, ListItem, ListItemButton,
-  ListItemIcon, ListItemText, Toolbar, Typography, Avatar, Menu, MenuItem, Divider
-} from '@mui/material';
-import {
-  Menu as MenuIcon, Dashboard, People, SportsEsports,
-  CardMembership, Subscriptions, AccountCircle, Logout
-} from '@mui/icons-material';
-import { clearAuthData, getUser } from '../utils/auth';
-import { useSnackbar } from 'notistack';
+## Integração com backend
 
-const drawerWidth = 240;
+- Depende do backend Express/Supabase em `http://localhost:3000`.
+- Necessário que CORS inclua `http://localhost:3001`.
+- Dados devem coincidir com as tabelas do Supabase (`games`, `subscription_plans`, etc.)
 
-const menuItems = [
-  { text: 'Dashboard', icon: <Dashboard />, path: '/' },
-  { text: 'UsuÃ¡rios', icon: <People />, path: '/users' },
-  { text: 'Jogos', icon: <SportsEsports />, path: '/games' },
-  { text: 'Planos', icon: <CardMembership />, path: '/plans' },
-  { text: 'Assinaturas', icon: <Subscriptions />, path: '/subscriptions' },
-];
+## Fluxo de logout
 
-export default function Layout() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { enqueueSnackbar } = useSnackbar();
-  const user = getUser();
+1. `Header` ? `logout` (função em `utils/auth`).
+2. Remove `token`, `refreshToken` e `user` do `localStorage`.
+3. Limpa dados extras no backend (`electronAPI` não é usado aqui) e redireciona para `/login`.
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+## Pontos de atenção
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+- O dashboard assume que os campos retornados pelo Supabase seguem os nomes utilizados na normalização (`full_name`, `folder_path`, `is_active`).
+- Atualize `VITE_API_URL` ao publicar o backend em outro host.
+- Tokens gravados em `localStorage`; considere cookies HttpOnly em produção se necessário.
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    clearAuthData();
-    enqueueSnackbar('Logout realizado com sucesso', { variant: 'success' });
-    navigate('/login');
-  };
-
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div" sx={{ color: 'primary.main', fontWeight: 700 }}>
-          NeuroGame
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </div>
-  );
-
-  return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar
-        position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Admin Dashboard
-          </Typography>
-          <IconButton onClick={handleMenuOpen} color="inherit">
-            <AccountCircle />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem disabled>
-              <Typography variant="body2">{user?.username}</Typography>
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
-              Sair
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 8
-        }}
-      >
-        <Outlet />
-      </Box>
-    </Box>
-  );
-}
-```
-
-## src/pages/Login.jsx
-
-```jsx
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Box, Paper, TextField, Button, Typography, Container, Alert
-} from '@mui/material';
-import { useSnackbar } from 'notistack';
-import { authAPI } from '../services/api';
-import { setAuthData } from '../utils/auth';
-
-export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await authAPI.login({ username, password });
-      const { user, token, refreshToken } = response.data.data;
-
-      if (!user.isAdmin) {
-        setError('Acesso negado. Apenas administradores podem fazer login.');
-        setLoading(false);
-        return;
-      }
-
-      setAuthData(token, refreshToken, user);
-      enqueueSnackbar('Login realizado com sucesso!', { variant: 'success' });
-      navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao fazer login');
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h5" align="center" gutterBottom sx={{ color: 'primary.main', fontWeight: 700 }}>
-            NeuroGame Admin
-          </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" gutterBottom>
-            Dashboard Administrativo
-          </Typography>
-
-          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="UsuÃ¡rio"
-              autoComplete="username"
-              autoFocus
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Senha"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </Box>
-
-          <Typography variant="caption" display="block" align="center" color="text.secondary" sx={{ mt: 2 }}>
-            Credenciais padrÃ£o: admin / Admin@123456
-          </Typography>
-        </Paper>
-      </Box>
-    </Container>
-  );
-}
-```
-
-## src/pages/Dashboard.jsx
-
-```jsx
-import { useQuery } from '@tanstack/react-query';
-import {
-  Grid, Paper, Typography, Box, Card, CardContent
-} from '@mui/material';
-import { People, SportsEsports, CardMembership, TrendingUp } from '@mui/icons-material';
-import { usersAPI, gamesAPI, subscriptionsAPI } from '../services/api';
-
-export default function Dashboard() {
-  const { data: usersData } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => usersAPI.getAll({ limit: 1000 })
-  });
-
-  const { data: gamesData } = useQuery({
-    queryKey: ['games'],
-    queryFn: () => gamesAPI.getAll()
-  });
-
-  const { data: subsData } = useQuery({
-    queryKey: ['subscriptions'],
-    queryFn: () => subscriptionsAPI.getAll({ limit: 1000 })
-  });
-
-  const stats = [
-    {
-      title: 'Total de UsuÃ¡rios',
-      value: usersData?.data?.data?.pagination?.total || 0,
-      icon: <People sx={{ fontSize: 40 }} />,
-      color: '#2196f3'
-    },
-    {
-      title: 'Jogos DisponÃ­veis',
-      value: gamesData?.data?.data?.count || 0,
-      icon: <SportsEsports sx={{ fontSize: 40 }} />,
-      color: '#4caf50'
-    },
-    {
-      title: 'Assinaturas Ativas',
-      value: subsData?.data?.data?.pagination?.total || 0,
-      icon: <CardMembership sx={{ fontSize: 40 }} />,
-      color: '#ff9800'
-    },
-    {
-      title: 'Taxa de Crescimento',
-      value: '+12%',
-      icon: <TrendingUp sx={{ fontSize: 40 }} />,
-      color: '#9c27b0'
-    }
-  ];
-
-  return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
-      <Typography variant="body2" color="text.secondary" gutterBottom>
-        Bem-vindo ao painel administrativo do NeuroGame
-      </Typography>
-
-      <Grid container spacing={3} sx={{ mt: 2 }}>
-        {stats.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      {stat.title}
-                    </Typography>
-                    <Typography variant="h4" sx={{ mt: 1 }}>
-                      {stat.value}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ color: stat.color }}>
-                    {stat.icon}
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
-}
-```
-
-## PrÃ³ximos Passos
-
-1. Criar pÃ¡ginas restantes (Users, Games, Plans, Subscriptions) com tabelas e formulÃ¡rios
-2. Implementar funcionalidades CRUD completas
-3. Adicionar validaÃ§Ãµes e tratamento de erros
-4. Testar integraÃ§Ã£o com backend
-
-### Para instalar dependÃªncias:
+## Execução típica
 
 ```bash
-cd neurogame-admin
+# Instalar dependências
 npm install
-```
 
-### Para executar em desenvolvimento:
-
-```bash
+# Desenvolvimento
 npm run dev
+
+# Build
+npm run build
 ```
 
-Dashboard rodarÃ¡ em `http://localhost:3001`
+Abra `http://localhost:3001`, faça login com `admin / Admin@123456` (criado via seeds do Supabase) e gerencie usuários, jogos e planos.

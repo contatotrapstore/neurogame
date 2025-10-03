@@ -215,8 +215,10 @@ heroku config:set CORS_ORIGIN=https://seu-dominio.com
 git push heroku main
 
 # Executar migrações
-heroku run npm run migrate
-heroku run npm run seed
+heroku config:set SUPABASE_URL=...
+heroku config:set SUPABASE_ANON_KEY=...
+heroku config:set SUPABASE_SERVICE_KEY=...
+# Executar scripts SQL diretamente no Supabase (n�o h� migrate/seed via Heroku)
 
 # Ver logs
 heroku logs --tail

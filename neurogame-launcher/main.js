@@ -1,4 +1,23 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const electronModule = require('electron');
+
+if (typeof electronModule === 'string' || !process.versions?.electron) {
+  // Relaunch Electron if the environment forced Node mode
+  const { spawn } = require('child_process');
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+
+  const child = spawn(electronModule, process.argv.slice(1), {
+    stdio: 'inherit',
+    env
+  });
+
+  child.on('close', (code) => {
+    process.exit(code ?? 0);
+  });
+  return;
+}
+
+const { app, BrowserWindow, ipcMain, Menu } = electronModule;
 const path = require('path');
 const Store = require('electron-store');
 
@@ -30,6 +49,15 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
+
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[main] Failed to load ${validatedURL}: ${errorCode} ${errorDescription}`);
+  });
+
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`[renderer] ${message} (${sourceId}:${line})`);
+  });
 
   // Create menu
   createMenu();
@@ -101,7 +129,11 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('store-set', (event, key, value) => {
-    store.set(key, value);
+    if (value === null || value === undefined) {
+      store.delete(key);
+    } else {
+      store.set(key, value);
+    }
     return true;
   });
 
@@ -148,6 +180,7 @@ app.whenReady().then(() => {
 
   // Check if running in development mode
   isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  console.log(`[launcher] isDev: ${isDev} | NODE_ENV: ${process.env.NODE_ENV} | isPackaged: ${app.isPackaged}`);
 
   registerIpcHandlers();
   createWindow();
@@ -189,3 +222,4 @@ app.on('web-contents-created', (event, contents) => {
     return { action: 'deny' };
   });
 });
+
