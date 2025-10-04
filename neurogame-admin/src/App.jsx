@@ -9,7 +9,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Games from './pages/Games';
 import Users from './pages/Users';
-import Subscriptions from './pages/Subscriptions';
+import Requests from './pages/Requests';
 
 // Layout
 import Layout from './components/Layout';
@@ -35,7 +35,7 @@ function App() {
 
     if (!user.is_admin) {
       return <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        Access Denied. Admin only.
+        Acesso Negado. Apenas administradores.
       </Box>;
     }
 
@@ -57,7 +57,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="games" element={<Games />} />
           <Route path="users" element={<Users />} />
-          <Route path="subscriptions" element={<Subscriptions />} />
+          <Route path="requests" element={<Requests />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

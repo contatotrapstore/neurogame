@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Drawer,
   List,
@@ -9,87 +9,98 @@ import {
   ListItemText,
   Toolbar,
   Box,
-  Typography
-} from '@mui/material';
+  Typography,
+  useTheme,
+  alpha,
+} from '@mui/material'
 import {
   Dashboard as DashboardIcon,
   SportsEsports as GamesIcon,
   People as PeopleIcon,
-  CardMembership as SubscriptionIcon
-} from '@mui/icons-material';
+  CardMembership as SubscriptionIcon,
+  Notifications as NotificationsIcon,
+} from '@mui/icons-material'
 
 const menuItems = [
-  { text: 'Dashboard', icon: DashboardIcon, path: '/' },
-  { text: 'Games', icon: GamesIcon, path: '/games' },
-  { text: 'Users', icon: PeopleIcon, path: '/users' },
-  { text: 'Subscriptions', icon: SubscriptionIcon, path: '/subscriptions' }
-];
+  { text: 'Painel', icon: DashboardIcon, path: '/' },
+  { text: 'Jogos', icon: GamesIcon, path: '/games' },
+  { text: 'Usuários', icon: PeopleIcon, path: '/users' },
+  { text: 'Requisições', icon: NotificationsIcon, path: '/requests' },
+]
 
 const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const theme = useTheme()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const handleNavigation = (path) => {
-    navigate(path);
+    navigate(path)
     if (mobileOpen) {
-      onDrawerToggle();
+      onDrawerToggle()
     }
-  };
+  }
 
   const drawer = (
-    <Box>
+    <Box
+      sx={{
+        minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        pb: 2,
+        backgroundImage: theme.palette?.gradient?.sidebar,
+      }}
+    >
       <Toolbar
         sx={{
-          backgroundColor: '#2D5F2E', // Verde da marca NeuroGame
-          backgroundImage: 'linear-gradient(135deg, #2D5F2E 0%, #3A7D3C 100%)',
-          color: 'white',
-          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          py: 2
+          py: 3,
+          gap: 1,
         }}
       >
         <img
           src="/logo-branca.png"
           alt="NeuroGame"
-          style={{ width: '80%', maxWidth: '180px', marginBottom: '8px' }}
+          style={{ width: '70%', maxWidth: 160 }}
         />
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>
-          Admin Panel
+        <Typography variant="caption" sx={{ color: alpha('#ffffff', 0.75), letterSpacing: '0.12em' }}>
+          Plataforma Educacional
         </Typography>
       </Toolbar>
-      <List sx={{ pt: 2 }}>
+      <List sx={{ px: 2, mt: 1 }}>
         {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/');
+          const Icon = item.icon
+          const isActive =
+            location.pathname === item.path || (item.path === '/' && location.pathname === '/')
 
           return (
-            <ListItem key={item.text} disablePadding sx={{ px: 2, mb: 0.5 }}>
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
                 onClick={() => handleNavigation(item.path)}
                 selected={isActive}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 0,
+                  px: 2,
+                  py: 1.2,
+                  color: isActive ? '#ffffff' : alpha('#ffffff', 0.78),
+                  transition: 'background-color 0.2s ease, transform 0.2s ease',
                   '&.Mui-selected': {
-                    backgroundColor: '#2D5F2E', // Verde da marca
-                    color: 'white',
+                    backgroundColor: alpha('#ffffff', 0.18),
                     '&:hover': {
-                      backgroundColor: '#3A7D3C'
+                      backgroundColor: alpha('#ffffff', 0.22),
                     },
-                    '& .MuiListItemIcon-root': {
-                      color: 'white'
-                    }
+                    transform: 'translateX(6px)',
                   },
                   '&:hover': {
-                    backgroundColor: 'rgba(45, 95, 46, 0.08)' // Verde suave no hover
-                  }
+                    backgroundColor: alpha('#ffffff', 0.12),
+                  },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: isActive ? 'white' : 'text.secondary',
-                    minWidth: 40
+                    minWidth: 40,
+                    color: isActive ? '#ffffff' : alpha('#ffffff', 0.65),
                   }}
                 >
                   <Icon />
@@ -97,22 +108,26 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
                 <ListItemText
                   primary={item.text}
                   primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 400
+                    fontWeight: isActive ? 600 : 500,
+                    letterSpacing: '0.02em',
                   }}
                 />
               </ListItemButton>
             </ListItem>
-          );
+          )
         })}
       </List>
+      <Box sx={{ flexGrow: 1 }} />
+      <Box sx={{ px: 3, pt: 2 }}>
+        <Typography variant="caption" sx={{ color: alpha('#ffffff', 0.5), lineHeight: 1.4 }}>
+          Gerencie jogos e usuários em um só lugar.
+        </Typography>
+      </Box>
     </Box>
-  );
+  )
 
   return (
-    <Box
-      component="nav"
-      sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-    >
+    <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -122,8 +137,9 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
           display: { xs: 'block', sm: 'none' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth
-          }
+            width: drawerWidth,
+            border: 'none',
+          },
         }}
       >
         {drawer}
@@ -135,15 +151,16 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
           display: { xs: 'none', sm: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth
-          }
+            width: drawerWidth,
+            border: 'none',
+          },
         }}
         open
       >
         {drawer}
       </Drawer>
     </Box>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar

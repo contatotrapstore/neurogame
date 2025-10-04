@@ -60,21 +60,21 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="h3" component="div" fontWeight="bold" color="primary">
-            ${plan.price.toFixed(2)}
+            R$ {plan.price.toFixed(2)}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Every {plan.durationDays} day{plan.durationDays !== 1 ? 's' : ''}
+            A cada {plan.durationDays} dia{plan.durationDays !== 1 ? 's' : ''}
           </Typography>
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {plan.description || 'No description available'}
+          {plan.description || 'Nenhuma descrição disponível'}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          Features
+          Recursos
         </Typography>
 
         {plan.features && plan.features.length > 0 ? (
@@ -93,19 +93,19 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
           </List>
         ) : (
           <Typography variant="body2" color="text.secondary">
-            No features listed
+            Nenhum recurso listado
           </Typography>
         )}
 
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          Included games ({includedGames.length})
+          Jogos incluídos ({includedGames.length})
         </Typography>
 
         {includedGames.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
-            No games assigned to this plan yet
+            Nenhum jogo atribuído a este plano ainda
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -117,7 +117,7 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
 
         <Box sx={{ mt: 2 }}>
           <Chip
-            label={plan.isActive ? 'Active' : 'Inactive'}
+            label={plan.isActive ? 'Ativo' : 'Inativo'}
             size="small"
             color={plan.isActive ? 'success' : 'default'}
           />
@@ -131,7 +131,7 @@ const PlanCard = ({ plan, onEdit, onDelete }) => {
           onClick={() => onEdit(plan)}
           variant="outlined"
         >
-          Edit
+          Editar
         </Button>
         <IconButton
           size="small"

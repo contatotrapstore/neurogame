@@ -11,7 +11,9 @@ import {
   CircularProgress,
   Chip,
   Stack,
-  Divider
+  Divider,
+  useTheme,
+  alpha
 } from '@mui/material';
 import {
   PlayArrow,
@@ -19,11 +21,14 @@ import {
   Info,
   Folder,
   Category,
-  Lock
+  Lock,
+  Send
 } from '@mui/icons-material';
 import GameWebView from '../components/GameWebView';
 import api from '../services/api';
 import { getGamesPath } from '../services/storage';
+import { gameRequestsApi } from '../services/gameRequestsApi';
+import { generateGameSessionToken } from '../services/gameProtection';
 
 const normalizeGame = (rawGame) => {
   if (!rawGame) return null;
@@ -45,6 +50,8 @@ const normalizeGame = (rawGame) => {
 };
 
 function GameDetail() {
+  const theme = useTheme();
+  const mutedText = alpha(theme.palette.text.primary, 0.65);
   const { id } = useParams();
   const navigate = useNavigate();
   const [game, setGame] = useState(null);
@@ -53,6 +60,8 @@ function GameDetail() {
   const [validating, setValidating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [gamePath, setGamePath] = useState('');
+  const [requesting, setRequesting] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
 
   useEffect(() => {
     fetchGameDetails();
@@ -75,7 +84,7 @@ function GameDetail() {
       setGame(fetchedGame);
     } catch (err) {
       console.error('Error fetching game details:', err);
-      setError(err.message || 'Failed to load game details');
+      setError(err.message || 'Falha ao carregar detalhes do jogo');
     } finally {
       setLoading(false);
     }
@@ -88,18 +97,24 @@ function GameDetail() {
     setError('');
 
     try {
+      // 1. Valida acesso no backend
       const response = await api.get(`/games/${id}/validate`);
       const payload = response.data?.data || {};
       const hasAccess = payload.hasAccess ?? payload.has_access ?? false;
 
       if (!hasAccess) {
-        setError(payload.message || 'You do not have access to this game. Please contact your administrator.');
+        setError(payload.message || 'Você não tem acesso a este jogo. Entre em contato com seu administrador.');
         return;
       }
 
+      // 2. Gera token de sessão para proteger o jogo
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      await generateGameSessionToken(game.id, userData.id);
+
+      // 3. Abre o jogo
       const gamesBasePath = await getGamesPath();
       if (!gamesBasePath) {
-        setError('Unable to resolve the local games directory.');
+        setError('Não foi possível localizar o diretório de jogos.');
         return;
       }
 
@@ -108,7 +123,7 @@ function GameDetail() {
       setIsPlaying(true);
     } catch (err) {
       console.error('Error validating game access:', err);
-      setError(err.message || 'Failed to validate game access');
+      setError(err.message || 'Falha ao validar acesso ao jogo');
     } finally {
       setValidating(false);
     }
@@ -121,6 +136,26 @@ function GameDetail() {
   const handleExitGame = () => {
     setIsPlaying(false);
     setGamePath('');
+  };
+
+  const handleRequestAccess = async () => {
+    if (!game) return;
+
+    setRequesting(true);
+    setError('');
+    setRequestSuccess(false);
+
+    try {
+      await gameRequestsApi.create(game.id, `Solicitação de acesso ao jogo ${game.name}`);
+      setRequestSuccess(true);
+      setError('');
+    } catch (err) {
+      console.error('Error requesting game access:', err);
+      setError(err.message || 'Falha ao solicitar acesso ao jogo');
+      setRequestSuccess(false);
+    } finally {
+      setRequesting(false);
+    }
   };
 
   if (loading) {
@@ -140,14 +175,21 @@ function GameDetail() {
 
   if (!game) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">Game not found</Alert>
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: { xs: 3, md: 5 },
+        position: 'relative',
+        background: 'radial-gradient(circle at top, rgba(31,138,76,0.12), transparent 55%)',
+      }}
+    >
+        <Alert severity="error">Jogo não encontrado</Alert>
         <Button
           startIcon={<ArrowBack />}
           onClick={handleBackToLibrary}
           sx={{ mt: 2 }}
         >
-          Back to Library
+          Voltar à Biblioteca
         </Button>
       </Container>
     );
@@ -160,13 +202,20 @@ function GameDetail() {
   const thumbnailUrl = game.coverImage || `https://via.placeholder.com/800x450/667eea/ffffff?text=${encodeURIComponent(game.name)}`;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: { xs: 3, md: 5 },
+        position: 'relative',
+        background: 'radial-gradient(circle at top, rgba(31,138,76,0.12), transparent 55%)',
+      }}
+    >
       <Button
         startIcon={<ArrowBack />}
         onClick={handleBackToLibrary}
         sx={{ mb: 3 }}
       >
-        Back to Library
+        Voltar à Biblioteca
       </Button>
 
       {error && (
@@ -175,7 +224,21 @@ function GameDetail() {
         </Alert>
       )}
 
-      <Card sx={{ overflow: 'hidden' }}>
+      {requestSuccess && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          Solicitação enviada com sucesso! Aguarde a aprovação do administrador.
+        </Alert>
+      )}
+
+      <Card
+        sx={{
+          overflow: 'hidden',
+          background: (theme.palette?.gradient?.card) || 'linear-gradient(160deg, rgba(24,39,31,0.88) 0%, rgba(8,15,11,0.94) 100%)',
+          border: '1px solid rgba(55,126,86,0.18)',
+          boxShadow: '0 22px 46px rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(6px)',
+        }}
+      >
         <CardMedia
           component="img"
           height="400"
@@ -219,28 +282,47 @@ function GameDetail() {
                 {game.hasAccess === false && (
                   <Chip
                     icon={<Lock />}
-                    label="Access required"
+                    label="Acesso necessário"
                     color="warning"
                   />
                 )}
               </Stack>
             </Box>
 
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={validating ? <CircularProgress size={20} /> : <PlayArrow />}
-              onClick={handlePlayGame}
-              disabled={validating}
-              sx={{
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem',
-                fontWeight: 600
-              }}
-            >
-              {validating ? 'Validating...' : game.hasAccess === false ? 'Request Access' : 'Play Now'}
-            </Button>
+            {game.hasAccess === false ? (
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={requesting ? <CircularProgress size={20} /> : <Send />}
+                onClick={handleRequestAccess}
+                disabled={requesting || requestSuccess}
+                color="warning"
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  fontWeight: 600
+                }}
+              >
+                {requesting ? 'Enviando...' : requestSuccess ? 'Solicitação Enviada' : 'Solicitar Acesso'}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={validating ? <CircularProgress size={20} /> : <PlayArrow />}
+                onClick={handlePlayGame}
+                disabled={validating}
+                sx={{
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  fontWeight: 600
+                }}
+              >
+                {validating ? 'Validando...' : 'Jogar Agora'}
+              </Button>
+            )}
           </Box>
 
           <Divider sx={{ my: 3 }} />
@@ -249,20 +331,20 @@ function GameDetail() {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Info sx={{ mr: 1, color: 'primary.main' }} />
               <Typography variant="h6" fontWeight="600">
-                About This Game
+                Sobre Este Jogo
               </Typography>
             </Box>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              {game.description || 'No description available for this game.'}
+            <Typography variant="body1" sx={{ color: mutedText }} paragraph>
+              {game.description || 'Nenhuma descrição disponível para este jogo.'}
             </Typography>
           </Box>
 
           {game.instructions && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="h6" gutterBottom fontWeight="600">
-                How to Play
+                Como Jogar
               </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph>
+              <Typography variant="body1" sx={{ color: mutedText }} paragraph>
                 {game.instructions}
               </Typography>
             </Box>
@@ -271,9 +353,9 @@ function GameDetail() {
           {game.controls && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="h6" gutterBottom fontWeight="600">
-                Controls
+                Controles
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" sx={{ color: mutedText }}>
                 {game.controls}
               </Typography>
             </Box>
@@ -285,3 +367,4 @@ function GameDetail() {
 }
 
 export default GameDetail;
+

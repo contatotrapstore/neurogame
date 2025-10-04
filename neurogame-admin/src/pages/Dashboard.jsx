@@ -14,7 +14,7 @@ import {
   CardMembership as SubscriptionIcon,
   TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
-import { usersAPI, gamesAPI, subscriptionsAPI } from '../services/api';
+import { usersAPI, gamesAPI } from '../services/api';
 
 const StatCard = ({ title, value, icon: Icon, color, loading }) => (
   <Card elevation={2} sx={{ height: '100%' }}>
@@ -52,9 +52,7 @@ const StatCard = ({ title, value, icon: Icon, color, loading }) => (
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
-    totalGames: 0,
-    totalPlans: 0,
-    activeSubscriptions: 0
+    totalGames: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,22 +66,18 @@ const Dashboard = () => {
     setError('');
 
     try {
-      const [usersRes, gamesRes, plansRes, activeSubsRes] = await Promise.all([
+      const [usersRes, gamesRes] = await Promise.all([
         usersAPI.getAll({ limit: 1 }),
-        gamesAPI.getAll({ limit: 1 }),
-        subscriptionsAPI.getAllPlans({ limit: 1 }),
-        subscriptionsAPI.getAll({ isActive: true, limit: 1 })
+        gamesAPI.getAll({ limit: 1 })
       ]);
 
       setStats({
         totalUsers: usersRes.pagination.total,
-        totalGames: gamesRes.count,
-        totalPlans: plansRes.count,
-        activeSubscriptions: activeSubsRes.pagination.total
+        totalGames: gamesRes.count
       });
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load dashboard statistics');
+      setError(err.response?.data?.message || err.message || 'Falha ao carregar estatísticas do painel');
     } finally {
       setLoading(false);
     }
@@ -92,10 +86,10 @@ const Dashboard = () => {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-        Dashboard
+        Painel de Controle
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Welcome to NeuroGame Admin Dashboard
+        Bem-vindo ao Painel Administrativo do NeuroGame
       </Typography>
 
       {error && (
@@ -105,9 +99,9 @@ const Dashboard = () => {
       )}
 
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6}>
           <StatCard
-            title="Total Users"
+            title="Total de Usuários"
             value={stats.totalUsers}
             icon={PeopleIcon}
             color="primary"
@@ -115,32 +109,12 @@ const Dashboard = () => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6}>
           <StatCard
-            title="Total Games"
+            title="Total de Jogos"
             value={stats.totalGames}
             icon={GamesIcon}
             color="success"
-            loading={loading}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Subscription Plans"
-            value={stats.totalPlans}
-            icon={SubscriptionIcon}
-            color="warning"
-            loading={loading}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Active Subscriptions"
-            value={stats.activeSubscriptions}
-            icon={TrendingUpIcon}
-            color="info"
             loading={loading}
           />
         </Grid>
@@ -151,10 +125,10 @@ const Dashboard = () => {
           <Card elevation={2}>
             <CardContent>
               <Typography variant="h6" gutterBottom fontWeight="bold">
-                Recent Activity
+                Atividade Recente
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                No recent activity to display
+                Nenhuma atividade recente para exibir
               </Typography>
             </CardContent>
           </Card>
@@ -164,10 +138,10 @@ const Dashboard = () => {
           <Card elevation={2}>
             <CardContent>
               <Typography variant="h6" gutterBottom fontWeight="bold">
-                Quick Actions
+                Ações Rápidas
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Use the sidebar to manage games, users, and subscription plans
+                Use a barra lateral para gerenciar jogos e usuários
               </Typography>
             </CardContent>
           </Card>

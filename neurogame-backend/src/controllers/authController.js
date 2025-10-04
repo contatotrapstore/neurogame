@@ -15,6 +15,76 @@ const generateRefreshToken = (userId) => {
   });
 };
 
+// Login com código de acesso
+exports.loginWithCode = async (req, res) => {
+  try {
+    const { access_code } = req.body;
+
+    if (!access_code) {
+      return res.status(400).json({
+        success: false,
+        message: 'Código de acesso é obrigatório'
+      });
+    }
+
+    // Normalizar código (remover espaços e converter para maiúscula)
+    const normalizedCode = access_code.trim().toUpperCase();
+
+    // Buscar usuário pelo código
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, username, email, full_name, is_admin, is_active, access_code')
+      .eq('access_code', normalizedCode)
+      .single();
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Código de acesso inválido'
+      });
+    }
+
+    // Verificar se usuário está ativo
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuário inativo. Entre em contato com o suporte.'
+      });
+    }
+
+    // Atualizar último login
+    await supabase
+      .from('users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', user.id);
+
+    // Gerar tokens
+    const token = generateToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
+
+    res.json({
+      success: true,
+      message: 'Login realizado com sucesso',
+      token,
+      refreshToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.full_name,
+        isAdmin: user.is_admin,
+        accessCode: user.access_code
+      }
+    });
+  } catch (error) {
+    console.error('Erro no login com código:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao fazer login'
+    });
+  }
+};
+
 // Register new user
 exports.register = async (req, res, next) => {
   try {

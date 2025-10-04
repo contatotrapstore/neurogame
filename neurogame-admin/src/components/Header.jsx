@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   AppBar,
   Toolbar,
@@ -11,44 +11,55 @@ import {
   Avatar,
   Divider,
   ListItemIcon,
-} from '@mui/material';
+  Tooltip,
+  alpha,
+  useTheme,
+  Button,
+} from '@mui/material'
 import {
   Menu as MenuIcon,
   AccountCircle,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
-} from '@mui/icons-material';
-import { getUser, clearAuth } from '../utils/auth';
+  HelpOutline as HelpIcon,
+} from '@mui/icons-material'
+import { getUser, clearAuth } from '../utils/auth'
 
 const Header = ({ onMenuClick, drawerWidth }) => {
-  const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const user = getUser();
+  const theme = useTheme()
+  const navigate = useNavigate()
+  const [anchorEl, setAnchorEl] = useState(null)
+  const user = getUser()
 
   const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+    setAnchorEl(event.currentTarget)
+  }
 
   const handleClose = () => {
-    setAnchorEl(null);
-  };
+    setAnchorEl(null)
+  }
 
   const handleLogout = () => {
-    clearAuth();
-    navigate('/login');
-  };
+    clearAuth()
+    navigate('/login')
+  }
+
+  const gradient = theme.palette?.gradient?.primary || 'linear-gradient(135deg, #0f2916 0%, #1f7a34 55%, #47b36b 100%)'
 
   return (
     <AppBar
       position="fixed"
+      elevation={0}
       sx={{
         width: { sm: `calc(100% - ${drawerWidth}px)` },
         ml: { sm: `${drawerWidth}px` },
-        bgcolor: '#2D5F2E', // Verde da marca NeuroGame
-        backgroundImage: 'linear-gradient(135deg, #2D5F2E 0%, #3A7D3C 100%)',
+        backgroundImage: gradient,
+        color: 'common.white',
+        borderBottom: 'none',
+        boxShadow: 'none',
       }}
     >
-      <Toolbar>
+      <Toolbar sx={{ minHeight: 72, px: { xs: 2, md: 4 } }}>
         <IconButton
           color="inherit"
           edge="start"
@@ -58,27 +69,40 @@ const Header = ({ onMenuClick, drawerWidth }) => {
           <MenuIcon />
         </IconButton>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, gap: 2 }}>
           <img
             src="/logo-branca.png"
             alt="NeuroGame"
-            style={{ height: '40px', marginRight: '12px' }}
+            style={{ height: 42, display: 'block' }}
           />
-          <Typography variant="h6" noWrap component="div">
-            Admin Dashboard
-          </Typography>
+          <Box sx={{ lineHeight: 1.2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              NeuroGame Admin
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: alpha('#ffffff', 0.8), letterSpacing: '0.04em' }}
+            >
+              Controle total da plataforma educacional
+            </Typography>
+          </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography variant="body2" sx={{ display: { xs: 'none', md: 'block' } }}>
             {user?.username || 'Admin'}
           </Typography>
-          <IconButton
-            size="large"
-            onClick={handleMenu}
-            color="inherit"
-          >
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+          <IconButton size="large" onClick={handleMenu} sx={{ p: 0 }}>
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 0,
+                bgcolor: alpha('#ffffff', 0.2),
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.25)',
+              }}
+            >
               {user?.username?.charAt(0).toUpperCase() || 'A'}
             </Avatar>
           </IconButton>
@@ -91,6 +115,11 @@ const Header = ({ onMenuClick, drawerWidth }) => {
           onClick={handleClose}
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          PaperProps={{
+            sx: {
+              borderRadius: 0,
+            }
+          }}
         >
           <MenuItem disabled>
             <ListItemIcon>
@@ -103,18 +132,18 @@ const Header = ({ onMenuClick, drawerWidth }) => {
             <ListItemIcon>
               <SettingsIcon fontSize="small" />
             </ListItemIcon>
-            Settings
+            Configurações
           </MenuItem>
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
-            Logout
+            Sair
           </MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

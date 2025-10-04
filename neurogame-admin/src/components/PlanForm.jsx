@@ -101,15 +101,15 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
     const nextErrors = {};
 
     if (!formData.name.trim()) {
-      nextErrors.name = 'Plan name is required';
+      nextErrors.name = 'Nome do plano é obrigatório';
     }
 
     if (!formData.price || Number(formData.price) <= 0) {
-      nextErrors.price = 'Valid price is required';
+      nextErrors.price = 'Preço válido é obrigatório';
     }
 
     if (!formData.durationDays || Number(formData.durationDays) <= 0) {
-      nextErrors.durationDays = 'Duration must be at least 1 day';
+      nextErrors.durationDays = 'Duração deve ser de pelo menos 1 dia';
     }
 
     setErrors(nextErrors);
@@ -128,13 +128,13 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{plan ? 'Edit Subscription Plan' : 'Create New Subscription Plan'}</DialogTitle>
+      <DialogTitle>{plan ? 'Editar Plano de Assinatura' : 'Criar Novo Plano de Assinatura'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Plan name"
+              label="Nome do plano"
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -147,7 +147,7 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Price"
+              label="Preço"
               name="price"
               type="number"
               value={formData.price}
@@ -162,7 +162,7 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Duration (days)"
+              label="Duração (dias)"
               name="durationDays"
               type="number"
               value={formData.durationDays}
@@ -177,7 +177,7 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Description"
+              label="Descrição"
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -188,13 +188,13 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
 
           <Grid item xs={12}>
             <FormControl fullWidth>
-              <InputLabel>Included games</InputLabel>
+              <InputLabel>Jogos incluídos</InputLabel>
               <Select
                 multiple
                 name="gameIds"
                 value={formData.gameIds}
                 onChange={handleGamesChange}
-                label="Included games"
+                label="Jogos incluídos"
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selected.map((value) => {
@@ -217,11 +217,11 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
             <Box>
               <TextField
                 fullWidth
-                label="Add feature"
+                label="Adicionar recurso"
                 value={featureInput}
                 onChange={(event) => setFeatureInput(event.target.value)}
                 onKeyPress={handleFeatureKeyPress}
-                placeholder="Type a feature and press Enter or click Add"
+                placeholder="Digite um recurso e pressione Enter ou clique em Adicionar"
                 InputProps={{
                   endAdornment: (
                     <Button
@@ -230,7 +230,7 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
                       disabled={!featureInput.trim()}
                       startIcon={<AddIcon />}
                     >
-                      Add
+                      Adicionar
                     </Button>
                   )
                 }}
@@ -257,15 +257,15 @@ const PlanForm = ({ open, onClose, onSave, plan, availableGames = [] }) => {
                   name="isActive"
                 />
               }
-              label="Active"
+              label="Ativo"
             />
           </Grid>
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>Cancelar</Button>
         <Button onClick={handleSubmit} variant="contained">
-          {plan ? 'Update' : 'Create'}
+          {plan ? 'Atualizar' : 'Criar'}
         </Button>
       </DialogActions>
     </Dialog>

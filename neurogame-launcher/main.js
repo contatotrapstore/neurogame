@@ -17,9 +17,10 @@ if (typeof electronModule === 'string' || !process.versions?.electron) {
   return;
 }
 
-const { app, BrowserWindow, ipcMain, Menu } = electronModule;
+const { app, BrowserWindow, ipcMain, Menu, dialog } = electronModule;
 const path = require('path');
 const Store = require('electron-store');
+const { autoUpdater } = require('electron-updater');
 
 let store;
 let mainWindow;
@@ -38,8 +39,9 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'build/icon.png'),
-    autoHideMenuBar: !isDev,
-    frame: true
+    autoHideMenuBar: true,
+    frame: true,
+    fullscreen: !isDev
   });
 
   // Load app
@@ -48,8 +50,11 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+    // Ensure fullscreen is set after window is ready
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.setFullScreen(true);
+    });
   }
-
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error(`[main] Failed to load ${validatedURL}: ${errorCode} ${errorDescription}`);
@@ -59,8 +64,8 @@ function createWindow() {
     console.log(`[renderer] ${message} (${sourceId}:${line})`);
   });
 
-  // Create menu
-  createMenu();
+  // Remove menu completely
+  Menu.setApplicationMenu(null);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -163,14 +168,127 @@ function registerIpcHandlers() {
     return app.getPath('userData');
   });
 
-  // Auto-updater placeholder
+  // Auto-updater handlers
   ipcMain.handle('check-for-updates', async () => {
-    // TODO: Implement auto-updater with electron-updater
-    return {
-      available: false,
-      version: app.getVersion()
-    };
+    if (isDev) {
+      return {
+        available: false,
+        version: app.getVersion(),
+        isDev: true
+      };
+    }
+
+    try {
+      const result = await autoUpdater.checkForUpdates();
+      return {
+        available: result.updateInfo.version !== app.getVersion(),
+        version: app.getVersion(),
+        latestVersion: result.updateInfo.version,
+        isDev: false
+      };
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+      return {
+        available: false,
+        version: app.getVersion(),
+        error: error.message
+      };
+    }
   });
+
+  ipcMain.handle('download-update', async () => {
+    if (isDev) return { success: false, message: 'Updates disabled in dev mode' };
+
+    try {
+      await autoUpdater.downloadUpdate();
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  });
+
+  ipcMain.handle('install-update', () => {
+    if (isDev) return;
+    autoUpdater.quitAndInstall();
+  });
+
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
+}
+
+function setupAutoUpdater() {
+  if (isDev) {
+    console.log('[updater] Auto-updater disabled in development mode');
+    return;
+  }
+
+  // Configure auto-updater
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('[updater] Checking for updates...');
+    mainWindow?.webContents.send('update-status', { status: 'checking' });
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('[updater] Update available:', info.version);
+    mainWindow?.webContents.send('update-status', {
+      status: 'available',
+      version: info.version,
+      releaseNotes: info.releaseNotes
+    });
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('[updater] Update not available');
+    mainWindow?.webContents.send('update-status', { status: 'not-available' });
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('[updater] Error:', err);
+    mainWindow?.webContents.send('update-status', {
+      status: 'error',
+      error: err.message
+    });
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    console.log(`[updater] Download progress: ${progressObj.percent}%`);
+    mainWindow?.webContents.send('update-status', {
+      status: 'downloading',
+      progress: progressObj.percent
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('[updater] Update downloaded');
+    mainWindow?.webContents.send('update-status', {
+      status: 'downloaded',
+      version: info.version
+    });
+
+    // Show dialog to install
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Atualização Disponível',
+      message: `Uma nova versão (${info.version}) foi baixada.`,
+      detail: 'O launcher será reiniciado para aplicar a atualização.',
+      buttons: ['Instalar Agora', 'Instalar Depois']
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  // Check for updates on startup (after 5 seconds)
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch(err => {
+      console.error('[updater] Failed to check for updates:', err);
+    });
+  }, 5000);
 }
 
 // App lifecycle
@@ -184,6 +302,7 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   createWindow();
+  setupAutoUpdater();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -77,7 +77,7 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
 
   const renderSubscription = (user) => {
     if (!user.subscription) {
-      return <Chip label="None" size="small" variant="outlined" />;
+      return <Chip label="Nenhuma" size="small" variant="outlined" />;
     }
 
     return (
@@ -95,38 +95,38 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'grey.100' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Nome de usuário</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Full name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Nome completo</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Função</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Subscription</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Assinatura</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center">
-                  No users found
+                  Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
             ) : (
               paginatedUsers.map((user) => (
                 <TableRow key={user.id} hover>
                   <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.email || '�'}</TableCell>
-                  <TableCell>{user.fullName || '�'}</TableCell>
+                  <TableCell>{user.email || '�'}</TableCell>
+                  <TableCell>{user.fullName || '�'}</TableCell>
                   <TableCell>
                     <Chip
-                      label={user.isAdmin ? 'Admin' : 'User'}
+                      label={user.isAdmin ? 'Admin' : 'Usuário'}
                       size="small"
                       color={user.isAdmin ? 'primary' : 'default'}
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={user.isActive ? 'Active' : 'Inactive'}
+                      label={user.isActive ? 'Ativo' : 'Inativo'}
                       size="small"
                       color={user.isActive ? 'success' : 'default'}
                     />
@@ -138,7 +138,7 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
                         size="small"
                         color="primary"
                         onClick={() => onEdit(user)}
-                        title="Edit User"
+                        title="Editar Usuário"
                       >
                         <EditIcon />
                       </IconButton>
@@ -146,7 +146,7 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
                         size="small"
                         color="info"
                         onClick={() => handleOpenAssignDialog(user)}
-                        title="Assign Subscription"
+                        title="Atribuir Assinatura"
                       >
                         <SubscriptionIcon />
                       </IconButton>
@@ -154,7 +154,7 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
                         size="small"
                         color="error"
                         onClick={() => onDelete(user.id)}
-                        title="Delete User"
+                        title="Excluir Usuário"
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -177,21 +177,21 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
       </TableContainer>
 
       <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Assign Subscription</DialogTitle>
+        <DialogTitle>Atribuir Assinatura</DialogTitle>
         <DialogContent>
           <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Subscription Plan</InputLabel>
+            <InputLabel>Plano de Assinatura</InputLabel>
             <Select
               value={selectedPlanId}
               onChange={(event) => setSelectedPlanId(event.target.value)}
-              label="Subscription Plan"
+              label="Plano de Assinatura"
             >
               <MenuItem value="">
-                <em>None</em>
+                <em>Nenhum</em>
               </MenuItem>
               {subscriptionPlans.map((plan) => (
                 <MenuItem key={plan.id} value={plan.id}>
-                  {plan.name} � ${plan.price} / {plan.durationDays}d
+                  {plan.name} – R$ {plan.price} / {plan.durationDays}d
                 </MenuItem>
               ))}
             </Select>
@@ -200,22 +200,22 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
           <TextField
             fullWidth
             sx={{ mt: 2 }}
-            label="Duration (days)"
+            label="Duração (dias)"
             type="number"
             value={durationDays}
             onChange={(event) => setDurationDays(event.target.value)}
-            placeholder="Defaults to plan duration"
+            placeholder="Padrão para duração do plano"
             inputProps={{ min: 1 }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseAssignDialog}>Cancel</Button>
+          <Button onClick={handleCloseAssignDialog}>Cancelar</Button>
           <Button
             onClick={handleAssignSubmit}
             variant="contained"
             disabled={!selectedPlanId}
           >
-            Assign
+            Atribuir
           </Button>
         </DialogActions>
       </Dialog>

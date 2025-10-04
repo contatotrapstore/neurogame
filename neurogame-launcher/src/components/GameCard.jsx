@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -7,19 +8,45 @@ import {
   Button,
   Chip,
   Box,
-  CardActionArea
+  CardActionArea,
+  Stack,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import { PlayArrow, Folder, Lock } from '@mui/icons-material';
 
 const buildFallbackCover = (name) => {
   const label = encodeURIComponent(name || 'NeuroGame');
-  return `https://via.placeholder.com/400x225/667eea/ffffff?text=${label}`;
+  return `https://via.placeholder.com/600x320/0f2916/ffffff?text=${label}`;
+};
+
+const getGameImage = async (slug) => {
+  try {
+    const image = await import(`../assets/games/${slug}.jpg`);
+    return image.default;
+  } catch {
+    return null;
+  }
 };
 
 function GameCard({ game }) {
+  const theme = useTheme();
   const navigate = useNavigate();
-  const coverImage = game.coverImage || buildFallbackCover(game.name);
+  const [coverImage, setCoverImage] = useState(buildFallbackCover(game.name));
   const hasAccess = game.hasAccess !== false;
+
+  useEffect(() => {
+    const loadImage = async () => {
+      const slug = game.folderPath?.split('/').pop() || game.slug;
+      if (slug) {
+        const image = await getGameImage(slug);
+        if (image) {
+          setCoverImage(image);
+        }
+      }
+    };
+    loadImage();
+  }, [game]);
 
   const handlePlayClick = (event) => {
     event.stopPropagation();
@@ -36,54 +63,81 @@ function GameCard({ game }) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        background: theme.palette?.gradient?.card,
+        border: '1px solid rgba(55,126,86,0.18)',
         position: 'relative',
-        cursor: 'pointer'
+        overflow: 'hidden'
       }}
     >
-      <CardActionArea onClick={handleCardClick}>
-        <CardMedia
-          component="img"
-          height="180"
-          image={coverImage}
-          alt={game.name}
-          sx={{
-            objectFit: 'cover',
-            bgcolor: 'grey.800'
-          }}
-        />
-        <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-          <Typography
-            gutterBottom
-            variant="h6"
-            component="div"
-            noWrap
-            sx={{ fontWeight: 600 }}
-          >
-            {game.name}
-          </Typography>
-
-          <Typography
-            variant="body2"
-            color="text.secondary"
+      <CardActionArea onClick={handleCardClick} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <Box sx={{ position: 'relative' }}>
+          <CardMedia
+            component="img"
+            height="170"
+            image={coverImage}
+            alt={game.name}
+            sx={{ objectFit: 'cover', filter: hasAccess ? 'none' : 'grayscale(0.6)' }}
+          />
+          <Box
             sx={{
-              mb: 2,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical'
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(180deg, rgba(7,13,10,0) 40%, rgba(7,13,10,0.9) 95%)'
             }}
-          >
-            {game.description || 'No description available'}
-          </Typography>
+          />
+          {!hasAccess && (
+            <Chip
+              icon={<Lock />}
+              label="Acesso necessário"
+              color="warning"
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 12,
+                left: 12,
+                backgroundColor: '#d97706'
+              }}
+            />
+          )}
+        </Box>
 
-          <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box>
+            <Typography
+              variant="h6"
+              component="div"
+              noWrap
+              sx={{ fontWeight: 600, letterSpacing: '0.02em' }}
+            >
+              {game.name}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: alpha('#e6f3eb', 0.65),
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}
+            >
+              {game.description || 'Sem descrição disponível'}
+            </Typography>
+          </Box>
+
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {game.category && (
               <Chip
                 label={game.category}
                 size="small"
-                color="primary"
-                variant="outlined"
+                sx={{
+                  height: 26,
+                  borderRadius: 999,
+                  backgroundColor: alpha('#37b464', 0.15),
+                  border: '1px solid rgba(71,179,107,0.35)',
+                  color: '#9deab2'
+                }}
               />
             )}
             {game.folderPath && (
@@ -91,33 +145,31 @@ function GameCard({ game }) {
                 icon={<Folder />}
                 label="Local"
                 size="small"
-                variant="outlined"
+                sx={{
+                  height: 26,
+                  borderRadius: 999,
+                  backgroundColor: alpha('#101b17', 0.8),
+                  border: '1px solid rgba(88, 126, 103, 0.5)'
+                }}
               />
             )}
-            {!hasAccess && (
-              <Chip
-                icon={<Lock />}
-                label="Access required"
-                size="small"
-                color="warning"
-              />
-            )}
-          </Box>
+          </Stack>
         </CardContent>
       </CardActionArea>
 
-      <Box sx={{ px: 2, pb: 2 }}>
+      <Box sx={{ px: 2.5, pb: 2.5 }}>
         <Button
           fullWidth
           variant="contained"
           startIcon={<PlayArrow />}
           onClick={handlePlayClick}
           sx={{
-            py: 1,
-            fontWeight: 600
+            py: 1.1,
+            fontWeight: 700,
+            letterSpacing: '0.08em'
           }}
         >
-          {hasAccess ? 'Play Now' : 'Request Access'}
+          {hasAccess ? 'Jogar Agora' : 'Solicitar Acesso'}
         </Button>
       </Box>
     </Card>

@@ -60,7 +60,7 @@ const Games = () => {
       setFilteredGames(fetchedGames);
     } catch (err) {
       console.error('Error fetching games:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load games');
+      setError(err.response?.data?.message || err.message || 'Falha ao carregar jogos');
     } finally {
       setLoading(false);
     }
@@ -81,31 +81,31 @@ const Games = () => {
       if (editingGame) {
         const updatedGame = await gamesAPI.update(editingGame.id, gameData);
         setGames((prev) => prev.map((game) => (game.id === updatedGame.id ? updatedGame : game)));
-        showSnackbar('Game updated successfully', 'success');
+        showSnackbar('Jogo atualizado com sucesso', 'success');
       } else {
         const newGame = await gamesAPI.create(gameData);
         setGames((prev) => [...prev, newGame]);
-        showSnackbar('Game created successfully', 'success');
+        showSnackbar('Jogo criado com sucesso', 'success');
       }
       handleCloseForm();
     } catch (err) {
       console.error('Error saving game:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to save game', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao salvar jogo', 'error');
     }
   };
 
   const handleDeleteGame = async (gameId) => {
-    if (!window.confirm('Are you sure you want to delete this game?')) {
+    if (!window.confirm('Tem certeza que deseja excluir este jogo?')) {
       return;
     }
 
     try {
       await gamesAPI.delete(gameId);
       setGames((prev) => prev.filter((game) => game.id !== gameId));
-      showSnackbar('Game deleted successfully', 'success');
+      showSnackbar('Jogo excluído com sucesso', 'success');
     } catch (err) {
       console.error('Error deleting game:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to delete game', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao excluir jogo', 'error');
     }
   };
 
@@ -122,10 +122,10 @@ const Games = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            Games Management
+            Gerenciamento de Jogos
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Manage all games in the system
+            Gerencie todos os jogos do sistema
           </Typography>
         </Box>
         <Button
@@ -134,13 +134,13 @@ const Games = () => {
           onClick={() => handleOpenForm()}
           size="large"
         >
-          Add Game
+          Adicionar Jogo
         </Button>
       </Box>
 
       <TextField
         fullWidth
-        placeholder="Search games by name, description, or category..."
+        placeholder="Buscar jogos por nome, descrição ou categoria..."
         value={searchQuery}
         onChange={(event) => setSearchQuery(event.target.value)}
         sx={{ mb: 3 }}
@@ -165,7 +165,7 @@ const Games = () => {
         </Box>
       ) : filteredGames.length === 0 ? (
         <Alert severity="info">
-          {searchQuery ? 'No games found matching your search' : 'No games available. Create your first game!'}
+          {searchQuery ? 'Nenhum jogo encontrado para sua busca' : 'Nenhum jogo disponível. Crie seu primeiro jogo!'}
         </Alert>
       ) : (
         <Grid container spacing={3}>

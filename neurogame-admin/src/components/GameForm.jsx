@@ -60,17 +60,17 @@ const GameForm = ({ open, onClose, onSave, game }) => {
     const nextErrors = {};
 
     if (!formData.name.trim()) {
-      nextErrors.name = 'Game name is required';
+      nextErrors.name = 'Nome do jogo é obrigatório';
     }
 
     if (!formData.slug.trim()) {
-      nextErrors.slug = 'Slug is required';
+      nextErrors.slug = 'Slug é obrigatório';
     } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      nextErrors.slug = 'Use only lowercase letters, numbers, and hyphens';
+      nextErrors.slug = 'Use apenas letras minúsculas, números e hífens';
     }
 
     if (!formData.folderPath.trim()) {
-      nextErrors.folderPath = 'Folder path is required';
+      nextErrors.folderPath = 'Caminho da pasta é obrigatório';
     }
 
     setErrors(nextErrors);
@@ -96,13 +96,13 @@ const GameForm = ({ open, onClose, onSave, game }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{game ? 'Edit Game' : 'Create New Game'}</DialogTitle>
+      <DialogTitle>{game ? 'Editar Jogo' : 'Criar Novo Jogo'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Game name"
+              label="Nome do jogo"
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -120,7 +120,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
               value={formData.slug}
               onChange={handleChange}
               error={Boolean(errors.slug)}
-              helperText={errors.slug || 'Lowercase letters, numbers, hyphen'}
+              helperText={errors.slug || 'Letras minúsculas, números e hífen'}
               required
             />
           </Grid>
@@ -128,7 +128,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Description"
+              label="Descrição"
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -140,7 +140,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Category"
+              label="Categoria"
               name="category"
               value={formData.category}
               onChange={handleChange}
@@ -150,7 +150,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Folder path"
+              label="Caminho da pasta"
               name="folderPath"
               value={formData.folderPath}
               onChange={handleChange}
@@ -163,7 +163,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Cover image URL"
+              label="URL da imagem de capa"
               name="coverImage"
               value={formData.coverImage}
               onChange={handleChange}
@@ -173,7 +173,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Order"
+              label="Ordem"
               name="order"
               type="number"
               value={formData.order}
@@ -190,15 +190,15 @@ const GameForm = ({ open, onClose, onSave, game }) => {
                   name="isActive"
                 />
               }
-              label="Active"
+              label="Ativo"
             />
           </Grid>
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>Cancelar</Button>
         <Button onClick={handleSubmit} variant="contained">
-          {game ? 'Update' : 'Create'}
+          {game ? 'Atualizar' : 'Criar'}
         </Button>
       </DialogActions>
     </Dialog>

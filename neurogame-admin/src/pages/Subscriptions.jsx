@@ -40,7 +40,7 @@ const Subscriptions = () => {
       setPlans(fetchedPlans);
     } catch (err) {
       console.error('Error fetching subscription plans:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load subscription plans');
+      setError(err.response?.data?.message || err.message || 'Falha ao carregar planos de assinatura');
     } finally {
       setLoading(false);
     }
@@ -70,31 +70,31 @@ const Subscriptions = () => {
       if (editingPlan) {
         const updatedPlan = await subscriptionsAPI.updatePlan(editingPlan.id, planData);
         setPlans((prev) => prev.map((plan) => (plan.id === updatedPlan.id ? updatedPlan : plan)));
-        showSnackbar('Subscription plan updated successfully', 'success');
+        showSnackbar('Plano de assinatura atualizado com sucesso', 'success');
       } else {
         const newPlan = await subscriptionsAPI.createPlan(planData);
         setPlans((prev) => [...prev, newPlan]);
-        showSnackbar('Subscription plan created successfully', 'success');
+        showSnackbar('Plano de assinatura criado com sucesso', 'success');
       }
       handleCloseForm();
     } catch (err) {
       console.error('Error saving subscription plan:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to save subscription plan', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao salvar plano de assinatura', 'error');
     }
   };
 
   const handleDeletePlan = async (planId) => {
-    if (!window.confirm('Are you sure you want to delete this subscription plan?')) {
+    if (!window.confirm('Tem certeza que deseja excluir este plano de assinatura?')) {
       return;
     }
 
     try {
       await subscriptionsAPI.deletePlan(planId);
       setPlans((prev) => prev.filter((plan) => plan.id !== planId));
-      showSnackbar('Subscription plan deleted successfully', 'success');
+      showSnackbar('Plano de assinatura excluído com sucesso', 'success');
     } catch (err) {
       console.error('Error deleting subscription plan:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to delete subscription plan', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao excluir plano de assinatura', 'error');
     }
   };
 
@@ -111,10 +111,10 @@ const Subscriptions = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            Subscription Plans
+            Planos de Assinatura
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Manage subscription plans and pricing
+            Gerencie planos de assinatura e preços
           </Typography>
         </Box>
         <Button
@@ -123,7 +123,7 @@ const Subscriptions = () => {
           onClick={() => handleOpenForm()}
           size="large"
         >
-          Add Plan
+          Adicionar Plano
         </Button>
       </Box>
 
@@ -139,7 +139,7 @@ const Subscriptions = () => {
         </Box>
       ) : plans.length === 0 ? (
         <Alert severity="info">
-          No subscription plans available. Create your first plan!
+          Nenhum plano de assinatura disponível. Crie seu primeiro plano!
         </Alert>
       ) : (
         <Grid container spacing={3}>

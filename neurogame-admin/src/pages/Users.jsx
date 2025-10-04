@@ -61,7 +61,7 @@ const Users = () => {
       setFilteredUsers(fetchedUsers);
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load users');
+      setError(err.response?.data?.message || err.message || 'Falha ao carregar usuários');
     } finally {
       setLoading(false);
     }
@@ -91,31 +91,31 @@ const Users = () => {
       if (editingUser) {
         const updatedUser = await usersAPI.update(editingUser.id, userData);
         setUsers((prev) => prev.map((user) => (user.id === updatedUser.id ? updatedUser : user)));
-        showSnackbar('User updated successfully', 'success');
+        showSnackbar('Usuário atualizado com sucesso', 'success');
       } else {
         const newUser = await usersAPI.create(userData);
         setUsers((prev) => [...prev, newUser]);
-        showSnackbar('User created successfully', 'success');
+        showSnackbar('Usuário criado com sucesso', 'success');
       }
       handleCloseForm();
     } catch (err) {
       console.error('Error saving user:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to save user', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao salvar usuário', 'error');
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
+    if (!window.confirm('Tem certeza que deseja excluir este usuário?')) {
       return;
     }
 
     try {
       await usersAPI.delete(userId);
       setUsers((prev) => prev.filter((user) => user.id !== userId));
-      showSnackbar('User deleted successfully', 'success');
+      showSnackbar('Usuário excluído com sucesso', 'success');
     } catch (err) {
       console.error('Error deleting user:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to delete user', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao excluir usuário', 'error');
     }
   };
 
@@ -123,10 +123,10 @@ const Users = () => {
     try {
       await subscriptionsAPI.assignSubscription({ userId, planId, durationDays });
       await fetchUsers();
-      showSnackbar('Subscription assigned successfully', 'success');
+      showSnackbar('Assinatura atribuída com sucesso', 'success');
     } catch (err) {
       console.error('Error assigning subscription:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Failed to assign subscription', 'error');
+      showSnackbar(err.response?.data?.message || err.message || 'Falha ao atribuir assinatura', 'error');
     }
   };
 
@@ -143,10 +143,10 @@ const Users = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            Users Management
+            Gerenciamento de Usuários
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Manage all users in the system
+            Gerencie todos os usuários do sistema
           </Typography>
         </Box>
         <Button
@@ -155,13 +155,13 @@ const Users = () => {
           onClick={() => handleOpenForm()}
           size="large"
         >
-          Add User
+          Adicionar Usuário
         </Button>
       </Box>
 
       <TextField
         fullWidth
-        placeholder="Search users by username, email, or name..."
+        placeholder="Buscar usuários por nome de usuário, email ou nome..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         sx={{ mb: 3 }}

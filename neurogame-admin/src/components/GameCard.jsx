@@ -63,7 +63,7 @@ const GameCard = ({ game, onEdit, onDelete }) => {
             minHeight: '60px'
           }}
         >
-          {game.description || 'No description available'}
+          {game.description || 'Nenhuma descrição disponível'}
         </Typography>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -85,10 +85,10 @@ const GameCard = ({ game, onEdit, onDelete }) => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
           <Typography variant="caption" color="text.secondary">
-            Order: {game.order ?? 0}
+            Ordem: {game.order ?? 0}
           </Typography>
           <Chip
-            label={game.isActive ? 'Active' : 'Inactive'}
+            label={game.isActive ? 'Ativo' : 'Inativo'}
             size="small"
             color={game.isActive ? 'success' : 'default'}
           />
@@ -102,7 +102,7 @@ const GameCard = ({ game, onEdit, onDelete }) => {
           onClick={() => onEdit(game)}
           variant="outlined"
         >
-          Edit
+          Editar
         </Button>
         <IconButton
           size="small"

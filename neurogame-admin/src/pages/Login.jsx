@@ -39,7 +39,7 @@ const Login = () => {
     setError('');
 
     if (!formData.username || !formData.password) {
-      setError('Please fill in all fields');
+      setError('Por favor, preencha todos os campos');
       return;
     }
 
@@ -50,7 +50,7 @@ const Login = () => {
       setAuthData(token, refreshToken, user);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'An error occurred during login');
+      setError(err.response?.data?.message || err.message || 'Ocorreu um erro durante o login');
     } finally {
       setLoading(false);
     }
@@ -76,10 +76,10 @@ const Login = () => {
                 style={{ width: '200px', marginBottom: '16px' }}
               />
               <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" sx={{ color: '#2D5F2E' }}>
-                Admin Dashboard
+                Painel Administrativo
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Sign in to access the admin panel
+                Faça login para acessar o painel administrativo
               </Typography>
             </Box>
 
@@ -92,7 +92,7 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Username"
+                label="Usuário"
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
@@ -105,7 +105,7 @@ const Login = () => {
 
               <TextField
                 fullWidth
-                label="Password"
+                label="Senha"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -144,7 +144,7 @@ const Login = () => {
                   }
                 }}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
           </CardContent>
