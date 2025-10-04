@@ -22,6 +22,14 @@ export const subscriptionApi = {
   },
 
   /**
+   * Verificar assinatura (para alertas)
+   */
+  check: async () => {
+    const response = await api.get('/subscriptions/check');
+    return response.data;
+  },
+
+  /**
    * Cancelar assinatura
    */
   cancel: async () => {

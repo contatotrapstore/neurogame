@@ -288,6 +288,58 @@ router.delete('/cancel', authenticate, async (req, res) => {
 });
 
 /**
+ * GET /api/v1/subscriptions/check
+ * Verificar status detalhado da assinatura (para alertas)
+ */
+router.get('/check', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Buscar assinatura ativa
+    const { data: subscription, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single();
+
+    if (error || !subscription) {
+      return res.json({
+        success: true,
+        data: {
+          isActive: false,
+          needsRenewal: true,
+          daysUntilExpiration: 0
+        }
+      });
+    }
+
+    // Calcular dias até o vencimento
+    const now = new Date();
+    const nextDueDate = new Date(subscription.next_due_date);
+    const daysUntilExpiration = Math.ceil((nextDueDate - now) / (1000 * 60 * 60 * 24));
+
+    res.json({
+      success: true,
+      data: {
+        isActive: true,
+        needsRenewal: daysUntilExpiration <= 3,
+        daysUntilExpiration,
+        nextDueDate: subscription.next_due_date,
+        paymentMethod: subscription.payment_method,
+        planValue: subscription.plan_value
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao verificar assinatura:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao verificar assinatura'
+    });
+  }
+});
+
+/**
  * GET /api/v1/subscriptions/payments
  * Listar pagamentos da assinatura
  */

@@ -1,19 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const gameController = require('../controllers/gameController');
-const { authenticate, authorizeAdmin } = require('../middleware/auth');
-const { validateCreateGame, validateUpdateGame, validateUUID } = require('../middleware/validator');
 const { supabase } = require('../config/supabase');
+const { authenticate, isAdmin } = require('../middleware/auth');
 
-// Protected user routes
-router.get('/user/games', authenticate, gameController.getUserGames);
-router.get('/:id/validate', authenticate, validateUUID, gameController.validateAccess);
-
-// Update checking routes
+/**
+ * GET /api/v1/games/updates
+ * Verificar se há novos jogos ou atualizações disponíveis
+ */
 router.get('/updates', authenticate, async (req, res) => {
   try {
     const { lastSyncVersion } = req.query;
 
+    // Buscar todos os jogos ativos
     const { data: games, error } = await supabase
       .from('games')
       .select('*')
@@ -22,15 +20,18 @@ router.get('/updates', authenticate, async (req, res) => {
 
     if (error) throw error;
 
+    // Versão atual do conteúdo (baseada no jogo mais recente)
     const latestGame = games[0];
-    const currentContentVersion = latestGame ? new Date(latestGame.updated_at || latestGame.created_at).getTime() : 0;
+    const currentContentVersion = latestGame ? new Date(latestGame.created_at).getTime() : 0;
 
+    // Verificar se há atualizações
     const hasUpdates = !lastSyncVersion || currentContentVersion > parseInt(lastSyncVersion);
 
+    // Filtrar apenas novos jogos se houver lastSyncVersion
     let newGames = games;
     if (lastSyncVersion) {
       newGames = games.filter(game =>
-        new Date(game.updated_at || game.created_at).getTime() > parseInt(lastSyncVersion)
+        new Date(game.created_at).getTime() > parseInt(lastSyncVersion)
       );
     }
 
@@ -53,6 +54,10 @@ router.get('/updates', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/v1/games/manifest
+ * Retorna manifest com versão e lista de jogos
+ */
 router.get('/manifest', authenticate, async (req, res) => {
   try {
     const { data: games, error } = await supabase
@@ -63,6 +68,7 @@ router.get('/manifest', authenticate, async (req, res) => {
 
     if (error) throw error;
 
+    // Calcular versão do manifest (timestamp do jogo mais recente)
     const manifestVersion = games.length > 0
       ? Math.max(...games.map(g => new Date(g.updated_at || g.created_at).getTime()))
       : Date.now();
@@ -93,14 +99,39 @@ router.get('/manifest', authenticate, async (req, res) => {
   }
 });
 
-// Public/Admin routes
-router.get('/', authenticate, gameController.getAllGames);
-router.get('/categories', authenticate, gameController.getCategories);
-router.get('/:id', authenticate, validateUUID, gameController.getGameById);
+/**
+ * POST /api/v1/games/:gameId/download-track
+ * Registrar download de jogo pelo usuário
+ */
+router.post('/:gameId/download-track', authenticate, async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const userId = req.user.id;
 
-// Admin only routes
-router.post('/', authenticate, authorizeAdmin, validateCreateGame, gameController.createGame);
-router.put('/:id', authenticate, authorizeAdmin, validateUUID, validateUpdateGame, gameController.updateGame);
-router.delete('/:id', authenticate, authorizeAdmin, validateUUID, gameController.deleteGame);
+    // Registrar download
+    const { error } = await supabase
+      .from('game_downloads')
+      .insert([{
+        user_id: userId,
+        game_id: gameId,
+        downloaded_at: new Date().toISOString()
+      }]);
+
+    if (error && error.code !== '23505') { // Ignorar erro de duplicata
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      message: 'Download registrado'
+    });
+  } catch (error) {
+    console.error('Error tracking game download:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao registrar download'
+    });
+  }
+});
 
 module.exports = router;

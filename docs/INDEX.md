@@ -20,9 +20,12 @@
 
 ### Instalador e Auto-Atualização
 - **[README_INSTALADOR.md](README_INSTALADOR.md)** - Resumo executivo do sistema
-- **[GUIA_BUILD_INSTALADOR.md](GUIA_BUILD_INSTALADOR.md)** - Guia técnico completo (EM BREVE)
-- **[SISTEMA_COMPLETO.md](SISTEMA_COMPLETO.md)** - Arquitetura visual (EM BREVE)
-- **[COMO_CRIAR_INSTALADOR.md](COMO_CRIAR_INSTALADOR.md)** - Guia rápido (EM BREVE)
+- **[SISTEMA_ATUALIZACOES.md](SISTEMA_ATUALIZACOES.md)** - Sistema completo de auto-updates ✅
+
+### Deploy em Produção
+- **[Backend Vercel](../neurogame-backend/DEPLOY_VERCEL.md)** - Deploy do backend no Vercel
+- **[Admin Vercel](../neurogame-admin/DEPLOY_VERCEL.md)** - Deploy do admin no Vercel
+- **[DEPLOY.md](DEPLOY.md)** - Guia geral de deploy
 
 ---
 

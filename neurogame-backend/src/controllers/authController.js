@@ -147,19 +147,22 @@ exports.register = async (req, res, next) => {
 // Login user
 exports.login = async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
-    // Find user
+    // Find user by email or username
+    const loginField = email || username;
+    const isEmail = loginField && loginField.includes('@');
+
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('username', username)
+      .eq(isEmail ? 'email' : 'username', loginField)
       .single();
 
     if (error || !user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid credentials'
       });
     }
 
@@ -177,7 +180,7 @@ exports.login = async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid credentials'
       });
     }
 

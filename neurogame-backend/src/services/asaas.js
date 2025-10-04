@@ -38,7 +38,38 @@ const createCustomer = async (userData) => {
 };
 
 /**
- * Criar assinatura mensal
+ * Criar cobrança única (pagamento mensal não recorrente)
+ */
+const createPayment = async (customerId, paymentData) => {
+  try {
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 1); // Vencimento para amanhã
+
+    const response = await asaasClient.post('/payments', {
+      customer: customerId,
+      billingType: paymentData.paymentMethod || 'PIX',
+      value: parseFloat(paymentData.value || process.env.SUBSCRIPTION_VALUE || 149.90),
+      dueDate: dueDate.toISOString().split('T')[0],
+      description: paymentData.description || 'NeuroGame - Mensalidade',
+
+      // Dados do cartão (se for CREDIT_CARD)
+      creditCard: paymentData.creditCard || undefined,
+      creditCardHolderInfo: paymentData.creditCardHolder || undefined,
+
+      // Configurações adicionais
+      externalReference: paymentData.userId, // ID do usuário
+      postalService: false
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao criar payment no Asaas:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.errors?.[0]?.description || 'Falha ao criar cobrança');
+  }
+};
+
+/**
+ * Criar assinatura mensal (DEPRECATED - usar createPayment)
  */
 const createSubscription = async (customerId, subscriptionData) => {
   try {
@@ -240,6 +271,7 @@ const mapPaymentStatus = (asaasStatus) => {
 
 module.exports = {
   createCustomer,
+  createPayment, // Nova função para pagamento único
   createSubscription,
   getSubscription,
   cancelSubscription,

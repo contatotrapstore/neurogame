@@ -41,10 +41,13 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files (games)
+// Serve static files (games) - only in development
+// In production (Vercel), games are bundled with the launcher installer
 const path = require('path');
-const gamesDir = process.env.GAMES_DIR || '../Jogos';
-app.use('/games', express.static(path.join(__dirname, gamesDir)));
+if (process.env.NODE_ENV === 'development') {
+  const gamesDir = process.env.GAMES_DIR || '../Jogos';
+  app.use('/games', express.static(path.join(__dirname, gamesDir)));
+}
 
 // API routes
 app.use('/api/v1', routes);
@@ -97,19 +100,22 @@ const startServer = async () => {
   }
 };
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err);
-  process.exit(1);
-});
+// Only start server if not running in serverless environment (Vercel)
+if (process.env.VERCEL !== '1') {
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Promise Rejection:', err);
+    process.exit(1);
+  });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server gracefully...');
-  process.exit(0);
-});
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, closing server gracefully...');
+    process.exit(0);
+  });
 
-// Start the server
-startServer();
+  // Start the server
+  startServer();
+}
 
 module.exports = app;

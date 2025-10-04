@@ -105,23 +105,30 @@ NeuroGame/
 Toda a documentação está organizada na pasta [`docs/`](docs/):
 
 ### 🚀 Para Começar
+- **[📖 Índice Completo](docs/INDEX.md)** - Navegação por toda documentação
 - [Início Rápido](docs/INICIO_RAPIDO.md)
 - [Iniciar Launcher Completo](docs/INICIAR_LAUNCHER_COMPLETO.md)
 - [Deploy em Produção](docs/DEPLOY.md)
 
-### 📦 Sistema de Instalador
-- [README Instalador](docs/README_INSTALADOR.md) - Resumo executivo
-- [Índice Completo](docs/INDEX.md) - Todos os documentos
+### 🔄 Sistemas
+- **[Sistema de Atualizações](docs/SISTEMA_ATUALIZACOES.md)** - Auto-updates de launcher e jogos
+- [Sistema de Instalador](docs/README_INSTALADOR.md)
+- [Integração de Jogos](docs/INTEGRACAO_JOGOS.md)
 
 ### 🏗️ Arquitetura
 - [PRD - Product Requirements](docs/PRD.md)
+- [Planejamento](docs/planejamento.md)
 - [Implementação Launcher](docs/IMPLEMENTACAO_LAUNCHER.md)
 - [Implementação Admin](docs/IMPLEMENTACAO_ADMIN.md)
 - [Solução Técnica](docs/SOLUCAO_LAUNCHER.md)
 
+### 🚢 Deploy
+- [Backend no Vercel](neurogame-backend/DEPLOY_VERCEL.md)
+- [Admin no Vercel](neurogame-admin/DEPLOY_VERCEL.md)
+
 ### 🔧 Configuração
 - [Setup Supabase](docs/SUPABASE_SETUP.md)
-- [Integração de Jogos](docs/INTEGRACAO_JOGOS.md)
+- [Próximos Passos](docs/PROXIMOS_PASSOS.md)
 
 ---
 

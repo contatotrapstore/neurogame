@@ -8,12 +8,14 @@ const subscriptionRoutes = require('./subscriptions');
 const webhookRoutes = require('./webhooks');
 const gameRequestRoutes = require('./gameRequests');
 const downloadsRoutes = require('./downloads');
+const paymentRoutes = require('./payments');
 
 // API routes
 router.use('/auth', authRoutes);
 router.use('/games', gameRoutes);
 router.use('/users', userRoutes);
 router.use('/subscriptions', subscriptionRoutes);
+router.use('/payments', paymentRoutes); // Nova rota de pagamentos únicos
 router.use('/webhooks', webhookRoutes);
 router.use('/game-requests', gameRequestRoutes);
 router.use('/downloads', downloadsRoutes);

@@ -21,13 +21,18 @@ import logoUrl from '../assets/logo-branca.png';
 function Login({ onLogin }) {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [accessCode, setAccessCode] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (event) => {
-    const value = event.target.value.toUpperCase();
-    setAccessCode(value);
+    setFormData({
+      ...formData,
+      [event.target.name]: event.target.value
+    });
     setError('');
   };
 
@@ -35,19 +40,20 @@ function Login({ onLogin }) {
     event.preventDefault();
     setError('');
 
-    if (!accessCode.trim()) {
-      setError('Informe seu código de acesso');
+    if (!formData.email || !formData.password) {
+      setError('Preencha email e senha');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login-code', {
-        access_code: accessCode
+      const response = await api.post('/auth/login', {
+        email: formData.email,
+        password: formData.password
       });
 
-      const { token, user } = response.data;
+      const { token, user } = response.data.data;
 
       await setStoredToken(token);
       await setStoredUser(user);
@@ -56,7 +62,7 @@ function Login({ onLogin }) {
       navigate('/library');
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Código de acesso inválido. Verifique e tente novamente.');
+      setError(err.response?.data?.message || 'Email ou senha incorretos. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -153,17 +159,10 @@ function Login({ onLogin }) {
           <Stack spacing={3}>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                Acesso com Código
+                Entrar na conta
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Use o código fornecido no site{' '}
-                <Link
-                  href="https://neuromodulando.com.br"
-                  target="_blank"
-                  sx={{ color: 'primary.main', fontWeight: 600 }}
-                >
-                  neuromodulando.com.br
-                </Link>
+                Use seu email e senha para acessar sua conta NeuroGame
               </Typography>
             </Box>
 
@@ -173,20 +172,29 @@ function Login({ onLogin }) {
 
             <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
-                label="Código de Acesso"
-                name="access_code"
-                value={accessCode}
+                label="E-mail"
+                name="email"
+                type="email"
+                value={formData.email}
                 onChange={handleChange}
-                autoComplete="off"
+                autoComplete="email"
                 autoFocus
                 fullWidth
                 variant="outlined"
                 size="medium"
-                placeholder="NEURO-XXXX-XXXX"
-                InputProps={{
-                  startAdornment: <VpnKey sx={{ mr: 1, color: 'text.secondary' }} />
-                }}
-                helperText="Digite o código no formato: NEURO-XXXX-XXXX"
+                placeholder="seu@email.com"
+              />
+
+              <TextField
+                label="Senha"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                fullWidth
+                variant="outlined"
+                size="medium"
               />
 
               <Button
@@ -203,19 +211,22 @@ function Login({ onLogin }) {
 
             <Box sx={{ textAlign: 'center', pt: 2 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Não tem um código?
+                Não tem uma conta?
               </Typography>
               <Link
-                href="https://neuromodulando.com.br"
-                target="_blank"
+                component="button"
+                onClick={() => navigate('/register')}
                 sx={{
                   color: 'primary.main',
                   fontWeight: 600,
                   textDecoration: 'none',
+                  cursor: 'pointer',
+                  background: 'none',
+                  border: 'none',
                   '&:hover': { textDecoration: 'underline' }
                 }}
               >
-                Obtenha seu código no site NeuroModulando
+                Criar conta grátis
               </Link>
             </Box>
           </Stack>

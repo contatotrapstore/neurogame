@@ -2,23 +2,56 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import GameLibrary from './pages/GameLibrary';
 import GameDetail from './pages/GameDetail';
+import RenewPayment from './pages/RenewPayment';
 import Header from './components/Header';
+import PaymentAlert from './components/PaymentAlert';
+import ContentUpdateDialog from './components/ContentUpdateDialog';
 import { isAuthenticated } from './utils/auth';
+import contentUpdater from './services/contentUpdater';
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showContentUpdate, setShowContentUpdate] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    if (authenticated) {
+      // Verificar atualizações de conteúdo após login
+      checkContentUpdates();
+
+      // Iniciar verificação periódica (a cada 30 minutos)
+      contentUpdater.startPeriodicCheck(30);
+
+      return () => {
+        contentUpdater.stopPeriodicCheck();
+      };
+    }
+  }, [authenticated]);
+
   const checkAuth = async () => {
     const isAuth = await isAuthenticated();
     setAuthenticated(isAuth);
     setLoading(false);
+  };
+
+  const checkContentUpdates = async () => {
+    try {
+      const updates = await contentUpdater.checkForUpdates();
+
+      if (updates.hasUpdates) {
+        // Mostrar dialog de atualização
+        setShowContentUpdate(true);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar atualizações de conteúdo:', error);
+    }
   };
 
   const handleLogin = () => {
@@ -49,6 +82,13 @@ function App() {
     <Router>
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         {authenticated && <Header onLogout={handleLogout} />}
+        {authenticated && <PaymentAlert />}
+        {authenticated && (
+          <ContentUpdateDialog
+            open={showContentUpdate}
+            onClose={() => setShowContentUpdate(false)}
+          />
+        )}
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           <Routes>
             <Route
@@ -58,6 +98,16 @@ function App() {
                   <Navigate to="/library" replace />
                 ) : (
                   <Login onLogin={handleLogin} />
+                )
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                authenticated ? (
+                  <Navigate to="/library" replace />
+                ) : (
+                  <Register onLogin={handleLogin} />
                 )
               }
             />
@@ -76,6 +126,16 @@ function App() {
               element={
                 authenticated ? (
                   <GameDetail />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/renew-payment"
+              element={
+                authenticated ? (
+                  <RenewPayment />
                 ) : (
                   <Navigate to="/login" replace />
                 )
