@@ -49,6 +49,10 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (favicon, etc)
+const publicDir = path.resolve(__dirname, '..', 'public');
+app.use(express.static(publicDir));
+
 // Serve static files (games) - only in development
 // In production (Vercel), games are bundled with the launcher installer
 if (process.env.NODE_ENV === 'development') {

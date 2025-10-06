@@ -6,7 +6,10 @@ if (!VITE_API_URL) {
   throw new Error('VITE_API_URL is not defined. Please configure it in your environment.');
 }
 
-const API_BASE_URL = VITE_API_URL;
+// Ensure API_BASE_URL includes /api/v1 prefix
+const API_BASE_URL = VITE_API_URL.endsWith('/api/v1')
+  ? VITE_API_URL
+  : `${VITE_API_URL}/api/v1`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -37,7 +40,9 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+          // Use full URL for refresh token to avoid interceptor loop
+          const baseUrl = VITE_API_URL.endsWith('/api/v1') ? VITE_API_URL : `${VITE_API_URL}/api/v1`;
+          const response = await axios.post(`${baseUrl}/auth/refresh-token`, {
             refreshToken
           });
 
