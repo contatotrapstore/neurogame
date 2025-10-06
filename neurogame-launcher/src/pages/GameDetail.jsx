@@ -115,6 +115,12 @@ function GameDetail() {
         return;
       }
 
+      // Verificar se o jogo está disponível para jogar
+      if (!game.folderPath) {
+        setError('Este jogo ainda não está disponível para download. Entre em contato com o administrador.');
+        return;
+      }
+
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       await generateGameSessionToken(game.id, userData.id);
 

@@ -263,12 +263,14 @@ class ContentUpdater {
       clearInterval(this.checkInterval);
     }
 
-    // Verificar imediatamente
-    this.checkForUpdates();
+    // NÃO verificar imediatamente - só após o intervalo
+    // Isso evita download automático ao iniciar o launcher
 
     // Verificar periodicamente
     this.checkInterval = setInterval(() => {
-      this.checkForUpdates();
+      this.checkForUpdates().catch(err => {
+        logError('[ContentUpdater] Erro na verificação periódica:', err);
+      });
     }, intervalMinutes * 60 * 1000);
 
     log(`[ContentUpdater] Verificação periódica iniciada (${intervalMinutes} min)`);

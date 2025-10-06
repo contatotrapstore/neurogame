@@ -18,9 +18,19 @@ import { buildGamePlaceholder } from '../utils/placeholders'
 
 const getGameImage = async (slug) => {
   try {
+    // Tentar importar de assets (desenvolvimento)
     const image = await import(`../assets/games/${slug}.jpg`)
     return image.default
   } catch {
+    // Fallback: tentar URL direta (produção)
+    try {
+      const response = await fetch(`/assets/games/${slug}.jpg`, { method: 'HEAD' })
+      if (response.ok) {
+        return `/assets/games/${slug}.jpg`
+      }
+    } catch {
+      // Imagem não encontrada
+    }
     return null
   }
 }
