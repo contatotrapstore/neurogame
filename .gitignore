@@ -53,6 +53,13 @@ desktop.ini
 # Electron
 neurogame-launcher/dist/
 neurogame-launcher/release/
+neurogame-launcher/dist-electron/
+
+# Instaladores (arquivos grandes - usar GitHub Releases)
+INSTALADORES/*.exe
+# Manter metadados
+!INSTALADORES/latest.yml
+!INSTALADORES/LEIA-ME.txt
 
 # React
 neurogame-admin/dist/

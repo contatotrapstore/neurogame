@@ -51,7 +51,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (favicon, etc)
 const publicDir = path.resolve(__dirname, '..', 'public');
-app.use(express.static(publicDir));
+const fs = require('fs');
+
+// Only serve static files if public directory exists
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+} else {
+  // Fallback: handle favicon.ico request to prevent errors
+  app.get('/favicon.ico', (req, res) => res.status(204).end());
+}
 
 // Serve static files (games) - only in development
 // In production (Vercel), games are bundled with the launcher installer
