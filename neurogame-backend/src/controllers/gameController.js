@@ -112,9 +112,79 @@ exports.getGameById = async (req, res, next) => {
       });
     }
 
+    const userId = req.user?.id;
+    let hasAccess = false;
+    let accessType = null;
+    let accessExpiresAt = null;
+
+    if (req.user?.isAdmin) {
+      hasAccess = true;
+      accessType = 'admin';
+    } else if (userId) {
+      const nowIso = new Date().toISOString();
+
+      const { data: activeSubscription, error: subscriptionError } = await supabase
+        .from('user_subscriptions')
+        .select('plan_id, end_date')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .gte('end_date', nowIso)
+        .maybeSingle();
+
+      if (subscriptionError) {
+        throw subscriptionError;
+      }
+
+      if (activeSubscription) {
+        const { data: planGame, error: planError } = await supabase
+          .from('plan_games')
+          .select('game_id')
+          .eq('plan_id', activeSubscription.plan_id)
+          .eq('game_id', game.id)
+          .maybeSingle();
+
+        if (planError) {
+          throw planError;
+        }
+
+        if (planGame) {
+          hasAccess = true;
+          accessType = 'subscription';
+          accessExpiresAt = activeSubscription.end_date;
+        }
+      }
+
+      if (!hasAccess) {
+        const { data: individualAccess, error: accessError } = await supabase
+          .from('user_game_access')
+          .select('expires_at')
+          .eq('user_id', userId)
+          .eq('game_id', game.id)
+          .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
+          .maybeSingle();
+
+        if (accessError) {
+          throw accessError;
+        }
+
+        if (individualAccess) {
+          hasAccess = true;
+          accessType = 'individual';
+          accessExpiresAt = individualAccess.expires_at;
+        }
+      }
+    }
+
+    const gameWithAccess = {
+      ...game,
+      hasAccess,
+      accessType,
+      accessExpiresAt
+    };
+
     res.json({
       success: true,
-      data: { game }
+      data: { game: gameWithAccess }
     });
   } catch (error) {
     next(error);
@@ -205,7 +275,10 @@ exports.validateAccess = async (req, res, next) => {
 // Create new game (Admin only)
 exports.createGame = async (req, res, next) => {
   try {
-    const { name, slug, description, folderPath, category, coverImage, order } = req.body;
+    const {
+      name, slug, description, folderPath, category, coverImage, order,
+      version, downloadUrl, fileSize, checksum, installerType, minimumDiskSpace, coverImageLocal
+    } = req.body;
 
     const { data: game, error } = await supabase
       .from('games')
@@ -216,7 +289,14 @@ exports.createGame = async (req, res, next) => {
         folder_path: folderPath,
         category,
         cover_image: coverImage,
-        order: order || 0
+        cover_image_local: coverImageLocal,
+        order: order || 0,
+        version: version || '1.0.0',
+        download_url: downloadUrl,
+        file_size: fileSize,
+        checksum,
+        installer_type: installerType || 'exe',
+        minimum_disk_space: minimumDiskSpace
       })
       .select()
       .single();
@@ -249,7 +329,11 @@ exports.updateGame = async (req, res, next) => {
       });
     }
 
-    const { name, slug, description, folderPath, category, coverImage, isActive, order } = req.body;
+    const {
+      name, slug, description, folderPath, category, coverImage, coverImageLocal,
+      version, downloadUrl, fileSize, checksum, installerType, minimumDiskSpace,
+      isActive, order
+    } = req.body;
 
     const updateData = {};
     if (name) updateData.name = name;
@@ -258,6 +342,13 @@ exports.updateGame = async (req, res, next) => {
     if (folderPath) updateData.folder_path = folderPath;
     if (category) updateData.category = category;
     if (coverImage !== undefined) updateData.cover_image = coverImage;
+    if (coverImageLocal !== undefined) updateData.cover_image_local = coverImageLocal;
+    if (version) updateData.version = version;
+    if (downloadUrl !== undefined) updateData.download_url = downloadUrl;
+    if (fileSize !== undefined) updateData.file_size = fileSize;
+    if (checksum !== undefined) updateData.checksum = checksum;
+    if (installerType) updateData.installer_type = installerType;
+    if (minimumDiskSpace !== undefined) updateData.minimum_disk_space = minimumDiskSpace;
     if (isActive !== undefined) updateData.is_active = isActive;
     if (order !== undefined) updateData.order = order;
 
@@ -332,3 +423,4 @@ exports.getCategories = async (req, res, next) => {
     next(error);
   }
 };
+

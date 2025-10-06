@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -29,6 +29,15 @@ import api from '../services/api';
 import { getGamesPath } from '../services/storage';
 import { gameRequestsApi } from '../services/gameRequestsApi';
 import { generateGameSessionToken } from '../services/gameProtection';
+import { buildGamePlaceholder } from '../utils/placeholders';
+
+const sanitizeFolderPath = (value = '') => {
+  if (!value) return '';
+  return value
+    .replace(/^\.?[\/]+/, '')
+    .replace(/^jogos[\/]/i, '')
+    .replace(/[\/]+$/, '');
+};
 
 const normalizeGame = (rawGame) => {
   if (!rawGame) return null;
@@ -41,7 +50,7 @@ const normalizeGame = (rawGame) => {
     controls: rawGame.controls || '',
     category: rawGame.category || null,
     coverImage: rawGame.cover_image || rawGame.thumbnail_url || '',
-    folderPath: rawGame.folder_path || rawGame.folderPath || '',
+    folderPath: sanitizeFolderPath(rawGame.folder_path || rawGame.folderPath || ''),
     slug: rawGame.slug || '',
     order: rawGame.order ?? rawGame.order_index ?? null,
     hasAccess: rawGame.hasAccess ?? rawGame.has_access ?? false,
@@ -90,14 +99,13 @@ function GameDetail() {
     }
   };
 
-  const handlePlayGame = async () => {
+  const handlePlayGame = useCallback(async () => {
     if (!game) return;
 
     setValidating(true);
     setError('');
 
     try {
-      // 1. Valida acesso no backend
       const response = await api.get(`/games/${id}/validate`);
       const payload = response.data?.data || {};
       const hasAccess = payload.hasAccess ?? payload.has_access ?? false;
@@ -107,19 +115,49 @@ function GameDetail() {
         return;
       }
 
-      // 2. Gera token de sessão para proteger o jogo
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       await generateGameSessionToken(game.id, userData.id);
 
-      // 3. Abre o jogo
       const gamesBasePath = await getGamesPath();
       if (!gamesBasePath) {
         setError('Não foi possível localizar o diretório de jogos.');
         return;
       }
 
-      const targetPath = `${gamesBasePath}/${game.folderPath}/index.html`;
-      setGamePath(targetPath);
+      const normalizedBase = gamesBasePath.replace(/[\/]+$/, '');
+      const baseSeparator = normalizedBase.includes('\\') ? '\\' : '/';
+      const currentFolder = game.folderPath || '';
+      const isAbsolutePath = (
+        /^[a-zA-Z]:[\/]/.test(currentFolder) ||
+        currentFolder.startsWith('\\\\') ||
+        currentFolder.startsWith('/') ||
+        currentFolder.startsWith('file://')
+      );
+
+      let targetPath;
+
+      if (currentFolder.startsWith('file://')) {
+        targetPath = currentFolder;
+      } else if (isAbsolutePath) {
+        const normalizedFolder = currentFolder.replace(/[\/]+$/, '');
+        const folderSeparator = normalizedFolder.includes('\\') ? '\\' : '/';
+        targetPath = `${normalizedFolder}${folderSeparator}index.html`;
+      } else {
+        const segments = sanitizeFolderPath(currentFolder).split(/[\/]+/).filter(Boolean);
+        const combinedPath = segments.reduce(
+          (accumulator, segment) => `${accumulator}${baseSeparator}${segment}`,
+          normalizedBase
+        );
+        targetPath = `${combinedPath}${baseSeparator}index.html`;
+      }
+
+      const normalizedTarget = targetPath.replace(/\\/g, '/');
+      const encodedTarget = normalizedTarget.replace(/ /g, '%20');
+      const fileUrl = encodedTarget.startsWith('file://')
+        ? encodedTarget
+        : `file://${encodedTarget.startsWith('/') ? '' : '/'}${encodedTarget}`;
+
+      setGamePath(fileUrl);
       setIsPlaying(true);
     } catch (err) {
       console.error('Error validating game access:', err);
@@ -127,7 +165,7 @@ function GameDetail() {
     } finally {
       setValidating(false);
     }
-  };
+  }, [game, id]);
 
   const handleBackToLibrary = () => {
     navigate('/library');
@@ -157,6 +195,43 @@ function GameDetail() {
       setRequesting(false);
     }
   };
+
+  useEffect(() => {
+    if (!requestSuccess) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const pollForAccess = async () => {
+      try {
+        const response = await api.get(`/games/${id}/validate`);
+        const payload = response.data?.data || {};
+        const hasAccess = payload.hasAccess ?? payload.has_access ?? false;
+
+        if (hasAccess && !cancelled) {
+          setGame((prev) => (prev ? { ...prev, hasAccess: true } : prev));
+          setRequestSuccess(false);
+          setError('');
+          handlePlayGame().catch((playError) => {
+            console.error('Error launching game after approval:', playError);
+          });
+        }
+      } catch (pollError) {
+        if (!cancelled) {
+          console.error('Error checking access after request:', pollError);
+        }
+      }
+    };
+
+    pollForAccess();
+    const intervalId = setInterval(pollForAccess, 5000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [requestSuccess, id, handlePlayGame]);
 
   if (loading) {
     return (
@@ -196,10 +271,14 @@ function GameDetail() {
   }
 
   if (isPlaying && gamePath) {
-    return <GameWebView gamePath={gamePath} onExit={handleExitGame} />;
+    return (
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}>
+        <GameWebView gamePath={gamePath} onExit={handleExitGame} />
+      </Box>
+    );
   }
 
-  const thumbnailUrl = game.coverImage || `https://via.placeholder.com/800x450/667eea/ffffff?text=${encodeURIComponent(game.name)}`;
+  const thumbnailUrl = game.coverImage || buildGamePlaceholder(game.name, 800, 450);
 
   return (
     <Container

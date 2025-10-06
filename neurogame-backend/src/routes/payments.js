@@ -4,34 +4,28 @@ const { supabase } = require('../config/supabase');
 const { authenticate } = require('../middleware/auth');
 const asaasService = require('../services/asaas');
 
-/**
- * POST /api/v1/payments/create
- * Criar novo pagamento mensal (PIX ou Cartão)
- */
-router.post('/create', authenticate, async (req, res) => {
+const ALLOWED_PAYMENT_METHODS = ['PIX', 'CREDIT_CARD'];
+
+const handleCreatePayment = async (req, res) => {
   try {
-    const { paymentMethod, creditCard, creditCardHolderInfo } = req.body;
+    const { creditCard, creditCardHolderInfo } = req.body;
+    const paymentMethod = req.body.paymentMethod;
     const userId = req.user.id;
 
-    // Validar método de pagamento
-    if (!['PIX', 'CREDIT_CARD'].includes(paymentMethod)) {
+    if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
       return res.status(400).json({
         success: false,
-        message: 'Método de pagamento inválido. Use PIX ou CREDIT_CARD'
+        message: 'Metodo de pagamento invalido. Use PIX ou CREDIT_CARD'
       });
     }
 
-    // Se for cartão, validar dados
-    if (paymentMethod === 'CREDIT_CARD') {
-      if (!creditCard || !creditCardHolderInfo) {
-        return res.status(400).json({
-          success: false,
-          message: 'Dados do cartão são obrigatórios'
-        });
-      }
+    if (paymentMethod === 'CREDIT_CARD' && (!creditCard || !creditCardHolderInfo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Dados do cartao sao obrigatorios'
+      });
     }
 
-    // Buscar dados do usuário
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -41,11 +35,10 @@ router.post('/create', authenticate, async (req, res) => {
     if (userError || !user) {
       return res.status(404).json({
         success: false,
-        message: 'Usuário não encontrado'
+        message: 'Usuario nao encontrado'
       });
     }
 
-    // Criar customer no Asaas se não existir
     let asaasCustomerId = user.asaas_customer_id;
 
     if (!asaasCustomerId) {
@@ -63,11 +56,14 @@ router.post('/create', authenticate, async (req, res) => {
         .eq('id', userId);
     }
 
-    // Criar pagamento no Asaas
+    const subscriptionValue = process.env.SUBSCRIPTION_VALUE
+      ? parseFloat(process.env.SUBSCRIPTION_VALUE)
+      : 149.90;
+
     const paymentData = {
       userId,
       paymentMethod,
-      value: parseFloat(process.env.SUBSCRIPTION_VALUE || 149.90),
+      value: subscriptionValue,
       description: 'NeuroGame - Mensalidade Mensal'
     };
 
@@ -81,11 +77,9 @@ router.post('/create', authenticate, async (req, res) => {
       paymentData
     );
 
-    // Calcular data de vencimento (30 dias)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
-    // Criar ou atualizar subscription no banco
     const { data: existingSubscription } = await supabase
       .from('subscriptions')
       .select('*')
@@ -95,7 +89,6 @@ router.post('/create', authenticate, async (req, res) => {
     let subscription;
 
     if (existingSubscription) {
-      // Atualizar subscription existente
       const { data: updatedSub, error: updateError } = await supabase
         .from('subscriptions')
         .update({
@@ -113,7 +106,6 @@ router.post('/create', authenticate, async (req, res) => {
       if (updateError) throw updateError;
       subscription = updatedSub;
     } else {
-      // Criar nova subscription
       const { data: newSub, error: createError } = await supabase
         .from('subscriptions')
         .insert([{
@@ -132,7 +124,6 @@ router.post('/create', authenticate, async (req, res) => {
       subscription = newSub;
     }
 
-    // Preparar resposta
     const response = {
       subscription,
       payment: {
@@ -143,7 +134,6 @@ router.post('/create', authenticate, async (req, res) => {
       }
     };
 
-    // Se for PIX, buscar QR Code
     if (paymentMethod === 'PIX') {
       try {
         const pixData = await asaasService.getPixQrCode(asaasPayment.id);
@@ -154,36 +144,39 @@ router.post('/create', authenticate, async (req, res) => {
       }
     }
 
-    // Se for cartão e já foi confirmado
     if (paymentMethod === 'CREDIT_CARD' && asaasPayment.status === 'CONFIRMED') {
       response.message = 'Pagamento aprovado! Acesso liberado por 30 dias.';
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Pagamento criado com sucesso',
       data: response
     });
-
   } catch (error) {
     console.error('Erro ao criar pagamento:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message || 'Erro ao criar pagamento'
     });
   }
-});
+};
+
+/**
+ * POST /api/v1/payments/create
+ * Criar novo pagamento mensal (PIX ou Cartao)
+ */
+router.post('/create', authenticate, handleCreatePayment);
 
 /**
  * POST /api/v1/payments/renew
- * Renovar pagamento (criar novo pagamento para o próximo mês)
+ * Renovar pagamento (criar novo pagamento para o proximo mes)
  */
 router.post('/renew', authenticate, async (req, res) => {
   try {
     const { paymentMethod, creditCard, creditCardHolderInfo } = req.body;
     const userId = req.user.id;
 
-    // Buscar subscription atual
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
@@ -197,13 +190,18 @@ router.post('/renew', authenticate, async (req, res) => {
       });
     }
 
-    // Usar mesmo fluxo de criação de pagamento
-    req.body.paymentMethod = paymentMethod || subscription.payment_method;
-    return router.handle(req, res);
+    req.body.paymentMethod = paymentMethod || subscription.payment_method || 'PIX';
 
+    // Se o usuario nao informar novamente os dados do cartao, mantemos a mesma validacao da criacao
+    if (req.body.paymentMethod === 'CREDIT_CARD') {
+      req.body.creditCard = creditCard;
+      req.body.creditCardHolderInfo = creditCardHolderInfo;
+    }
+
+    return handleCreatePayment(req, res);
   } catch (error) {
     console.error('Erro ao renovar pagamento:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro ao renovar pagamento'
     });
@@ -239,7 +237,7 @@ router.get('/status', authenticate, async (req, res) => {
     const isExpired = expiresAt < now;
     const daysUntilExpiry = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         hasActivePayment: subscription.status === 'active' && !isExpired,
@@ -252,10 +250,9 @@ router.get('/status', authenticate, async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     console.error('Erro ao verificar status:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro ao verificar status do pagamento'
     });
@@ -263,3 +260,4 @@ router.get('/status', authenticate, async (req, res) => {
 });
 
 module.exports = router;
+

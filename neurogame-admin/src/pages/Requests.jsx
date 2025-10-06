@@ -137,17 +137,17 @@ const Requests = () => {
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }}>
           {error}
         </Alert>
       )}
 
       {requests.length === 0 ? (
-        <Alert severity="info">
+        <Alert severity="info" sx={{ borderRadius: 0 }}>
           Nenhuma requisição encontrada
         </Alert>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ borderRadius: 0 }}>
           <Table>
             <TableHead>
               <TableRow>
@@ -165,14 +165,14 @@ const Requests = () => {
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
                       <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                        {request.user?.username?.charAt(0).toUpperCase() || 'U'}
+                        {request.user?.email?.charAt(0).toUpperCase() || 'U'}
                       </Avatar>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {request.user?.username || 'Desconhecido'}
+                          {request.user?.email || 'Desconhecido'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {request.user?.email || ''}
+                          {request.user?.full_name || ''}
                         </Typography>
                       </Box>
                     </Box>
@@ -237,15 +237,23 @@ const Requests = () => {
       )}
 
       {/* Dialog de Confirmação */}
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 0 }
+        }}
+      >
         <DialogTitle>
           {dialogAction === 'approve' ? 'Aprovar Requisição' : 'Rejeitar Requisição'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
             {dialogAction === 'approve'
-              ? `Tem certeza que deseja aprovar o acesso de ${selectedRequest?.user?.username} ao jogo "${selectedRequest?.game?.name}"?`
-              : `Tem certeza que deseja rejeitar a requisição de ${selectedRequest?.user?.username}?`
+              ? `Tem certeza que deseja aprovar o acesso de ${selectedRequest?.user?.email} ao jogo "${selectedRequest?.game?.name}"?`
+              : `Tem certeza que deseja rejeitar a requisição de ${selectedRequest?.user?.email}?`
             }
           </DialogContentText>
           <TextField

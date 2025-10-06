@@ -70,3 +70,4 @@ pids/
 *.seed
 *.pid.lock
 .claude/
+nul

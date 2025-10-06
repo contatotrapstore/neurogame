@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const authRoutes = require('./auth');
+const authRoutes = require('./authRoutes');
 const gameRoutes = require('./gameRoutes');
 const userRoutes = require('./userRoutes');
-const subscriptionRoutes = require('./subscriptions');
+const subscriptionRoutes = require('./subscriptionRoutes');
 const webhookRoutes = require('./webhooks');
 const gameRequestRoutes = require('./gameRequests');
 const downloadsRoutes = require('./downloads');
@@ -30,3 +30,4 @@ router.get('/health', (req, res) => {
 });
 
 module.exports = router;
+

@@ -1,66 +1,66 @@
-# 📦 Sistema de Instalador e Auto-Atualização - NeuroGame
+# ???? Sistema de Instalador e Auto-Atualiza????o - NeuroGame
 
-## ✅ O Que Foi Implementado
+## ??? O Que Foi Implementado
 
-### 1. Sistema de Build e Distribuição
+### 1. Sistema de Build e Distribui????o
 
-✅ **Electron Builder configurado** para criar instaladores profissionais
+??? **Electron Builder configurado** para criar instaladores profissionais
 - Suporte para Windows (NSIS)
 - Suporte para macOS (DMG)
 - Suporte para Linux (AppImage/DEB)
 
-✅ **Instalador Windows (NSIS)** com:
-- Escolha de pasta de instalação
-- Criação de atalhos (Desktop + Menu Iniciar)
-- Desinstalador automático
-- Execução após instalação
+??? **Instalador Windows (NSIS)** com:
+- Escolha de pasta de instala????o
+- Cria????o de atalhos (Desktop + Menu Iniciar)
+- Desinstalador autom??tico
+- Execu????o ap??s instala????o
 
-### 2. Sistema de Auto-Atualização
+### 2. Sistema de Auto-Atualiza????o
 
-✅ **electron-updater** integrado no launcher
-- Verifica atualizações ao iniciar (após 5 segundos)
+??? **electron-updater** integrado no launcher
+- Verifica atualiza????es ao iniciar (ap??s 5 segundos)
 - Download em background com barra de progresso
-- Instalação com reinicialização automática
+- Instala????o com reinicializa????o autom??tica
 - Suporte a updates incrementais
 
-✅ **Backend preparado** para servir updates
+??? **Backend preparado** para servir updates
 - Rota `/api/v1/downloads/` para listar arquivos
 - Rota `/api/v1/downloads/latest.yml` para metadata
 - Rota `/api/v1/downloads/:filename` para download
 - Pasta `releases/` para armazenar instaladores
 
-### 3. Gerenciamento de Versões
+### 3. Gerenciamento de Vers??es
 
-✅ **Script automatizado** (`release.js`) para:
-- Incrementar versão automaticamente (patch/minor/major)
+??? **Script automatizado** (`release.js`) para:
+- Incrementar vers??o automaticamente (patch/minor/major)
 - Build do instalador
 - Copiar arquivos para pasta de releases
 - Gerar notas de release
 
-✅ **Versionamento semântico** implementado:
-- Patch: Bug fixes (1.0.0 → 1.0.1)
-- Minor: Novas features (1.0.0 → 1.1.0)
-- Major: Breaking changes (1.0.0 → 2.0.0)
+??? **Versionamento sem??ntico** implementado:
+- Patch: Bug fixes (1.0.0 ??? 1.0.1)
+- Minor: Novas features (1.0.0 ??? 1.1.0)
+- Major: Breaking changes (1.0.0 ??? 2.0.0)
 
-### 4. Documentação Completa
+### 4. Documenta????o Completa
 
-✅ **Guias criados:**
-- `GUIA_BUILD_INSTALADOR.md` - Guia completo técnico
-- `SISTEMA_COMPLETO.md` - Visão geral da arquitetura
-- `COMO_CRIAR_INSTALADOR.md` - Guia rápido para criar instalador
-- `neurogame-launcher/build/README.md` - Instruções para ícones
+??? **Guias criados:**
+- `GUIA_BUILD_INSTALADOR.md` - Guia completo t??cnico
+- `SISTEMA_COMPLETO.md` - Vis??o geral da arquitetura
+- `COMO_CRIAR_INSTALADOR.md` - Guia r??pido para criar instalador
+- `neurogame-launcher/build/README.md` - Instru????es para ??cones
 
 ---
 
-## 🚀 Como Usar
+## ???? Como Usar
 
 ### Criar Primeiro Instalador
 
 ```bash
-# 1. Adicionar ícones (primeira vez)
+# 1. Adicionar ??cones (primeira vez)
 # Coloque icon.ico, icon.icns, icon.png em neurogame-launcher/build/
 
-# 2. Instalar dependências
+# 2. Instalar depend??ncias
 cd neurogame-launcher
 npm install
 
@@ -74,7 +74,7 @@ node release.js build
 neurogame-backend/releases/NeuroGame Launcher Setup 1.0.0.exe
 ```
 
-### Criar Nova Versão (Update)
+### Criar Nova Vers??o (Update)
 
 ```bash
 # Bug fix
@@ -83,11 +83,11 @@ node release.js build patch
 # Nova feature
 node release.js build minor
 
-# Grande atualização
+# Grande atualiza????o
 node release.js build major
 ```
 
-### Listar Releases Disponíveis
+### Listar Releases Dispon??veis
 
 ```bash
 node release.js list
@@ -95,66 +95,66 @@ node release.js list
 
 ---
 
-## 📁 Estrutura de Arquivos
+## ???? Estrutura de Arquivos
 
 ### Arquivos Criados/Modificados
 
 ```
 NeuroGame/
-│
-├── neurogame-launcher/
-│   ├── main.js                          ✅ MODIFICADO
-│   │   └── Sistema de auto-update integrado
-│   │
-│   ├── package.json                     ✅ MODIFICADO
-│   │   ├── electron-updater adicionado
-│   │   └── Configuração de build/publish
-│   │
-│   └── build/                           ✅ NOVA PASTA
-│       └── README.md                    ✅ NOVO
-│           └── Instruções para ícones
-│
-├── neurogame-backend/
-│   ├── src/routes/
-│   │   ├── downloads.js                 ✅ NOVO
-│   │   │   └── Rotas para servir updates
-│   │   │
-│   │   └── index.js                     ✅ MODIFICADO
-│   │       └── Rota downloads registrada
-│   │
-│   └── releases/                        ✅ NOVA PASTA
-│       └── (instaladores ficam aqui)
-│
-├── release.js                           ✅ NOVO
-│   └── Script de automação de releases
-│
-├── GUIA_BUILD_INSTALADOR.md            ✅ NOVO
-│   └── Documentação técnica completa
-│
-├── SISTEMA_COMPLETO.md                 ✅ NOVO
-│   └── Visão geral da arquitetura
-│
-├── COMO_CRIAR_INSTALADOR.md            ✅ NOVO
-│   └── Guia rápido para criar instalador
-│
-└── README_INSTALADOR.md                ✅ NOVO (este arquivo)
-    └── Resumo de tudo implementado
+???
+????????? neurogame-launcher/
+???   ????????? main.js                          ??? MODIFICADO
+???   ???   ????????? Sistema de auto-update integrado
+???   ???
+???   ????????? package.json                     ??? MODIFICADO
+???   ???   ????????? electron-updater adicionado
+???   ???   ????????? Configura????o de build/publish
+???   ???
+???   ????????? build/                           ??? NOVA PASTA
+???       ????????? README.md                    ??? NOVO
+???           ????????? Instru????es para ??cones
+???
+????????? neurogame-backend/
+???   ????????? src/routes/
+???   ???   ????????? downloads.js                 ??? NOVO
+???   ???   ???   ????????? Rotas para servir updates
+???   ???   ???
+???   ???   ????????? index.js                     ??? MODIFICADO
+???   ???       ????????? Rota downloads registrada
+???   ???
+???   ????????? releases/                        ??? NOVA PASTA
+???       ????????? (instaladores ficam aqui)
+???
+????????? release.js                           ??? NOVO
+???   ????????? Script de automa????o de releases
+???
+????????? GUIA_BUILD_INSTALADOR.md            ??? NOVO
+???   ????????? Documenta????o t??cnica completa
+???
+????????? SISTEMA_COMPLETO.md                 ??? NOVO
+???   ????????? Vis??o geral da arquitetura
+???
+????????? COMO_CRIAR_INSTALADOR.md            ??? NOVO
+???   ????????? Guia r??pido para criar instalador
+???
+????????? README_INSTALADOR.md                ??? NOVO (este arquivo)
+    ????????? Resumo de tudo implementado
 ```
 
 ---
 
-## 🔄 Fluxo de Auto-Atualização
+## ???? Fluxo de Auto-Atualiza????o
 
 ### Como Funciona
 
-1. **Usuário inicia o launcher** instalado (versão 1.0.0)
+1. **Usu??rio inicia o launcher** instalado (vers??o 1.0.0)
 
-2. **Launcher verifica updates** (5s após iniciar)
+2. **Launcher verifica updates** (5s ap??s iniciar)
    ```
    GET http://localhost:3000/api/v1/downloads/latest.yml
    ```
 
-3. **Backend retorna metadata** da versão mais recente:
+3. **Backend retorna metadata** da vers??o mais recente:
    ```yaml
    version: 1.0.1
    path: NeuroGame Launcher Setup 1.0.1.exe
@@ -162,158 +162,158 @@ NeuroGame/
    releaseDate: 2025-10-04
    ```
 
-4. **Launcher compara versões**:
+4. **Launcher compara vers??es**:
    - Atual: 1.0.0
-   - Disponível: 1.0.1
-   - Update disponível? ✅ SIM
+   - Dispon??vel: 1.0.1
+   - Update dispon??vel? ??? SIM
 
-5. **Mostra notificação** ao usuário:
+5. **Mostra notifica????o** ao usu??rio:
    ```
-   "Nova versão disponível: 1.0.1
+   "Nova vers??o dispon??vel: 1.0.1
     Deseja atualizar agora?"
    ```
 
-6. **Usuário aceita**, launcher:
+6. **Usu??rio aceita**, launcher:
    - Baixa instalador em background
-   - Mostra progresso: [████████░░] 80%
+   - Mostra progresso: [??????????????????????????????] 80%
    - Ao completar, pergunta: "Instalar agora?"
 
-7. **Usuário confirma**, launcher:
-   - Fecha aplicação
+7. **Usu??rio confirma**, launcher:
+   - Fecha aplica????o
    - Executa novo instalador
-   - Instalador sobrescreve versão antiga
+   - Instalador sobrescreve vers??o antiga
    - Launcher reabre automaticamente
-   - Agora rodando versão 1.0.1 ✅
+   - Agora rodando vers??o 1.0.1 ???
 
 ### Diagrama do Fluxo
 
 ```
-┌─────────────┐
-│  Launcher   │
-│  (v1.0.0)   │
-└──────┬──────┘
-       │
-       │ 1. Check updates
-       ▼
-┌─────────────────┐
-│    Backend      │
-│ GET latest.yml  │
-└────────┬────────┘
-         │
-         │ 2. version: 1.0.1
-         ▼
-┌─────────────────────┐
-│  Compara versões    │
-│  1.0.0 < 1.0.1 ✅   │
-└──────────┬──────────┘
-           │
-           │ 3. Notifica usuário
-           ▼
-┌────────────────────────┐
-│  "Atualizar para       │
-│   versão 1.0.1?"       │
-│  [Sim]  [Depois]       │
-└──────────┬─────────────┘
-           │
-           │ 4. Download
-           ▼
-┌────────────────────────┐
-│  Download em background │
-│  [████████░░] 80%      │
-└──────────┬─────────────┘
-           │
-           │ 5. Completo
-           ▼
-┌────────────────────────┐
-│  "Instalar agora?"     │
-│  [Instalar] [Depois]   │
-└──────────┬─────────────┘
-           │
-           │ 6. Instala
-           ▼
-┌────────────────────────┐
-│  Reinicia launcher     │
-│  Versão 1.0.1 ✅       │
-└────────────────────────┘
+?????????????????????????????????????????????
+???  Launcher   ???
+???  (v1.0.0)   ???
+?????????????????????????????????????????????
+       ???
+       ??? 1. Check updates
+       ???
+?????????????????????????????????????????????????????????
+???    Backend      ???
+??? GET latest.yml  ???
+?????????????????????????????????????????????????????????
+         ???
+         ??? 2. version: 1.0.1
+         ???
+?????????????????????????????????????????????????????????????????????
+???  Compara vers??es    ???
+???  1.0.0 < 1.0.1 ???   ???
+?????????????????????????????????????????????????????????????????????
+           ???
+           ??? 3. Notifica usu??rio
+           ???
+??????????????????????????????????????????????????????????????????????????????
+???  "Atualizar para       ???
+???   vers??o 1.0.1?"       ???
+???  [Sim]  [Depois]       ???
+??????????????????????????????????????????????????????????????????????????????
+           ???
+           ??? 4. Download
+           ???
+??????????????????????????????????????????????????????????????????????????????
+???  Download em background ???
+???  [??????????????????????????????] 80%      ???
+??????????????????????????????????????????????????????????????????????????????
+           ???
+           ??? 5. Completo
+           ???
+??????????????????????????????????????????????????????????????????????????????
+???  "Instalar agora?"     ???
+???  [Instalar] [Depois]   ???
+??????????????????????????????????????????????????????????????????????????????
+           ???
+           ??? 6. Instala
+           ???
+??????????????????????????????????????????????????????????????????????????????
+???  Reinicia launcher     ???
+???  Vers??o 1.0.1 ???       ???
+??????????????????????????????????????????????????????????????????????????????
 ```
 
 ---
 
-## 🎯 Próximos Passos
+## ???? Pr??ximos Passos
 
-### Obrigatório (antes de distribuir)
+### Obrigat??rio (antes de distribuir)
 
-1. **Criar ícones oficiais** do NeuroGame
-   - Contratar designer ou criar você mesmo
+1. **Criar ??cones oficiais** do NeuroGame
+   - Contratar designer ou criar voc?? mesmo
    - Formatos: ICO (Windows), ICNS (macOS), PNG (Linux)
    - Colocar em `neurogame-launcher/build/`
 
-2. **Primeiro build de produção**
+2. **Primeiro build de produ????o**
    ```bash
    node release.js build
    ```
 
 3. **Testar instalador**
-   - Instalar em máquina limpa (Windows)
+   - Instalar em m??quina limpa (Windows)
    - Verificar se inicia corretamente
    - Testar todas as funcionalidades
 
 ### Opcional (melhorias)
 
-1. **Code Signing** (Assinatura de Código)
+1. **Code Signing** (Assinatura de C??digo)
    - Evita warning "Publisher desconhecido"
    - Requer certificado digital (~$300/ano)
-   - Mais confiança dos usuários
+   - Mais confian??a dos usu??rios
 
-2. **Configurar servidor de produção**
+2. **Configurar servidor de produ????o**
    - Hospedar backend em VPS/Cloud
-   - Domínio próprio (ex: api.neurogame.com)
-   - SSL/HTTPS obrigatório
+   - Dom??nio pr??prio (ex: api.neurogame.com)
+   - SSL/HTTPS obrigat??rio
 
 3. **CDN para downloads**
    - AWS CloudFront, Cloudflare
-   - Downloads mais rápidos globalmente
+   - Downloads mais r??pidos globalmente
    - Reduz carga no servidor
 
 ---
 
-## 📊 Comparação: Antes vs Depois
+## ???? Compara????o: Antes vs Depois
 
-### ❌ Antes (Sem Instalador)
+### ??? Antes (Sem Instalador)
 
 ```
-- Usuário baixa pasta ZIP
+- Usu??rio baixa pasta ZIP
 - Extrai manualmente
-- Procura executável
+- Procura execut??vel
 - Cria atalho manual (se quiser)
-- Updates manuais (baixar nova versão)
-- Sem controle de versão
-- Experiência não profissional
+- Updates manuais (baixar nova vers??o)
+- Sem controle de vers??o
+- Experi??ncia n??o profissional
 ```
 
-### ✅ Depois (Com Instalador)
+### ??? Depois (Com Instalador)
 
 ```
-- Usuário baixa instalador .exe
-- Executa instalador (próximo, próximo, instalar)
+- Usu??rio baixa instalador .exe
+- Executa instalador (pr??ximo, pr??ximo, instalar)
 - Atalhos criados automaticamente
 - Launcher inicia automaticamente
-- Updates automáticos notificados
-- Controle de versão completo
-- Experiência profissional (estilo Steam, Epic Games)
+- Updates autom??ticos notificados
+- Controle de vers??o completo
+- Experi??ncia profissional (estilo Steam, Epic Games)
 ```
 
 ---
 
-## 🛠️ Comandos de Referência Rápida
+## ??????? Comandos de Refer??ncia R??pida
 
 ### Build e Release
 
 ```bash
-# Criar release (incrementa versão)
+# Criar release (incrementa vers??o)
 node release.js build [patch|minor|major]
 
-# Build manual (sem incrementar versão)
+# Build manual (sem incrementar vers??o)
 cd neurogame-launcher
 npm run build:win
 
@@ -327,13 +327,13 @@ node release.js copy
 ### Desenvolvimento
 
 ```bash
-# Instalar dependências
+# Instalar depend??ncias
 cd neurogame-launcher && npm install
 
 # Rodar em modo dev
 cd neurogame-launcher && npm run dev
 
-# Build de produção
+# Build de produ????o
 cd neurogame-launcher && npm run build
 ```
 
@@ -343,21 +343,21 @@ cd neurogame-launcher && npm run build
 # Iniciar backend (servir updates)
 cd neurogame-backend && npm run dev
 
-# Listar releases disponíveis
+# Listar releases dispon??veis
 curl http://localhost:3000/api/v1/downloads/
 
-# Baixar instalador específico
+# Baixar instalador espec??fico
 curl http://localhost:3000/api/v1/downloads/NeuroGame%20Launcher%20Setup%201.0.0.exe -o installer.exe
 ```
 
 ---
 
-## 📈 Métricas e Monitoramento
+## ???? M??tricas e Monitoramento
 
-### Rastrear Versões Instaladas
+### Rastrear Vers??es Instaladas
 
 ```sql
--- Quantos usuários em cada versão
+-- Quantos usu??rios em cada vers??o
 SELECT
   launcher_version,
   COUNT(DISTINCT user_id) as usuarios
@@ -367,10 +367,10 @@ GROUP BY launcher_version
 ORDER BY launcher_version DESC;
 ```
 
-### Rastrear Taxa de Atualização
+### Rastrear Taxa de Atualiza????o
 
 ```sql
--- Velocidade de adoção de nova versão
+-- Velocidade de ado????o de nova vers??o
 SELECT
   DATE(last_heartbeat) as dia,
   launcher_version,
@@ -383,15 +383,15 @@ ORDER BY dia, launcher_version;
 
 ---
 
-## 🔧 Troubleshooting
+## ???? Troubleshooting
 
-### Update não funciona
+### Update n??o funciona
 
 **Verificar:**
-1. Backend está rodando? `npm run dev`
+1. Backend est?? rodando? `npm run dev`
 2. Arquivo `latest.yml` existe em `releases/`?
 3. URL correta no `package.json`?
-4. Versão instalada < versão no `latest.yml`?
+4. Vers??o instalada < vers??o no `latest.yml`?
 
 **Debug:**
 ```bash
@@ -404,7 +404,7 @@ curl http://localhost:3000/api/v1/downloads/latest.yml
 
 ### Build falha
 
-**Soluções:**
+**Solu????es:**
 ```bash
 # Limpar e reconstruir
 rm -rf neurogame-launcher/dist*
@@ -415,64 +415,64 @@ cd ..
 node release.js build
 ```
 
-### Instalador com warning de segurança
+### Instalador com warning de seguran??a
 
-**Normal!** Windows mostra warning para apps não assinados.
+**Normal!** Windows mostra warning para apps n??o assinados.
 
-**Solução permanente:**
+**Solu????o permanente:**
 - Comprar certificado code signing (~$300/ano)
-- Assinar executável com certificado
-- Windows não mostrará mais warning
+- Assinar execut??vel com certificado
+- Windows n??o mostrar?? mais warning
 
-**Solução temporária:**
-- Usuários clicam "Mais informações" → "Executar assim mesmo"
+**Solu????o tempor??ria:**
+- Usu??rios clicam "Mais informa????es" ??? "Executar assim mesmo"
 
 ---
 
-## 📚 Recursos Adicionais
+## ???? Recursos Adicionais
 
-### Documentação
+### Documenta????o
 
-- [GUIA_BUILD_INSTALADOR.md](GUIA_BUILD_INSTALADOR.md) - Guia técnico completo
+- [GUIA_BUILD_INSTALADOR.md](GUIA_BUILD_INSTALADOR.md) - Guia t??cnico completo
 - [SISTEMA_COMPLETO.md](SISTEMA_COMPLETO.md) - Arquitetura do sistema
-- [COMO_CRIAR_INSTALADOR.md](COMO_CRIAR_INSTALADOR.md) - Guia rápido
+- [COMO_CRIAR_INSTALADOR.md](COMO_CRIAR_INSTALADOR.md) - Guia r??pido
 
-### Links Úteis
+### Links ??teis
 
 - [Electron Builder](https://www.electron.build/)
 - [electron-updater](https://www.electron.build/auto-update)
-- [Ícone Converter](https://www.icoconverter.com/)
+- [??cone Converter](https://www.icoconverter.com/)
 - [Code Signing Certificate](https://www.digicert.com/signing/code-signing-certificates)
 
 ---
 
-## ✅ Checklist Final
+## ??? Checklist Final
 
-Antes de distribuir para usuários:
+Antes de distribuir para usu??rios:
 
-- [ ] Ícones oficiais adicionados
-- [ ] Versão testada em dev
+- [ ] ??cones oficiais adicionados
+- [ ] Vers??o testada em dev
 - [ ] Instalador criado com `node release.js build`
-- [ ] Instalador testado em máquina limpa
+- [ ] Instalador testado em m??quina limpa
 - [ ] Backend configurado para servir updates
 - [ ] URL de updates correta no `package.json`
-- [ ] Documentação para usuários criada
+- [ ] Documenta????o para usu??rios criada
 - [ ] Canal de suporte definido (email, Discord, etc.)
 
 ---
 
-## 🎉 Conclusão
+## ???? Conclus??o
 
-Você agora tem um **sistema completo de distribuição** para o NeuroGame Launcher!
+Voc?? agora tem um **sistema completo de distribui????o** para o NeuroGame Launcher!
 
 ### O que foi entregue:
 
-✅ Instalador profissional estilo Steam/Epic Games
-✅ Sistema de auto-atualização automático
-✅ Processo de release automatizado
-✅ Backend pronto para servir updates
-✅ Documentação completa
-✅ Scripts de automação
+??? Instalador profissional estilo Steam/Epic Games
+??? Sistema de auto-atualiza????o autom??tico
+??? Processo de release automatizado
+??? Backend pronto para servir updates
+??? Documenta????o completa
+??? Scripts de automa????o
 
 ### Como usar:
 
@@ -485,12 +485,13 @@ node release.js build
 
 # Updates futuros
 node release.js build patch
-# Usuários receberão notificação automática!
+# Usu??rios receber??o notifica????o autom??tica!
 ```
 
-**Sistema pronto para produção!** 🚀
+**Sistema pronto para produ????o!** ????
 
 ---
 
-*Desenvolvido com ❤️ para o NeuroGame*
+*Desenvolvido com ?????? para o NeuroGame*
 *Data: Outubro 2025*
+

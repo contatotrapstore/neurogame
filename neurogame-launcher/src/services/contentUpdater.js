@@ -8,9 +8,29 @@ import api from './api';
 const STORAGE_KEY_CONTENT_VERSION = 'contentVersion';
 const STORAGE_KEY_INSTALLED_GAMES = 'installedGames';
 
+// Logger condicional (apenas em desenvolvimento)
+const log = (...args) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(...args);
+  }
+};
+
+const logError = (...args) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error(...args);
+  }
+};
+
+const logWarn = (...args) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(...args);
+  }
+};
+
 class ContentUpdater {
   constructor() {
     this.checkInterval = null;
+    this.downloadProgressUnsubscribe = null;
   }
 
   /**
@@ -27,7 +47,7 @@ class ContentUpdater {
       const { hasUpdates, contentVersion, newGames, games } = response.data.data;
 
       if (hasUpdates) {
-        console.log(`[ContentUpdater] ${newGames} novos jogos disponíveis`);
+        log(`[ContentUpdater] ${newGames} novos jogos disponíveis`);
 
         return {
           hasUpdates: true,
@@ -37,14 +57,14 @@ class ContentUpdater {
         };
       }
 
-      console.log('[ContentUpdater] Nenhuma atualização disponível');
+      log('[ContentUpdater] Nenhuma atualização disponível');
       return {
         hasUpdates: false,
         newGamesCount: 0,
         games: []
       };
     } catch (error) {
-      console.error('[ContentUpdater] Erro ao verificar atualizações:', error);
+      logError('[ContentUpdater] Erro ao verificar atualizações:', error);
       throw error;
     }
   }
@@ -55,24 +75,32 @@ class ContentUpdater {
   async downloadNewGames(games) {
     const results = [];
 
+    if (window.electronAPI?.downloads?.onProgress) {
+      this.downloadProgressUnsubscribe = window.electronAPI.downloads.onProgress((progress) => {
+        if (typeof progress?.percent === 'number' && progress.url) {
+          const percentage = (progress.percent * 100).toFixed(1);
+          log(`[ContentUpdater] Progresso download (${progress.url}): ${percentage}%`);
+        }
+      });
+    }
+
     for (const game of games) {
       try {
-        console.log(`[ContentUpdater] Baixando ${game.title}...`);
+        log(`[ContentUpdater] Baixando ${game.title}...`);
 
-        // Aqui você implementaria o download real
-        // Por enquanto, vamos simular
-        await this.downloadGame(game);
+        const downloadResult = await this.downloadGame(game);
 
         results.push({
           gameId: game.id,
           title: game.title,
-          success: true
+          success: true,
+          filePath: downloadResult.filePath
         });
 
         // Registrar game como instalado
-        await this.markGameAsInstalled(game.id);
+        await this.markGameAsInstalled(game.id, downloadResult.filePath, game.version);
       } catch (error) {
-        console.error(`[ContentUpdater] Erro ao baixar ${game.title}:`, error);
+        logError(`[ContentUpdater] Erro ao baixar ${game.title}:`, error);
         results.push({
           gameId: game.id,
           title: game.title,
@@ -82,18 +110,69 @@ class ContentUpdater {
       }
     }
 
+    if (typeof this.downloadProgressUnsubscribe === 'function') {
+      this.downloadProgressUnsubscribe();
+      this.downloadProgressUnsubscribe = null;
+    }
+
     return results;
   }
 
   /**
-   * Simula download de jogo (substituir por implementação real)
+   * Executa download real de um jogo via canal IPC
    */
   async downloadGame(game) {
-    // TODO: Implementar download real usando electron-dl ou axios
-    // Por enquanto, apenas simula
-    return new Promise((resolve) => {
-      setTimeout(resolve, 1000);
+    if (!window.electronAPI?.downloads?.downloadGame) {
+      throw new Error('API de download não disponível no contexto atual');
+    }
+
+    const downloadUrl = game.download_url || game.downloadUrl;
+
+    if (!downloadUrl) {
+      throw new Error('URL de download não encontrada para o jogo');
+    }
+
+    const inferredFileName = this.resolveFileName(game, downloadUrl);
+    const checksum = game.checksum || game.sha256 || null;
+
+    const result = await window.electronAPI.downloads.downloadGame({
+      url: downloadUrl,
+      fileName: inferredFileName,
+      checksum
     });
+
+    if (!result?.success) {
+      throw new Error(result?.message || 'Falha ao baixar jogo');
+    }
+
+    if (result.checksumValid === false) {
+      throw new Error('Download concluído, porém o checksum é inválido');
+    }
+
+    return result;
+  }
+
+  resolveFileName(game, downloadUrl) {
+    if (game.file_name) return game.file_name;
+    if (game.fileName) return game.fileName;
+
+    try {
+      const url = new URL(downloadUrl);
+      const pathname = url.pathname || '';
+      const segments = pathname.split('/').filter(Boolean);
+      if (segments.length > 0) {
+        return segments[segments.length - 1];
+      }
+    } catch (error) {
+      logWarn('[ContentUpdater] Não foi possível inferir nome do arquivo via URL:', error);
+    }
+
+    if (game.slug) return `${game.slug}.zip`;
+    if (game.title) {
+      return `${game.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`;
+    }
+
+    return `${game.id || 'game'}-${Date.now()}.zip`;
   }
 
   /**
@@ -121,16 +200,34 @@ class ContentUpdater {
   /**
    * Marca um jogo como instalado
    */
-  async markGameAsInstalled(gameId) {
+  async markGameAsInstalled(gameId, filePath, version) {
     let installedGames = await this.getInstalledGames();
-    if (!installedGames.includes(gameId)) {
-      installedGames.push(gameId);
 
-      if (window.electronAPI) {
-        await window.electronAPI.store.set(STORAGE_KEY_INSTALLED_GAMES, installedGames);
-      } else {
-        localStorage.setItem(STORAGE_KEY_INSTALLED_GAMES, JSON.stringify(installedGames));
-      }
+    const normalized = installedGames.map((entry) =>
+      typeof entry === 'string'
+        ? { id: entry }
+        : entry
+    );
+
+    const exists = normalized.find((entry) => entry.id === gameId);
+
+    if (exists) {
+      exists.version = version || exists.version || null;
+      exists.filePath = filePath || exists.filePath || null;
+      exists.installedAt = exists.installedAt || new Date().toISOString();
+    } else {
+      normalized.push({
+        id: gameId,
+        installedAt: new Date().toISOString(),
+        version: version || null,
+        filePath: filePath || null
+      });
+    }
+
+    if (window.electronAPI) {
+      await window.electronAPI.store.set(STORAGE_KEY_INSTALLED_GAMES, normalized);
+    } else {
+      localStorage.setItem(STORAGE_KEY_INSTALLED_GAMES, JSON.stringify(normalized));
     }
   }
 
@@ -138,13 +235,24 @@ class ContentUpdater {
    * Obtém lista de jogos instalados
    */
   async getInstalledGames() {
+    let games;
+
     if (window.electronAPI) {
-      const games = await window.electronAPI.store.get(STORAGE_KEY_INSTALLED_GAMES);
-      return games || [];
+      games = await window.electronAPI.store.get(STORAGE_KEY_INSTALLED_GAMES);
     } else {
-      const games = localStorage.getItem(STORAGE_KEY_INSTALLED_GAMES);
-      return games ? JSON.parse(games) : [];
+      const raw = localStorage.getItem(STORAGE_KEY_INSTALLED_GAMES);
+      games = raw ? JSON.parse(raw) : [];
     }
+
+    if (!Array.isArray(games)) {
+      return [];
+    }
+
+    return games.map((entry) => (
+      typeof entry === 'string'
+        ? { id: entry }
+        : entry
+    ));
   }
 
   /**
@@ -163,7 +271,7 @@ class ContentUpdater {
       this.checkForUpdates();
     }, intervalMinutes * 60 * 1000);
 
-    console.log(`[ContentUpdater] Verificação periódica iniciada (${intervalMinutes} min)`);
+    log(`[ContentUpdater] Verificação periódica iniciada (${intervalMinutes} min)`);
   }
 
   /**
@@ -173,7 +281,7 @@ class ContentUpdater {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
-      console.log('[ContentUpdater] Verificação periódica parada');
+      log('[ContentUpdater] Verificação periódica parada');
     }
   }
 
@@ -185,7 +293,7 @@ class ContentUpdater {
       const updates = await this.checkForUpdates();
 
       if (updates.hasUpdates && updates.newGamesCount > 0) {
-        console.log('[ContentUpdater] Iniciando atualização obrigatória...');
+        log('[ContentUpdater] Iniciando atualização obrigatória...');
 
         const results = await this.downloadNewGames(updates.games);
 
@@ -203,7 +311,7 @@ class ContentUpdater {
         message: 'Nenhuma atualização necessária'
       };
     } catch (error) {
-      console.error('[ContentUpdater] Erro na atualização forçada:', error);
+      logError('[ContentUpdater] Erro na atualização forçada:', error);
       throw error;
     }
   }

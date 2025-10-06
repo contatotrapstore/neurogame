@@ -17,6 +17,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getUserDataPath: () => ipcRenderer.invoke('get-user-data-path')
   },
 
+  // Download operations
+  downloads: {
+    downloadGame: (options) => ipcRenderer.invoke('download-game', options),
+    onProgress: (callback) => {
+      if (typeof callback !== 'function') return () => {};
+      const listener = (_event, data) => callback(data);
+      ipcRenderer.on('game-download-progress', listener);
+      return () => ipcRenderer.removeListener('game-download-progress', listener);
+    }
+  },
+
   // Update operations
   updates: {
     check: () => ipcRenderer.invoke('check-for-updates')

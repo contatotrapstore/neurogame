@@ -23,6 +23,7 @@
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
     "axios": "^1.6.8",
+    "electron-dl": "^3.5.2",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.6.2",
     "react": "^18.2.0",
@@ -54,7 +55,7 @@
       "target": [
         "nsis"
       ],
-      "icon": "build/icon.ico",
+      "icon": "build/icon.png",
       "publisherName": "NeuroGame",
       "verifyUpdateCodeSignature": false
     },
@@ -80,16 +81,14 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "allowElevation": true,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico",
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
       "runAfterFinish": true
     },
     "publish": {
       "provider": "generic",
-      "url": "http://localhost:3000/downloads"
+      "url": "http://localhost:3000/api/v1/downloads"
     }
   }
 }
+

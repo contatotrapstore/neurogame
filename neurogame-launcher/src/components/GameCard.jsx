@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+﻿import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -11,51 +11,50 @@ import {
   CardActionArea,
   Stack,
   alpha,
-  useTheme,
-} from '@mui/material';
-import { PlayArrow, Folder, Lock } from '@mui/icons-material';
-
-const buildFallbackCover = (name) => {
-  const label = encodeURIComponent(name || 'NeuroGame');
-  return `https://via.placeholder.com/600x320/0f2916/ffffff?text=${label}`;
-};
+  useTheme
+} from '@mui/material'
+import { PlayArrow, Folder, Lock } from '@mui/icons-material'
+import { buildGamePlaceholder } from '../utils/placeholders'
 
 const getGameImage = async (slug) => {
   try {
-    const image = await import(`../assets/games/${slug}.jpg`);
-    return image.default;
+    const image = await import(`../assets/games/${slug}.jpg`)
+    return image.default
   } catch {
-    return null;
+    return null
   }
-};
+}
 
 function GameCard({ game }) {
-  const theme = useTheme();
-  const navigate = useNavigate();
-  const [coverImage, setCoverImage] = useState(buildFallbackCover(game.name));
-  const hasAccess = game.hasAccess !== false;
+  const theme = useTheme()
+  const navigate = useNavigate()
+  const [coverImage, setCoverImage] = useState(buildGamePlaceholder(game.name, 600, 320))
+  const hasAccess = game.hasAccess !== false
 
   useEffect(() => {
     const loadImage = async () => {
-      const slug = game.folderPath?.split('/').pop() || game.slug;
-      if (slug) {
-        const image = await getGameImage(slug);
-        if (image) {
-          setCoverImage(image);
-        }
+      const slug = game.folderPath?.split('/').pop() || game.slug
+      if (!slug) {
+        return
       }
-    };
-    loadImage();
-  }, [game]);
+
+      const image = await getGameImage(slug)
+      if (image) {
+        setCoverImage(image)
+      }
+    }
+
+    loadImage()
+  }, [game])
 
   const handlePlayClick = (event) => {
-    event.stopPropagation();
-    navigate(`/game/${game.id}`);
-  };
+    event.stopPropagation()
+    navigate(`/game/${game.id}`)
+  }
 
   const handleCardClick = () => {
-    navigate(`/game/${game.id}`);
-  };
+    navigate(`/game/${game.id}`)
+  }
 
   return (
     <Card
@@ -173,7 +172,7 @@ function GameCard({ game }) {
         </Button>
       </Box>
     </Card>
-  );
+  )
 }
 
-export default GameCard;
+export default GameCard

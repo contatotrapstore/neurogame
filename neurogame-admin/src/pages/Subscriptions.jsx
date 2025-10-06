@@ -2,129 +2,101 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Button,
-  Grid,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  CircularProgress,
   Alert,
-  Snackbar,
-  CircularProgress
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
-import { subscriptionsAPI, gamesAPI } from '../services/api';
-import PlanCard from '../components/PlanCard';
-import PlanForm from '../components/PlanForm';
+import { Cancel as CancelIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import api from '../services/api';
 
 const Subscriptions = () => {
-  const [plans, setPlans] = useState([]);
-  const [availableGames, setAvailableGames] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [openForm, setOpenForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
 
   useEffect(() => {
-    fetchPlans();
-    fetchGames();
+    fetchSubscriptions();
   }, []);
 
-  const fetchPlans = async () => {
+  const fetchSubscriptions = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const { plans: fetchedPlans } = await subscriptionsAPI.getAllPlans();
-      setPlans(fetchedPlans);
+      const response = await api.get('/subscriptions');
+      setSubscriptions(response.data?.data?.subscriptions || response.data?.subscriptions || []);
     } catch (err) {
-      console.error('Error fetching subscription plans:', err);
-      setError(err.response?.data?.message || err.message || 'Falha ao carregar planos de assinatura');
+      console.error('Error fetching subscriptions:', err);
+      setError(err.response?.data?.message || err.message || 'Falha ao carregar assinaturas');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchGames = async () => {
-    try {
-      const { games } = await gamesAPI.getAll({ isActive: true });
-      setAvailableGames(games);
-    } catch (err) {
-      console.error('Error fetching games for plans:', err);
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const handleOpenForm = (plan = null) => {
-    setEditingPlan(plan);
-    setOpenForm(true);
+  const formatCurrency = (value) => {
+    if (!value) return '-';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
-  const handleCloseForm = () => {
-    setOpenForm(false);
-    setEditingPlan(null);
+  const getStatusChip = (status) => {
+    const statusMap = {
+      active: { label: 'Ativa', color: 'success' },
+      cancelled: { label: 'Cancelada', color: 'error' },
+      pending: { label: 'Pendente', color: 'warning' },
+      expired: { label: 'Expirada', color: 'default' }
+    };
+
+    const statusInfo = statusMap[status] || { label: status, color: 'default' };
+
+    return (
+      <Chip
+        label={statusInfo.label}
+        color={statusInfo.color}
+        size="small"
+        icon={status === 'active' ? <CheckCircleIcon /> : status === 'cancelled' ? <CancelIcon /> : undefined}
+      />
+    );
   };
 
-  const handleSavePlan = async (planData) => {
-    try {
-      if (editingPlan) {
-        const updatedPlan = await subscriptionsAPI.updatePlan(editingPlan.id, planData);
-        setPlans((prev) => prev.map((plan) => (plan.id === updatedPlan.id ? updatedPlan : plan)));
-        showSnackbar('Plano de assinatura atualizado com sucesso', 'success');
-      } else {
-        const newPlan = await subscriptionsAPI.createPlan(planData);
-        setPlans((prev) => [...prev, newPlan]);
-        showSnackbar('Plano de assinatura criado com sucesso', 'success');
-      }
-      handleCloseForm();
-    } catch (err) {
-      console.error('Error saving subscription plan:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Falha ao salvar plano de assinatura', 'error');
-    }
-  };
+  const getDaysRemaining = (nextDueDate) => {
+    if (!nextDueDate) return null;
+    const today = new Date();
+    const dueDate = new Date(nextDueDate);
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  const handleDeletePlan = async (planId) => {
-    if (!window.confirm('Tem certeza que deseja excluir este plano de assinatura?')) {
-      return;
-    }
-
-    try {
-      await subscriptionsAPI.deletePlan(planId);
-      setPlans((prev) => prev.filter((plan) => plan.id !== planId));
-      showSnackbar('Plano de assinatura excluído com sucesso', 'success');
-    } catch (err) {
-      console.error('Error deleting subscription plan:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Falha ao excluir plano de assinatura', 'error');
-    }
-  };
-
-  const showSnackbar = (message, severity) => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
+    if (diffDays < 0) return 'Vencida';
+    if (diffDays === 0) return 'Vence hoje';
+    if (diffDays === 1) return '1 dia restante';
+    return `${diffDays} dias restantes`;
   };
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            Planos de Assinatura
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Gerencie planos de assinatura e preços
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenForm()}
-          size="large"
-        >
-          Adicionar Plano
-        </Button>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          Assinaturas Ativas
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Visualize e gerencie todas as assinaturas dos usuários
+        </Typography>
       </Box>
 
       {error && (
@@ -137,42 +109,72 @@ const Subscriptions = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
         </Box>
-      ) : plans.length === 0 ? (
+      ) : subscriptions.length === 0 ? (
         <Alert severity="info">
-          Nenhum plano de assinatura disponível. Crie seu primeiro plano!
+          Nenhuma assinatura encontrada.
         </Alert>
       ) : (
-        <Grid container spacing={3}>
-          {plans.map((plan) => (
-            <Grid item xs={12} sm={6} md={4} key={plan.id}>
-              <PlanCard
-                plan={plan}
-                onEdit={() => handleOpenForm(plan)}
-                onDelete={() => handleDeletePlan(plan.id)}
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell><strong>Usuário</strong></TableCell>
+                <TableCell><strong>E-mail</strong></TableCell>
+                <TableCell><strong>Status</strong></TableCell>
+                <TableCell align="right"><strong>Valor</strong></TableCell>
+                <TableCell><strong>Ciclo</strong></TableCell>
+                <TableCell><strong>Início</strong></TableCell>
+                <TableCell><strong>Próximo Vencimento</strong></TableCell>
+                <TableCell><strong>Método Pagamento</strong></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {subscriptions.map((subscription) => {
+                const daysRemaining = getDaysRemaining(subscription.next_due_date);
+                const user = subscription.user || {};
+
+                return (
+                  <TableRow key={subscription.id} hover>
+                    <TableCell>{user.full_name || user.fullName || '-'}</TableCell>
+                    <TableCell>{user.email || '-'}</TableCell>
+                    <TableCell>{getStatusChip(subscription.status)}</TableCell>
+                    <TableCell align="right">
+                      {formatCurrency(subscription.plan_value || subscription.planValue)}
+                    </TableCell>
+                    <TableCell>
+                      {subscription.billing_cycle === 'MONTHLY' ? 'Mensal' :
+                       subscription.billing_cycle === 'YEARLY' ? 'Anual' :
+                       subscription.billing_cycle || '-'}
+                    </TableCell>
+                    <TableCell>{formatDate(subscription.started_at)}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2">
+                          {formatDate(subscription.next_due_date)}
+                        </Typography>
+                        {daysRemaining && subscription.status === 'active' && (
+                          <Typography
+                            variant="caption"
+                            color={daysRemaining.includes('Venc') ? 'error' : 'text.secondary'}
+                          >
+                            {daysRemaining}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      {subscription.payment_method === 'PIX' ? 'PIX' :
+                       subscription.payment_method === 'CREDIT_CARD' ? 'Cartão de Crédito' :
+                       subscription.payment_method === 'manual' ? 'Manual' :
+                       subscription.payment_method || '-'}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-
-      <PlanForm
-        open={openForm}
-        onClose={handleCloseForm}
-        onSave={handleSavePlan}
-        plan={editingPlan}
-        availableGames={availableGames}
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

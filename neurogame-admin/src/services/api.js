@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const { VITE_API_URL } = import.meta.env;
+
+if (!VITE_API_URL) {
+  throw new Error('VITE_API_URL is not defined. Please configure it in your environment.');
+}
+
+const API_BASE_URL = VITE_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -339,3 +345,5 @@ export const subscriptionsAPI = {
 };
 
 export default api;
+
+

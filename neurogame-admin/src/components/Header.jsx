@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AppBar,
@@ -13,23 +13,24 @@ import {
   ListItemIcon,
   Tooltip,
   alpha,
-  useTheme,
-  Button,
+  useTheme
 } from '@mui/material'
 import {
   Menu as MenuIcon,
   AccountCircle,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
-  HelpOutline as HelpIcon,
+  HelpOutline as HelpIcon
 } from '@mui/icons-material'
 import { getUser, clearAuth } from '../utils/auth'
+import { AuthContext } from '../contexts/AuthContext'
 
 const Header = ({ onMenuClick, drawerWidth }) => {
   const theme = useTheme()
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState(null)
-  const user = getUser()
+  const { user, setUser } = useContext(AuthContext)
+  const currentUser = user || getUser()
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget)
@@ -41,6 +42,7 @@ const Header = ({ onMenuClick, drawerWidth }) => {
 
   const handleLogout = () => {
     clearAuth()
+    setUser(null)
     navigate('/login')
   }
 
@@ -56,7 +58,7 @@ const Header = ({ onMenuClick, drawerWidth }) => {
         backgroundImage: gradient,
         color: 'common.white',
         borderBottom: 'none',
-        boxShadow: 'none',
+        boxShadow: 'none'
       }}
     >
       <Toolbar sx={{ minHeight: 72, px: { xs: 2, md: 4 } }}>
@@ -89,8 +91,13 @@ const Header = ({ onMenuClick, drawerWidth }) => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Tooltip title="Ajuda">
+            <IconButton size="small" color="inherit">
+              <HelpIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
           <Typography variant="body2" sx={{ display: { xs: 'none', md: 'block' } }}>
-            {user?.username || 'Admin'}
+            {currentUser?.email || 'Admin'}
           </Typography>
           <IconButton size="large" onClick={handleMenu} sx={{ p: 0 }}>
             <Avatar
@@ -100,10 +107,10 @@ const Header = ({ onMenuClick, drawerWidth }) => {
                 borderRadius: 0,
                 bgcolor: alpha('#ffffff', 0.2),
                 color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.25)',
+                border: '1px solid rgba(255,255,255,0.25)'
               }}
             >
-              {user?.username?.charAt(0).toUpperCase() || 'A'}
+              {currentUser?.email?.charAt(0).toUpperCase() || 'A'}
             </Avatar>
           </IconButton>
         </Box>
@@ -117,7 +124,7 @@ const Header = ({ onMenuClick, drawerWidth }) => {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           PaperProps={{
             sx: {
-              borderRadius: 0,
+              borderRadius: 0
             }
           }}
         >
@@ -125,7 +132,7 @@ const Header = ({ onMenuClick, drawerWidth }) => {
             <ListItemIcon>
               <AccountCircle fontSize="small" />
             </ListItemIcon>
-            {user?.username || 'Admin'}
+            {currentUser?.email || 'Admin'}
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleClose}>

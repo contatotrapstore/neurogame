@@ -4,6 +4,10 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+const path = require('path');
+const validateEnv = require('./config/validateEnv');
+
+validateEnv();
 
 const { supabase } = require('./config/supabase');
 const routes = require('./routes');
@@ -38,15 +42,22 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Body parsers
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString('utf8');
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files (games) - only in development
 // In production (Vercel), games are bundled with the launcher installer
-const path = require('path');
 if (process.env.NODE_ENV === 'development') {
-  const gamesDir = process.env.GAMES_DIR || '../Jogos';
-  app.use('/games', express.static(path.join(__dirname, gamesDir)));
+  const rawGamesDir = process.env.GAMES_DIR;
+  const gamesDir = rawGamesDir
+    ? (path.isAbsolute(rawGamesDir) ? rawGamesDir : path.resolve(process.cwd(), rawGamesDir))
+    : path.resolve(process.cwd(), '..', 'Jogos');
+
+  app.use('/games', express.static(gamesDir));
 }
 
 // API routes
@@ -79,23 +90,23 @@ const startServer = async () => {
     const { data, error } = await supabase.from('users').select('count').limit(1);
 
     if (error) {
-      console.error('❌ Failed to connect to Supabase:', error.message);
+      console.error('Failed to connect to Supabase:', error.message);
       console.error('Please check your SUPABASE_URL and SUPABASE_ANON_KEY in .env');
       process.exit(1);
     }
 
-    console.log('✅ Supabase connection established successfully');
+    console.log('Supabase connection established successfully');
 
     // Start server
     app.listen(PORT, () => {
-      console.log(`\n🚀 NeuroGame API Server`);
-      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 Server running on http://localhost:${PORT}`);
-      console.log(`📚 API Documentation: http://localhost:${PORT}/api/v1`);
-      console.log(`✅ Health check: http://localhost:${PORT}/api/v1/health\n`);
+      console.log(`\nNeuroGame API Server`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`API Documentation: http://localhost:${PORT}/api/v1`);
+      console.log(`Health check: http://localhost:${PORT}/api/v1/health\n`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
@@ -119,3 +130,5 @@ if (process.env.VERCEL !== '1') {
 }
 
 module.exports = app;
+
+

@@ -1,4 +1,4 @@
-const electronModule = require('electron');
+﻿const electronModule = require('electron');
 
 if (typeof electronModule === 'string' || !process.versions?.electron) {
   // Relaunch Electron if the environment forced Node mode
@@ -19,8 +19,11 @@ if (typeof electronModule === 'string' || !process.versions?.electron) {
 
 const { app, BrowserWindow, ipcMain, Menu, dialog } = electronModule;
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
 const Store = require('electron-store');
 const { autoUpdater } = require('electron-updater');
+const { download } = require('electron-dl');
 
 let store;
 let mainWindow;
@@ -41,20 +44,26 @@ function createWindow() {
     icon: path.join(__dirname, 'build/icon.png'),
     autoHideMenuBar: true,
     frame: true,
-    fullscreen: !isDev
+    show: false // Não mostrar até estar pronto
   });
 
   // Load app
   if (isDev) {
     mainWindow.loadURL('http://localhost:5174');
-    mainWindow.webContents.openDevTools();
+        if (process.env.OPEN_DEVTOOLS === '1') {
+      mainWindow.webContents.openDevTools();
+    }
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
-    // Ensure fullscreen is set after window is ready
-    mainWindow.once('ready-to-show', () => {
-      mainWindow.setFullScreen(true);
-    });
   }
+
+  // Mostrar janela quando estiver pronta
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    if (!isDev) {
+      mainWindow.maximize();
+    }
+  });
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error(`[main] Failed to load ${validatedURL}: ${errorCode} ${errorDescription}`);
@@ -166,6 +175,93 @@ function registerIpcHandlers() {
 
   ipcMain.handle('get-user-data-path', () => {
     return app.getPath('userData');
+  });
+
+  ipcMain.handle('download-game', async (event, payload) => {
+    const { url, fileName, directory, checksum } = payload;
+
+    if (!url) {
+      return {
+        success: false,
+        message: 'URL de download não informada'
+      };
+    }
+
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const targetDirectory = directory || path.join(app.getPath('userData'), 'games');
+
+    try {
+      await fs.promises.mkdir(targetDirectory, { recursive: true });
+    } catch (mkdirError) {
+      console.error('[download] Failed to prepare directory:', mkdirError);
+      return {
+        success: false,
+        message: 'Não foi possível preparar a pasta de jogos'
+      };
+    }
+
+    try {
+      const downloadResult = await download(win, url, {
+        directory: targetDirectory,
+        filename: fileName || undefined,
+        overwrite: true,
+        onProgress: (progress) => {
+          event.sender.send('game-download-progress', {
+            url,
+            percent: progress.percent,
+            transferredBytes: progress.transferredBytes,
+            totalBytes: progress.totalBytes
+          });
+        }
+      });
+
+      const filePath = downloadResult.getSavePath();
+      let checksumValid = true;
+
+      if (checksum) {
+        try {
+          checksumValid = await new Promise((resolve, reject) => {
+            const hash = crypto.createHash('sha256');
+            const stream = fs.createReadStream(filePath);
+
+            stream.on('data', (chunk) => hash.update(chunk));
+            stream.on('error', reject);
+            stream.on('end', () => {
+              const digest = hash.digest('hex');
+              resolve(digest.toLowerCase() === checksum.toLowerCase());
+            });
+          });
+
+          if (!checksumValid) {
+            await fs.promises.unlink(filePath).catch(() => {});
+            return {
+              success: false,
+              checksumValid,
+              message: 'Arquivo baixado com checksum inválido'
+            };
+          }
+        } catch (hashError) {
+          console.error('[download] Failed to validate checksum:', hashError);
+          return {
+            success: false,
+            message: 'Não foi possível validar o checksum do arquivo'
+          };
+        }
+      }
+
+      return {
+        success: true,
+        filePath,
+        checksumValid,
+        directory: targetDirectory
+      };
+    } catch (error) {
+      console.error('[download] Failed to download game:', error);
+      return {
+        success: false,
+        message: error.message || 'Falha ao baixar jogo'
+      };
+    }
   });
 
   // Auto-updater handlers
@@ -297,7 +393,9 @@ app.whenReady().then(() => {
   store = new Store();
 
   // Check if running in development mode
-  isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  // Considera dev se NODE_ENV=development OU se existe pasta node_modules/electron
+  const hasElectronDevFolder = fs.existsSync(path.join(__dirname, 'node_modules', 'electron'));
+  isDev = process.env.NODE_ENV === 'development' || !app.isPackaged || hasElectronDevFolder;
   console.log(`[launcher] isDev: ${isDev} | NODE_ENV: ${process.env.NODE_ENV} | isPackaged: ${app.isPackaged}`);
 
   registerIpcHandlers();
@@ -341,4 +439,3 @@ app.on('web-contents-created', (event, contents) => {
     return { action: 'deny' };
   });
 });
-

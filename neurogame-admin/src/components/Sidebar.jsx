@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Drawer,
@@ -12,6 +12,7 @@ import {
   Typography,
   useTheme,
   alpha,
+  Badge,
 } from '@mui/material'
 import {
   Dashboard as DashboardIcon,
@@ -20,18 +21,37 @@ import {
   CardMembership as SubscriptionIcon,
   Notifications as NotificationsIcon,
 } from '@mui/icons-material'
+import { gameRequestsAPI } from '../services/gameRequestsApi'
 
 const menuItems = [
   { text: 'Painel', icon: DashboardIcon, path: '/' },
   { text: 'Jogos', icon: GamesIcon, path: '/games' },
   { text: 'Usuários', icon: PeopleIcon, path: '/users' },
-  { text: 'Requisições', icon: NotificationsIcon, path: '/requests' },
+  { text: 'Planos', icon: SubscriptionIcon, path: '/subscriptions' },
+  { text: 'Requisições', icon: NotificationsIcon, path: '/requests', hasBadge: true },
 ]
 
 const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
   const theme = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    fetchPendingCount()
+    // Atualizar a cada 30 segundos
+    const interval = setInterval(fetchPendingCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchPendingCount = async () => {
+    try {
+      const data = await gameRequestsAPI.getPendingCount()
+      setPendingCount(data.count || 0)
+    } catch (error) {
+      console.error('Erro ao buscar contagem de requisições pendentes:', error)
+    }
+  }
 
   const handleNavigation = (path) => {
     navigate(path)
@@ -103,7 +123,26 @@ const Sidebar = ({ mobileOpen, onDrawerToggle, drawerWidth }) => {
                     color: isActive ? '#ffffff' : alpha('#ffffff', 0.65),
                   }}
                 >
-                  <Icon />
+                  {item.hasBadge && pendingCount > 0 ? (
+                    <Badge
+                      badgeContent={pendingCount}
+                      color="error"
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          right: -3,
+                          top: -3,
+                          fontSize: '0.65rem',
+                          height: 18,
+                          minWidth: 18,
+                          padding: '0 4px',
+                        }
+                      }}
+                    >
+                      <Icon />
+                    </Badge>
+                  ) : (
+                    <Icon />
+                  )}
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}

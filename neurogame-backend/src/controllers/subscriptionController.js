@@ -1,4 +1,5 @@
 const { supabase } = require('../config/supabase');
+const asaasService = require('../services/asaas');
 
 // Get all subscription plans
 exports.getAllPlans = async (req, res, next) => {
@@ -406,15 +407,14 @@ exports.getAllSubscriptions = async (req, res, next) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
-      .from('user_subscriptions')
+      .from('subscriptions')
       .select(`
         *,
-        user:users(*),
-        plan:subscription_plans(*)
+        user:users(id, email, full_name)
       `, { count: 'exact' });
 
     if (isActive !== undefined) {
-      query = query.eq('is_active', isActive === 'true');
+      query = query.eq('status', isActive === 'true' ? 'active' : 'cancelled');
     }
 
     const { data: subscriptions, error, count } = await query
@@ -471,6 +471,323 @@ exports.getUserSubscription = async (req, res, next) => {
     res.json({
       success: true,
       data: { subscription: subscription || null }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// === Customer subscription endpoints (launcher) ===
+
+exports.createUserSubscription = async (req, res, next) => {
+  try {
+    const { paymentMethod, creditCard, creditCardHolder } = req.body;
+    const userId = req.user.id;
+
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    const { data: existingSubscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single();
+
+    if (existingSubscription) {
+      return res.status(400).json({
+        success: false,
+        message: 'Você já possui uma assinatura ativa'
+      });
+    }
+
+    let asaasCustomerId = user.asaas_customer_id;
+
+    if (!asaasCustomerId) {
+      const asaasCustomer = await asaasService.createCustomer({
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name
+      });
+
+      asaasCustomerId = asaasCustomer.id;
+
+      await supabase
+        .from('users')
+        .update({ asaas_customer_id: asaasCustomerId })
+        .eq('id', userId);
+    }
+
+    const subscriptionData = {
+      userId,
+      paymentMethod: paymentMethod || 'PIX',
+      value: parseFloat(process.env.SUBSCRIPTION_VALUE || 149.90),
+      description: 'NeuroGame - Assinatura Mensal Completa'
+    };
+
+    if (paymentMethod === 'CREDIT_CARD' && creditCard) {
+      subscriptionData.creditCard = creditCard;
+      subscriptionData.creditCardHolder = creditCardHolder;
+    }
+
+    const asaasSubscription = await asaasService.createSubscription(
+      asaasCustomerId,
+      subscriptionData
+    );
+
+    const { data: newSubscription, error: insertError } = await supabase
+      .from('subscriptions')
+      .insert([{
+        user_id: userId,
+        asaas_subscription_id: asaasSubscription.id,
+        status: 'pending',
+        plan_value: subscriptionData.value,
+        billing_cycle: 'MONTHLY',
+        payment_method: paymentMethod,
+        next_due_date: asaasSubscription.nextDueDate
+      }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    let pixQrCode = null;
+    let pixCopyPaste = null;
+
+    if (paymentMethod === 'PIX') {
+      try {
+        const payments = await asaasService.listPayments(asaasSubscription.id, { limit: 1 });
+
+        if (payments.data && payments.data.length > 0) {
+          const firstPayment = payments.data[0];
+
+          const pixData = await asaasService.getPixQrCode(firstPayment.id);
+          pixQrCode = pixData.encodedImage;
+          pixCopyPaste = pixData.payload;
+
+          await supabase
+            .from('payments')
+            .insert([{
+              subscription_id: newSubscription.id,
+              asaas_payment_id: firstPayment.id,
+              asaas_invoice_url: firstPayment.invoiceUrl,
+              value: firstPayment.value,
+              status: 'pending',
+              payment_method: 'PIX',
+              due_date: firstPayment.dueDate,
+              description: 'Primeiro pagamento - NeuroGame'
+            }]);
+        }
+      } catch (pixError) {
+        console.error('Erro ao buscar QR Code PIX:', pixError.message);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Assinatura criada com sucesso',
+      data: {
+        subscription: {
+          id: newSubscription.id,
+          asaas_subscription_id: asaasSubscription.id,
+          status: newSubscription.status,
+          plan_value: newSubscription.plan_value,
+          payment_method: paymentMethod,
+          next_due_date: newSubscription.next_due_date
+        },
+        payment: paymentMethod === 'PIX'
+          ? { pixQrCode, pixCopyPaste, expiresIn: '15 minutos' }
+          : null
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getSubscriptionStatus = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: subscription, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !subscription) {
+      return res.json({
+        success: true,
+        data: { hasSubscription: false, subscription: null }
+      });
+    }
+
+    if (subscription.asaas_subscription_id) {
+      try {
+        const asaasSubscription = await asaasService.getSubscription(subscription.asaas_subscription_id);
+        const newStatus = asaasService.mapSubscriptionStatus(asaasSubscription.status);
+
+        if (newStatus !== subscription.status) {
+          await supabase
+            .from('subscriptions')
+            .update({ status: newStatus })
+            .eq('id', subscription.id);
+
+          subscription.status = newStatus;
+        }
+      } catch (asaasError) {
+        console.error('Erro ao sincronizar com Asaas:', asaasError.message);
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        hasSubscription: true,
+        subscription: {
+          id: subscription.id,
+          status: subscription.status,
+          plan_value: subscription.plan_value,
+          billing_cycle: subscription.billing_cycle,
+          next_due_date: subscription.next_due_date,
+          payment_method: subscription.payment_method,
+          started_at: subscription.started_at,
+          isActive: subscription.status === 'active'
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.cancelUserSubscription = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: subscription, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single();
+
+    if (error || !subscription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Nenhuma assinatura ativa encontrada'
+      });
+    }
+
+    if (subscription.asaas_subscription_id) {
+      try {
+        await asaasService.cancelSubscription(subscription.asaas_subscription_id);
+      } catch (asaasError) {
+        console.error('Erro ao cancelar no Asaas:', asaasError.message);
+      }
+    }
+
+    await supabase
+      .from('subscriptions')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString()
+      })
+      .eq('id', subscription.id);
+
+    return res.json({
+      success: true,
+      message: 'Assinatura cancelada com sucesso'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.checkSubscription = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: subscription, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single();
+
+    if (error || !subscription) {
+      return res.json({
+        success: true,
+        data: {
+          isActive: false,
+          needsRenewal: true,
+          daysUntilExpiration: 0
+        }
+      });
+    }
+
+    const now = new Date();
+    const nextDueDate = new Date(subscription.next_due_date);
+    const daysUntilExpiration = Math.ceil((nextDueDate - now) / (1000 * 60 * 60 * 24));
+
+    return res.json({
+      success: true,
+      data: {
+        isActive: true,
+        needsRenewal: daysUntilExpiration <= 3,
+        daysUntilExpiration,
+        nextDueDate: subscription.next_due_date,
+        paymentMethod: subscription.payment_method,
+        planValue: subscription.plan_value
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.listSubscriptionPayments = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!subscription) {
+      return res.json({
+        success: true,
+        data: { payments: [] }
+      });
+    }
+
+    const { data: payments, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('subscription_id', subscription.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      data: { payments: payments || [] }
     });
   } catch (error) {
     next(error);

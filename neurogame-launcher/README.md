@@ -38,9 +38,9 @@ NeuroGame/
 +- neurogame-launcher/
 +- Jogos/
    +- autorama/
-   ¦  +- index.html
+   ?  +- index.html
    +- balao/
-   ¦  +- index.html
+   ?  +- index.html
    +- ...
 ```
 
@@ -98,3 +98,16 @@ The base URL comes from `electron-store` settings (`storage.js`) and defaults to
 ## License
 
 MIT
+
+## Scripts utilitarios
+
+### protect-games.js
+
+Script auxiliar para proteger o conteudo dos jogos antes de distribuir os arquivos. Ele aplica o mecanismo de validacao do launcher diretamente nas pastas dos jogos gerando os assets finais.
+
+```bash
+node protect-games.js ./Jogos/nome-do-jogo
+```
+
+Opcionalmente mova o arquivo para um diretorio `scripts/` junto com outros utilitarios de automacao.
+

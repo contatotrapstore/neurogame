@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+﻿import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import Login from './pages/Login';
@@ -36,9 +36,15 @@ function App() {
   }, [authenticated]);
 
   const checkAuth = async () => {
-    const isAuth = await isAuthenticated();
-    setAuthenticated(isAuth);
-    setLoading(false);
+    try {
+      const isAuth = await isAuthenticated();
+      setAuthenticated(isAuth);
+    } catch (error) {
+      console.error('[App] Error checking authentication:', error);
+      setAuthenticated(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const checkContentUpdates = async () => {

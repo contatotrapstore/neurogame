@@ -1,4 +1,4 @@
-const { supabase } = require('../config/supabase');
+﻿const { supabase } = require('../config/supabase');
 
 // Get all users (Admin only)
 exports.getAllUsers = async (req, res, next) => {
@@ -11,10 +11,7 @@ exports.getAllUsers = async (req, res, next) => {
       .from('users')
       .select(`
         *,
-        subscriptions:user_subscriptions!inner(
-          *,
-          plan:subscription_plans(*)
-        )
+        subscription:subscriptions(*)
       `, { count: 'exact' });
 
     if (isActive !== undefined) {
@@ -22,10 +19,8 @@ exports.getAllUsers = async (req, res, next) => {
     }
 
     if (search) {
-      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%,full_name.ilike.%${search}%`);
+      query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
     }
-
-    query = query.eq('subscriptions.is_active', true);
 
     const { data: users, error, count } = await query
       .range(offset, offset + parseInt(limit) - 1)
@@ -63,10 +58,7 @@ exports.getUserById = async (req, res, next) => {
       .from('users')
       .select(`
         *,
-        subscriptions:user_subscriptions(
-          *,
-          plan:subscription_plans(*)
-        ),
+        subscription:subscriptions(*),
         accessible_games:user_game_access(
           granted_at,
           expires_at,
@@ -98,7 +90,7 @@ exports.getUserById = async (req, res, next) => {
 // Create new user (Admin only)
 exports.createUser = async (req, res, next) => {
   try {
-    const { username, email, password, fullName, isAdmin } = req.body;
+    const { email, password, fullName, isAdmin } = req.body;
     const bcrypt = require('bcrypt');
 
     // Hash password
@@ -107,9 +99,9 @@ exports.createUser = async (req, res, next) => {
     const { data: user, error } = await supabase
       .from('users')
       .insert({
-        username,
         email,
         password: hashedPassword,
+        password_hash: hashedPassword,
         full_name: fullName,
         is_admin: isAdmin || false
       })
@@ -155,7 +147,11 @@ exports.updateUser = async (req, res, next) => {
     if (fullName !== undefined) updateData.full_name = fullName;
     if (isActive !== undefined) updateData.is_active = isActive;
     if (isAdmin !== undefined) updateData.is_admin = isAdmin;
-    if (password) updateData.password = await bcrypt.hash(password, 10);
+    if (password) {
+      const hashed = await bcrypt.hash(password, 10);
+      updateData.password = hashed;
+      updateData.password_hash = hashed;
+    }
 
     const { data: updatedUser, error } = await supabase
       .from('users')
@@ -377,3 +373,4 @@ exports.getUserHistory = async (req, res, next) => {
     next(error);
   }
 };
+

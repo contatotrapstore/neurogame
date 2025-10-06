@@ -11,13 +11,15 @@ router.post('/asaas', async (req, res) => {
   try {
     const event = req.body;
 
-    console.log('[Webhook Asaas] Evento recebido:', event.event);
+    console.log(`[Webhook Asaas] Evento recebido: ${event.event}`);
 
-    // Validar webhook (TODO: implementar validação de assinatura)
-    // const isValid = asaasService.validateWebhook(event, req.headers['asaas-signature']);
-    // if (!isValid) {
-    //   return res.status(401).json({ error: 'Invalid signature' });
-    // }
+    const signature = req.headers['asaas-signature'];
+    const rawPayload = req.rawBody || JSON.stringify(event);
+
+    if (!asaasService.validateWebhook(rawPayload, signature)) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
 
     // Salvar webhook no banco para log
     const { data: webhookLog } = await supabase
@@ -34,10 +36,10 @@ router.post('/asaas', async (req, res) => {
     // Processar evento
     await processWebhookEvent(event, webhookLog.id);
 
-    // Retornar sucesso imediatamente (Asaas exige resposta rápida)
+    // Retornar sucesso imediatamente (Asaas exige resposta rapida)
     res.json({ received: true });
   } catch (error) {
-    console.error('[Webhook Asaas] Erro:', error);
+    console.error(`[Webhook Asaas] Erro: ${error.message}`);
     res.status(500).json({ error: 'Internal error' });
   }
 });
@@ -70,7 +72,7 @@ async function processWebhookEvent(event, webhookId) {
         break;
 
       default:
-        console.log(`[Webhook] Evento não tratado: ${eventType}`);
+        console.log(`[Webhook] Evento nao tratado: ${eventType}`);
     }
 
     // Marcar webhook como processado
@@ -83,7 +85,7 @@ async function processWebhookEvent(event, webhookId) {
       .eq('id', webhookId);
 
   } catch (error) {
-    console.error(`[Webhook] Erro ao processar ${eventType}:`, error);
+    console.error(`[Webhook] Erro ao processar ${eventType}: ${error.message}`);
 
     // Registrar erro no webhook
     await supabase
@@ -112,7 +114,7 @@ async function handlePaymentCreated(payment, webhookId) {
     .single();
 
   if (!subscription) {
-    console.log('[Webhook] Subscription não encontrada para payment:', payment.id);
+    console.log('[Webhook] Subscription nao encontrada para payment:', payment.id);
     return;
   }
 
@@ -169,7 +171,7 @@ async function handlePaymentConfirmed(payment, webhookId) {
     .single();
 
   if (!subscription) {
-    console.log('[Webhook] Subscription não encontrada');
+    console.log('[Webhook] Subscription nao encontrada');
     return;
   }
 
@@ -283,7 +285,7 @@ async function handlePaymentDeleted(payment, webhookId) {
     })
     .eq('asaas_payment_id', payment.id);
 
-  // Se era o último pagamento confirmado, desativar subscription
+  // Se era o ultimo pagamento confirmado, desativar subscription
   if (subscription.status === 'active') {
     await supabase
       .from('subscriptions')
@@ -307,3 +309,7 @@ async function handlePaymentDeleted(payment, webhookId) {
 }
 
 module.exports = router;
+
+
+
+

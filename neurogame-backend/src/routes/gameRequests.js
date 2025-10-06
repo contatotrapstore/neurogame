@@ -35,7 +35,7 @@ router.post('/', authenticate, async (req, res) => {
       }])
       .select(`
         *,
-        user:users!game_requests_user_id_fkey(id, username, email, full_name),
+        user:users!game_requests_user_id_fkey(id, email, full_name),
         game:games(id, name, slug, cover_image)
       `)
       .single();
@@ -59,9 +59,9 @@ router.get('/', authenticate, async (req, res) => {
       .from('game_requests')
       .select(`
         *,
-        user:users!game_requests_user_id_fkey(id, username, email, full_name),
+        user:users!game_requests_user_id_fkey(id, email, full_name),
         game:games(id, name, slug, cover_image),
-        reviewer:users!game_requests_reviewed_by_fkey(id, username)
+        reviewer:users!game_requests_reviewed_by_fkey(id, email)
       `, { count: 'exact' })
       .order('created_at', { ascending: false });
 
@@ -153,9 +153,9 @@ router.patch('/:id', authenticate, authorizeAdmin, async (req, res) => {
       .eq('id', id)
       .select(`
         *,
-        user:users!game_requests_user_id_fkey(id, username, email, full_name),
+        user:users!game_requests_user_id_fkey(id, email, full_name),
         game:games(id, name, slug, cover_image),
-        reviewer:users!game_requests_reviewed_by_fkey(id, username)
+        reviewer:users!game_requests_reviewed_by_fkey(id, email)
       `)
       .single();
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -15,11 +15,13 @@ import {
 import { Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material';
 import { authAPI } from '../services/api';
 import { setAuthData } from '../utils/auth';
+import { AuthContext } from '../contexts/AuthContext';
 
 const Login = () => {
+  const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +40,7 @@ const Login = () => {
     event.preventDefault();
     setError('');
 
-    if (!formData.username || !formData.password) {
+    if (!formData.email || !formData.password) {
       setError('Por favor, preencha todos os campos');
       return;
     }
@@ -48,6 +50,7 @@ const Login = () => {
     try {
       const { token, refreshToken, user } = await authAPI.login(formData);
       setAuthData(token, refreshToken, user);
+      setUser(user);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Ocorreu um erro durante o login');
@@ -92,13 +95,14 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Usuário"
-                name="username"
-                value={formData.username}
+                label="E-mail"
+                name="email"
+                type="email"
+                value={formData.email}
                 onChange={handleChange}
                 margin="normal"
                 variant="outlined"
-                autoComplete="username"
+                autoComplete="email"
                 autoFocus
                 disabled={loading}
               />
@@ -155,3 +159,7 @@ const Login = () => {
 };
 
 export default Login;
+
+
+
+

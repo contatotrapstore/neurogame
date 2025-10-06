@@ -12,9 +12,11 @@ import {
   Link,
   Stepper,
   Step,
-  StepLabel
+  StepLabel,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
-import { PersonAdd, Payment, CheckCircle } from '@mui/icons-material';
+import { PersonAdd, Payment, CheckCircle, Visibility, VisibilityOff } from '@mui/icons-material';
 import api from '../services/api';
 import { setStoredToken, setStoredUser } from '../services/storage';
 import logoUrl from '../assets/logo-branca.png';
@@ -34,6 +36,8 @@ function Register({ onLogin }) {
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Step 2: Plano selecionado (fixo por enquanto)
   const [selectedPlan] = useState({
@@ -79,7 +83,7 @@ function Register({ onLogin }) {
 
     try {
       const response = await api.post('/auth/register', {
-        full_name: formData.full_name,
+        fullName: formData.full_name,
         email: formData.email,
         password: formData.password
       });
@@ -164,25 +168,50 @@ function Register({ onLogin }) {
 
       <TextField
         fullWidth
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         label="Senha"
         name="password"
         value={formData.password}
         onChange={handleChange}
         disabled={loading}
         helperText="Mínimo 6 caracteres"
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowPassword((prev) => !prev)}
+                edge="end"
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          )
+        }}
       />
 
       <TextField
         fullWidth
-        type="password"
+        type={showConfirmPassword ? 'text' : 'password'}
         label="Confirmar Senha"
         name="confirmPassword"
         value={formData.confirmPassword}
         onChange={handleChange}
         disabled={loading}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                edge="end"
+                aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          )
+        }}
       />
-
       {error && <Alert severity="error">{error}</Alert>}
 
       <Button

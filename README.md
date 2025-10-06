@@ -4,33 +4,41 @@ Sistema completo de distribuição e gerenciamento de jogos com launcher desktop
 
 ---
 
+## 🔐 Acesso Rápido
+
+**📋 Credenciais Admin:**
+- **Email:** `admin@neurogame.com`
+- **Senha:** `Admin123`
+- **URL:** http://localhost:3001
+
+**📚 Documentação:** [ACESSO_RAPIDO.md](ACESSO_RAPIDO.md) | [STATUS_ATUAL.md](STATUS_ATUAL.md) | [docs/INDEX.md](docs/INDEX.md)
+
+---
+
 ## 🚀 Início Rápido
 
 ### Pré-requisitos
 - Node.js 16+
 - npm 8+
-- Supabase (banco de dados)
+- Conta Supabase (banco de dados)
 
 ### Instalação
 
 ```bash
-# 1. Clonar repositório
-git clone [url-do-repositorio]
-cd NeuroGame
-
-# 2. Instalar dependências do backend
-cd neurogame-backend
+# 1. Instalar dependências
 npm install
 
-# 3. Configurar variáveis de ambiente
+# 2. Backend
+cd neurogame-backend
+npm install
 cp .env.example .env
-# Editar .env com suas credenciais
+# Editar .env com credenciais do Supabase
 
-# 4. Instalar dependências do admin
+# 3. Admin Panel
 cd ../neurogame-admin
 npm install
 
-# 5. Instalar dependências do launcher
+# 4. Launcher
 cd ../neurogame-launcher
 npm install
 ```
@@ -38,229 +46,145 @@ npm install
 ### Executar em Desenvolvimento
 
 ```bash
-# Terminal 1 - Backend
-cd neurogame-backend
-npm run dev
+# Terminal 1 - Backend (localhost:3000)
+cd neurogame-backend && npm run dev
 
-# Terminal 2 - Admin Panel
-cd neurogame-admin
-npm run dev
+# Terminal 2 - Admin (localhost:3001)
+cd neurogame-admin && npm run dev
 
-# Terminal 3 - Launcher
-cd neurogame-launcher
-npm run dev
+# Terminal 3 - Launcher (Electron)
+cd neurogame-launcher && npm run dev
 ```
 
----
-
-## 📦 Estrutura do Projeto
+## 📂 Estrutura
 
 ```
 NeuroGame/
-├── neurogame-backend/       # API Backend (Node.js + Express)
-├── neurogame-admin/         # Painel Admin (React + Vite)
-├── neurogame-launcher/      # Launcher Desktop (Electron + React)
-├── docs/                    # Documentação completa
-├── release.js               # Script de automação de releases
-└── package.json             # Dependências do projeto
+├── neurogame-backend/    # API REST (Node.js + Express)
+├── neurogame-admin/      # Painel Admin (React + Vite + MUI)
+├── neurogame-launcher/   # Launcher Desktop (Electron + React)
+├── TESTES_FINAIS.md      # Relatório de testes realizados
+└── README.md             # Este arquivo
 ```
-
----
 
 ## ✨ Funcionalidades
 
 ### 🎮 Launcher Desktop
-- ✅ Interface moderna e intuitiva
-- ✅ Biblioteca de jogos
-- ✅ Download e instalação automática
-- ✅ Sistema de auto-atualização
-- ✅ Proteção por assinatura
-- ✅ Solicitação de novos jogos
+- Interface moderna com Material-UI
+- Biblioteca de jogos com capas locais (offline)
+- Download e instalação automática
+- Sistema de auto-atualização
+- Proteção por assinatura
+- Solicitação de novos jogos
 
-### 👨‍💼 Painel Administrativo
-- ✅ Gerenciamento de usuários
-- ✅ Gerenciamento de jogos
-- ✅ Controle de assinaturas
-- ✅ Aprovação de solicitações
-- ✅ Dashboard com métricas
+### 🔧 Painel Administrativo
+- Gerenciamento de usuários
+- CRUD de jogos
+- Controle de assinaturas e planos
+- Aprovação de solicitações
+- Dashboard com métricas
 
-### 🔐 Sistema de Assinaturas
-- ✅ Autenticação JWT
-- ✅ Integração Asaas/Stripe
-- ✅ Proteção de conteúdo
-- ✅ Heartbeat de validação
-- ✅ Webhooks de pagamento
-
-### 📦 Sistema de Distribuição
-- ✅ Instalador profissional (NSIS)
-- ✅ Auto-atualização automática
-- ✅ Versionamento semântico
-- ✅ Release management
-- ✅ Suporte multiplataforma
-
----
-
-## 📚 Documentação
-
-Toda a documentação está organizada na pasta [`docs/`](docs/):
-
-### 🚀 Para Começar
-- **[📖 Índice Completo](docs/INDEX.md)** - Navegação por toda documentação
-- [Início Rápido](docs/INICIO_RAPIDO.md)
-- [Iniciar Launcher Completo](docs/INICIAR_LAUNCHER_COMPLETO.md)
-- [Deploy em Produção](docs/DEPLOY.md)
-
-### 🔄 Sistemas
-- **[Sistema de Atualizações](docs/SISTEMA_ATUALIZACOES.md)** - Auto-updates de launcher e jogos
-- [Sistema de Instalador](docs/README_INSTALADOR.md)
-- [Integração de Jogos](docs/INTEGRACAO_JOGOS.md)
-
-### 🏗️ Arquitetura
-- [PRD - Product Requirements](docs/PRD.md)
-- [Planejamento](docs/planejamento.md)
-- [Implementação Launcher](docs/IMPLEMENTACAO_LAUNCHER.md)
-- [Implementação Admin](docs/IMPLEMENTACAO_ADMIN.md)
-- [Solução Técnica](docs/SOLUCAO_LAUNCHER.md)
-
-### 🚢 Deploy
-- [Backend no Vercel](neurogame-backend/DEPLOY_VERCEL.md)
-- [Admin no Vercel](neurogame-admin/DEPLOY_VERCEL.md)
-
-### 🔧 Configuração
-- [Setup Supabase](docs/SUPABASE_SETUP.md)
-- [Próximos Passos](docs/PROXIMOS_PASSOS.md)
-
----
+### 💳 Sistema de Assinaturas
+- Autenticação JWT + Refresh Token
+- Integração com Asaas (gateway de pagamento)
+- Proteção de conteúdo por assinatura
+- Webhooks de pagamento
+- 3 planos: Básico, Premium, Educacional
 
 ## 🛠️ Tecnologias
 
-### Backend
+**Backend**
 - Node.js + Express
 - Supabase (PostgreSQL)
 - JWT Authentication
-- Asaas API (Pagamentos)
+- Asaas API
 
-### Frontend Admin
+**Frontend Admin**
 - React 18
-- Material-UI
-- React Router
+- Material-UI v5
+- React Router v6
 - Axios
 
-### Launcher
-- Electron
+**Launcher**
+- Electron 28
 - React 18
-- Material-UI
+- Material-UI v5
 - electron-updater
 
----
+## 📊 Status Atual (04/10/2025)
 
-## 📥 Criar Instalador
+✅ **100% Funcional em Desenvolvimento**
 
-### Primeira vez
+- ✅ Sistema de autenticação
+- ✅ CRUD de assinaturas
+- ✅ 13 jogos cadastrados
+- ✅ 14 capas locais offline
+- ✅ Launcher Electron operacional
+- ✅ Painel admin completo
+- ✅ Migrations Supabase aplicadas
+- ✅ Sistema de proteção de jogos
 
-```bash
-# 1. Adicionar ícones em neurogame-launcher/build/
-#    - icon.ico (Windows)
-#    - icon.icns (macOS)
-#    - icon.png (Linux)
+Ver [TESTES_FINAIS.md](TESTES_FINAIS.md) para detalhes dos testes.
 
-# 2. Criar release
-node release.js build
-```
+## 🔐 Credenciais de Teste
 
-### Atualizações
+**Admin**
+- Email: `admin@neurogame.com`
+- Senha: `Admin@123456`
 
-```bash
-# Bug fix (1.0.0 → 1.0.1)
-node release.js build patch
+## 🎯 Próximos Passos
 
-# Nova feature (1.0.0 → 1.1.0)
-node release.js build minor
+1. **Configurar Produção**
+   - Adicionar chaves reais do Asaas no `.env`
+   - Configurar domínio e SSL
 
-# Breaking change (1.0.0 → 2.0.0)
-node release.js build major
-```
+2. **Build e Deploy**
+   ```bash
+   # Launcher
+   cd neurogame-launcher && npm run build
 
-**Instalador gerado em:** `neurogame-backend/releases/`
+   # Admin
+   cd neurogame-admin && npm run build
 
----
+   # Backend (Vercel)
+   vercel --prod
+   ```
 
-## 🔄 Auto-Atualização
+3. **Testes Pendentes**
+   - [ ] Download completo de jogos
+   - [ ] Validação de checksums
+   - [ ] Auto-update em produção
+   - [ ] Webhooks Asaas real
 
-O launcher verifica automaticamente por atualizações:
+## 📚 Documentação
 
-1. **Ao iniciar** (após 5 segundos)
-2. **Backend serve** metadata em `/api/v1/downloads/latest.yml`
-3. **Download** em background com progresso
-4. **Instalação** automática com reinicialização
+- **[TESTES_FINAIS.md](TESTES_FINAIS.md)** - Relatório de testes e status
+- **Backend**: `/neurogame-backend/README.md`
+- **Admin**: `/neurogame-admin/README.md`
+- **Launcher**: `/neurogame-launcher/README.md`
 
----
+## 🎮 Jogos Disponíveis (13)
 
-## 🚢 Deploy
-
-### Backend
-```bash
-cd neurogame-backend
-npm install --production
-npm start
-```
-
-### Admin Panel
-```bash
-cd neurogame-admin
-npm run build
-# Deploy pasta dist/ em servidor web
-```
-
-### Launcher
-```bash
-node release.js build
-# Distribuir instalador gerado
-```
-
-Ver [DEPLOY.md](docs/DEPLOY.md) para detalhes completos.
-
----
-
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'feat: adicionar nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
----
+1. Autorama (Corrida)
+2. Balão (Aventura)
+3. Batalha de Tanques (Ação)
+4. Correndo pelos Trilhos (Corrida)
+5. Desafio Aéreo (Simulação)
+6. Desafio Automotivo (Corrida)
+7. Desafio nas Alturas (Aventura)
+8. Fazendinha (Simulação)
+9. Labirinto (Puzzle)
+10. Missão Espacial (Aventura)
+11. Resgate em Chamas (Ação)
+12. Taxi City (Simulação)
+13. Tesouro do Mar (Aventura)
 
 ## 📝 Licença
 
-Este projeto está sob a licença MIT.
+MIT License - Livre para uso comercial e pessoal.
 
 ---
 
-## 🔗 Links
-
-- **Documentação Completa:** [`docs/INDEX.md`](docs/INDEX.md)
-- **Issues:** [GitHub Issues](#)
-- **Suporte:** suporte@neurogame.com
-- **Discord:** discord.gg/neurogame
-
----
-
-## 📊 Status do Projeto
-
-- ✅ Sistema de autenticação
-- ✅ Sistema de assinaturas
-- ✅ Launcher funcional
-- ✅ Painel administrativo
-- ✅ Sistema de instalador
-- ✅ Auto-atualização
-- ✅ Solicitações de jogos
-- 🔄 Multiplayer (em desenvolvimento)
-- 📝 Mobile app (planejado)
-
----
-
-**Desenvolvido com ❤️ pela equipe NeuroGame**
+**Desenvolvido pela equipe NeuroGame**
 
 *Última atualização: 04/10/2025*

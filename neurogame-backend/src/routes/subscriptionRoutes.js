@@ -8,7 +8,14 @@ const { validateCreatePlan, validateUUID } = require('../middleware/validator');
 router.get('/plans', subscriptionController.getAllPlans);
 router.get('/plans/:id', validateUUID, subscriptionController.getPlanById);
 
-// User route to get own subscription
+// User subscription endpoints
+router.post('/create', authenticate, subscriptionController.createUserSubscription);
+router.get('/status', authenticate, subscriptionController.getSubscriptionStatus);
+router.delete('/cancel', authenticate, subscriptionController.cancelUserSubscription);
+router.get('/check', authenticate, subscriptionController.checkSubscription);
+router.get('/payments', authenticate, subscriptionController.listSubscriptionPayments);
+
+// User route to get own subscription (admin usage)
 router.get('/user/:userId', authenticate, subscriptionController.getUserSubscription);
 
 // Admin only routes

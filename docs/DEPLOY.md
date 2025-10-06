@@ -651,3 +651,7 @@ Sua plataforma NeuroGame está pronta para produção!
 ---
 
 **Dúvidas?** Consulte a documentação completa ou entre em contato.
+\n### Gerar pacotes do launcher\n\nAntes de publicar uma versao, execute \
+ode release.js build\ na raiz do projeto. Os instaladores e metadados gerados sao copiados para \
+eurogame-backend/releases\, que alimentam o endpoint \/api/v1/downloads\.\n\nSe ja existir um build valido, use \
+ode release.js copy\ para apenas sincronizar os arquivos atuais com a pasta de releases do backend.

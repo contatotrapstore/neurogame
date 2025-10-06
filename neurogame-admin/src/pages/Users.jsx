@@ -10,14 +10,13 @@ import {
   InputAdornment
 } from '@mui/material';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
-import { usersAPI, subscriptionsAPI } from '../services/api';
+import { usersAPI } from '../services/api';
 import UserTable from '../components/UserTable';
 import UserForm from '../components/UserForm';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [openForm, setOpenForm] = useState(false);
@@ -31,7 +30,6 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetchSubscriptionPlans();
   }, []);
 
   useEffect(() => {
@@ -43,7 +41,6 @@ const Users = () => {
     const query = searchQuery.toLowerCase();
     const filtered = users.filter((user) => {
       return (
-        user.username.toLowerCase().includes(query) ||
         user.email.toLowerCase().includes(query) ||
         user.fullName.toLowerCase().includes(query)
       );
@@ -64,15 +61,6 @@ const Users = () => {
       setError(err.response?.data?.message || err.message || 'Falha ao carregar usuários');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchSubscriptionPlans = async () => {
-    try {
-      const { plans } = await subscriptionsAPI.getAllPlans({ isActive: true, limit: 100 });
-      setSubscriptionPlans(plans);
-    } catch (err) {
-      console.error('Error fetching subscription plans:', err);
     }
   };
 
@@ -119,17 +107,6 @@ const Users = () => {
     }
   };
 
-  const handleAssignSubscription = async (userId, planId, durationDays) => {
-    try {
-      await subscriptionsAPI.assignSubscription({ userId, planId, durationDays });
-      await fetchUsers();
-      showSnackbar('Assinatura atribuída com sucesso', 'success');
-    } catch (err) {
-      console.error('Error assigning subscription:', err);
-      showSnackbar(err.response?.data?.message || err.message || 'Falha ao atribuir assinatura', 'error');
-    }
-  };
-
   const showSnackbar = (message, severity) => {
     setSnackbar({ open: true, message, severity });
   };
@@ -161,7 +138,7 @@ const Users = () => {
 
       <TextField
         fullWidth
-        placeholder="Buscar usuários por nome de usuário, email ou nome..."
+        placeholder="Buscar usuários por email ou nome..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         sx={{ mb: 3 }}
@@ -175,7 +152,7 @@ const Users = () => {
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }}>
           {error}
         </Alert>
       )}
@@ -187,10 +164,8 @@ const Users = () => {
       ) : (
         <UserTable
           users={filteredUsers}
-          subscriptionPlans={subscriptionPlans}
           onEdit={handleOpenForm}
           onDelete={handleDeleteUser}
-          onAssignSubscription={handleAssignSubscription}
         />
       )}
 
@@ -207,7 +182,7 @@ const Users = () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 0 }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

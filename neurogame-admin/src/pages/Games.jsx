@@ -154,7 +154,7 @@ const Games = () => {
       />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }}>
           {error}
         </Alert>
       )}
@@ -164,7 +164,7 @@ const Games = () => {
           <CircularProgress />
         </Box>
       ) : filteredGames.length === 0 ? (
-        <Alert severity="info">
+        <Alert severity="info" sx={{ borderRadius: 0 }}>
           {searchQuery ? 'Nenhum jogo encontrado para sua busca' : 'Nenhum jogo disponível. Crie seu primeiro jogo!'}
         </Alert>
       ) : (
@@ -194,7 +194,7 @@ const Games = () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 0 }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

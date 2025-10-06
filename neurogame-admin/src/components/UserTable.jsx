@@ -10,31 +10,16 @@ import {
   IconButton,
   Chip,
   Box,
-  TablePagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField
+  TablePagination
 } from '@mui/material';
 import {
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  CardMembership as SubscriptionIcon
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 
-const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscription }) => {
+const UserTable = ({ users, onEdit, onDelete }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [durationDays, setDurationDays] = useState('');
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -43,34 +28,6 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
-
-  const handleOpenAssignDialog = (user) => {
-    setSelectedUser(user);
-    const planId = user.subscription?.planId || '';
-    setSelectedPlanId(planId);
-
-    const defaultDuration = planId
-      ? subscriptionPlans.find((plan) => plan.id === planId)?.durationDays || ''
-      : '';
-
-    setDurationDays(defaultDuration ? String(defaultDuration) : '');
-    setAssignDialogOpen(true);
-  };
-
-  const handleCloseAssignDialog = () => {
-    setAssignDialogOpen(false);
-    setSelectedUser(null);
-    setSelectedPlanId('');
-    setDurationDays('');
-  };
-
-  const handleAssignSubmit = () => {
-    if (selectedUser && selectedPlanId) {
-      const parsedDuration = durationDays ? parseInt(durationDays, 10) : undefined;
-      onAssignSubscription(selectedUser.id, selectedPlanId, parsedDuration);
-    }
-    handleCloseAssignDialog();
   };
 
   const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -91,11 +48,10 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
 
   return (
     <>
-      <TableContainer component={Paper} elevation={2}>
+      <TableContainer component={Paper} elevation={2} sx={{ borderRadius: 0 }}>
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'grey.100' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>Nome de usuário</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Nome completo</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Função</TableCell>
@@ -107,16 +63,15 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
           <TableBody>
             {paginatedUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={6} align="center">
                   Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
             ) : (
               paginatedUsers.map((user) => (
                 <TableRow key={user.id} hover>
-                  <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.email || '�'}</TableCell>
-                  <TableCell>{user.fullName || '�'}</TableCell>
+                  <TableCell>{user.email || '—'}</TableCell>
+                  <TableCell>{user.fullName || '—'}</TableCell>
                   <TableCell>
                     <Chip
                       label={user.isAdmin ? 'Admin' : 'Usuário'}
@@ -144,14 +99,6 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
                       </IconButton>
                       <IconButton
                         size="small"
-                        color="info"
-                        onClick={() => handleOpenAssignDialog(user)}
-                        title="Atribuir Assinatura"
-                      >
-                        <SubscriptionIcon />
-                      </IconButton>
-                      <IconButton
-                        size="small"
                         color="error"
                         onClick={() => onDelete(user.id)}
                         title="Excluir Usuário"
@@ -175,50 +122,6 @@ const UserTable = ({ users, subscriptionPlans, onEdit, onDelete, onAssignSubscri
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
-
-      <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Atribuir Assinatura</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Plano de Assinatura</InputLabel>
-            <Select
-              value={selectedPlanId}
-              onChange={(event) => setSelectedPlanId(event.target.value)}
-              label="Plano de Assinatura"
-            >
-              <MenuItem value="">
-                <em>Nenhum</em>
-              </MenuItem>
-              {subscriptionPlans.map((plan) => (
-                <MenuItem key={plan.id} value={plan.id}>
-                  {plan.name} – R$ {plan.price} / {plan.durationDays}d
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            sx={{ mt: 2 }}
-            label="Duração (dias)"
-            type="number"
-            value={durationDays}
-            onChange={(event) => setDurationDays(event.target.value)}
-            placeholder="Padrão para duração do plano"
-            inputProps={{ min: 1 }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseAssignDialog}>Cancelar</Button>
-          <Button
-            onClick={handleAssignSubmit}
-            variant="contained"
-            disabled={!selectedPlanId}
-          >
-            Atribuir
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

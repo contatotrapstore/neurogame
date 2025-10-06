@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Games from './pages/Games';
 import Users from './pages/Users';
 import Requests from './pages/Requests';
+import Subscriptions from './pages/Subscriptions';
 
 // Layout
 import Layout from './components/Layout';
@@ -57,6 +58,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="games" element={<Games />} />
           <Route path="users" element={<Users />} />
+          <Route path="subscriptions" element={<Subscriptions />} />
           <Route path="requests" element={<Requests />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -55,14 +55,14 @@ const UserForm = ({ open, onClose, onSave, user }) => {
   const validate = () => {
     const nextErrors = {};
 
-    if (!formData.username.trim()) {
-      nextErrors.username = 'Nome de usuário é obrigatório';
-    }
-
     if (!formData.email.trim()) {
       nextErrors.email = 'Email é obrigatório';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       nextErrors.email = 'Email é inválido';
+    }
+
+    if (!formData.fullName.trim()) {
+      nextErrors.fullName = 'Nome completo é obrigatório';
     }
 
     if (!user && !formData.password) {
@@ -79,12 +79,16 @@ const UserForm = ({ open, onClose, onSave, user }) => {
     if (!validate()) return;
 
     const payload = {
-      username: formData.username.trim(),
       email: formData.email.trim(),
       fullName: formData.fullName.trim(),
       isAdmin: formData.isAdmin,
       isActive: formData.isActive
     };
+
+    // Opcional: adicionar username apenas se preenchido
+    if (formData.username.trim()) {
+      payload.username = formData.username.trim();
+    }
 
     if (formData.password) {
       payload.password = formData.password;
@@ -94,24 +98,18 @@ const UserForm = ({ open, onClose, onSave, user }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 0 }
+      }}
+    >
       <DialogTitle>{user ? 'Editar Usuário' : 'Criar Novo Usuário'}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Nome de usuário"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              error={Boolean(errors.username)}
-              helperText={errors.username}
-              required
-              disabled={Boolean(user)}
-            />
-          </Grid>
-
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
@@ -126,13 +124,16 @@ const UserForm = ({ open, onClose, onSave, user }) => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Nome completo"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
+              error={Boolean(errors.fullName)}
+              helperText={errors.fullName}
+              required
             />
           </Grid>
 

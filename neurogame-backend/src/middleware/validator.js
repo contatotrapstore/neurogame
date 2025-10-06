@@ -1,4 +1,4 @@
-const { body, param, query, validationResult } = require('express-validator');
+﻿const { body, param, query, validationResult } = require('express-validator');
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
@@ -37,13 +37,27 @@ const validateRegister = [
 ];
 
 const validateLogin = [
-  body('username')
+  body('email')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Username is required'),
+    .isEmail()
+    .withMessage('Must be a valid email address')
+    .normalizeEmail(),
+  body('username')
+    .optional()
+    .trim()
+    .isLength({ min: 3, max: 50 })
+    .withMessage('Username must be between 3 and 50 characters'),
   body('password')
     .notEmpty()
     .withMessage('Password is required'),
+  body()
+    .custom((_, { req }) => {
+      if (!req.body.email && !req.body.username) {
+        throw new Error('Email or username is required');
+      }
+      return true;
+    }),
   validate
 ];
 
@@ -160,3 +174,4 @@ module.exports = {
   validateCreatePlan,
   validateUUID
 };
+
