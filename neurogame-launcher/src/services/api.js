@@ -3,7 +3,7 @@ import { getStoredToken, getStoredSettings } from './storage';
 
 const createApiClient = async () => {
   const settings = await getStoredSettings();
-  const baseURL = settings.apiUrl || 'http://localhost:3000/api/v1';
+  const baseURL = settings.apiUrl;
 
   const client = axios.create({
     baseURL,

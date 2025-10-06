@@ -1,6 +1,6 @@
 {
   "name": "neurogame-launcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NeuroGame Desktop Launcher - Game library and player",
   "main": "main.js",
   "author": "NeuroGame Team",
@@ -87,7 +87,7 @@
     },
     "publish": {
       "provider": "generic",
-      "url": "http://localhost:3000/api/v1/downloads"
+      "url": "https://neurogame.onrender.com/api/v1/downloads"
     }
   }
 }

@@ -48,15 +48,16 @@ export const setStoredSettings = async (settings) => {
 };
 
 export const getStoredSettings = async () => {
+  // Use production URL by default
+  const defaultSettings = {
+    apiUrl: 'https://neurogame.onrender.com/api/v1'
+  };
+
   if (window.electronAPI) {
-    return await window.electronAPI.store.get('settings') || {
-      apiUrl: 'http://localhost:3000/api/v1'
-    };
+    return await window.electronAPI.store.get('settings') || defaultSettings;
   }
   const settings = localStorage.getItem('settings');
-  return settings ? JSON.parse(settings) : {
-    apiUrl: 'http://localhost:3000/api/v1'
-  };
+  return settings ? JSON.parse(settings) : defaultSettings;
 };
 
 export const clearAllStorage = async () => {
