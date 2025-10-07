@@ -8,7 +8,7 @@
 
 - **Backend:** https://neurogame.onrender.com
 - **Admin:** https://neurogame-admin.vercel.app
-- **Launcher:** v1.0.5 (262MB - 13 jogos embedados)
+- **Launcher:** v1.0.9 (273.8MB - 13 jogos embedados)
 - **Database:** Supabase (btsarxzpiroprpdcrpcx)
 - **Status:** ✅ 100% Operacional
 
@@ -181,7 +181,7 @@
 ---
 
 **Última atualização:** 07/10/2025
-**Versão Launcher:** 1.0.5
+**Versão Launcher:** 1.0.9
 **Status:** ✅ Produção - 100% Operacional
 
 **Sistema desenvolvido pela equipe NeuroGame**
