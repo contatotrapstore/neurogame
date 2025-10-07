@@ -246,6 +246,58 @@ function GameWebView({ gamePath, onExit }) {
         overflow: 'hidden'
       }}
     >
+      {/* Botão de emergência SEMPRE visível */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 2147483647,
+          display: 'flex',
+          gap: 1
+        }}
+      >
+        <Tooltip title="Sair do Jogo (ESC)">
+          <IconButton
+            onClick={handleExit}
+            sx={{
+              color: 'white',
+              bgcolor: 'rgba(220,38,38,0.95)',
+              width: 48,
+              height: 48,
+              '&:hover': {
+                bgcolor: 'rgba(220,38,38,1)',
+                transform: 'scale(1.1)'
+              },
+              transition: 'all 0.2s',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+            }}
+          >
+            <Close sx={{ fontSize: 28 }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title={isFullscreen ? 'Sair Fullscreen (F11)' : 'Fullscreen (F11)'}>
+          <IconButton
+            onClick={handleFullscreenToggle}
+            sx={{
+              color: 'white',
+              bgcolor: 'rgba(0,0,0,0.95)',
+              width: 48,
+              height: 48,
+              '&:hover': {
+                bgcolor: 'rgba(0,0,0,1)',
+                transform: 'scale(1.1)'
+              },
+              transition: 'all 0.2s',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+            }}
+          >
+            {isFullscreen ? <FullscreenExit sx={{ fontSize: 24 }} /> : <Fullscreen sx={{ fontSize: 24 }} />}
+          </IconButton>
+        </Tooltip>
+      </Box>
+
       {/* ESC Hint - aparece ao entrar em fullscreen */}
       <Fade in={showEscHint} timeout={500}>
         <Box
@@ -254,7 +306,7 @@ function GameWebView({ gamePath, onExit }) {
             bottom: 80,
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 2147483647,
+            zIndex: 2147483646,
             bgcolor: 'rgba(0,0,0,0.9)',
             color: 'white',
             px: 3,
@@ -265,69 +317,11 @@ function GameWebView({ gamePath, onExit }) {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: 600, textAlign: 'center' }}>
-            Pressione ESC para sair do jogo
+            Pressione ESC para sair • F11 para fullscreen
           </Typography>
         </Box>
       </Fade>
 
-      {/* Controls overlay - auto-hide em fullscreen */}
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 2147483646,
-          display: 'flex',
-          justifyContent: 'space-between',
-          p: 2,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)',
-          opacity: showOverlay ? 1 : 0,
-          pointerEvents: showOverlay ? 'auto' : 'none',
-          transition: 'opacity 0.3s ease-in-out'
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 1, pointerEvents: 'auto' }}>
-          <Tooltip title="Sair do Jogo (ESC)">
-            <IconButton
-              onClick={handleExit}
-              sx={{
-                color: 'white',
-                bgcolor: 'rgba(220,38,38,0.9)',
-                width: 56,
-                height: 56,
-                '&:hover': {
-                  bgcolor: 'rgba(220,38,38,1)',
-                  transform: 'scale(1.1)'
-                },
-                transition: 'all 0.2s'
-              }}
-            >
-              <Close sx={{ fontSize: 32 }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        <Tooltip title={isFullscreen ? 'Sair Fullscreen (F11)' : 'Fullscreen (F11)'}>
-          <IconButton
-            onClick={handleFullscreenToggle}
-            sx={{
-              color: 'white',
-              bgcolor: 'rgba(0,0,0,0.9)',
-              width: 56,
-              height: 56,
-              pointerEvents: 'auto',
-              '&:hover': {
-                bgcolor: 'rgba(0,0,0,1)',
-                transform: 'scale(1.1)'
-              },
-              transition: 'all 0.2s'
-            }}
-          >
-            {isFullscreen ? <FullscreenExit sx={{ fontSize: 28 }} /> : <Fullscreen sx={{ fontSize: 28 }} />}
-          </IconButton>
-        </Tooltip>
-      </Box>
 
       {/* Error message */}
       {error && (

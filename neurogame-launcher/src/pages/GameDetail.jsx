@@ -32,6 +32,25 @@ import { gameRequestsApi } from '../services/gameRequestsApi';
 import { generateGameSessionToken } from '../services/gameProtection';
 import { buildGamePlaceholder } from '../utils/placeholders';
 
+const getGameImage = async (slug) => {
+  try {
+    // Tentar importar de assets (desenvolvimento)
+    const image = await import(`../assets/games/${slug}.jpg`);
+    return image.default;
+  } catch {
+    // Fallback: tentar URL direta (produção)
+    try {
+      const response = await fetch(`/assets/games/${slug}.jpg`, { method: 'HEAD' });
+      if (response.ok) {
+        return `/assets/games/${slug}.jpg`;
+      }
+    } catch {
+      // Imagem não encontrada
+    }
+    return null;
+  }
+};
+
 const sanitizeFolderPath = (value = '') => {
   if (!value) return '';
   return value
@@ -74,6 +93,7 @@ function GameDetail() {
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [installProgress, setInstallProgress] = useState({ status: '', progress: 0, message: '' });
+  const [coverImage, setCoverImage] = useState(null);
 
   useEffect(() => {
     fetchGameDetails();
@@ -90,6 +110,28 @@ function GameDetail() {
       if (unsubscribe) unsubscribe();
     };
   }, [game?.slug]);
+
+  // Carregar imagem do jogo
+  useEffect(() => {
+    const loadImage = async () => {
+      if (!game) return;
+
+      const slug = game.folderPath?.split('/').pop() || game.slug;
+      if (!slug) {
+        setCoverImage(buildGamePlaceholder(game.name, 800, 450));
+        return;
+      }
+
+      const image = await getGameImage(slug);
+      if (image) {
+        setCoverImage(image);
+      } else {
+        setCoverImage(buildGamePlaceholder(game.name, 800, 450));
+      }
+    };
+
+    loadImage();
+  }, [game]);
 
   const fetchGameDetails = async () => {
     setLoading(true);
@@ -325,7 +367,7 @@ function GameDetail() {
     );
   }
 
-  const thumbnailUrl = game.coverImage || buildGamePlaceholder(game.name, 800, 450);
+  const thumbnailUrl = coverImage || game.coverImage || buildGamePlaceholder(game.name, 800, 450);
 
   return (
     <Container
