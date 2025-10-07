@@ -1,0 +1,33 @@
+image: electronuserland/builder:wine
+
+stages:
+  - build
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+# Build Linux (funciona no shared runner do GitLab)
+build-linux:
+  stage: build
+  only:
+    - tags
+    - master
+  before_script:
+    - npm --version
+    - node --version
+  script:
+    - cd neurogame-launcher
+    - npm ci --legacy-peer-deps
+    - npm run build
+    - npm run build:linux
+  artifacts:
+    name: "neurogame-linux-$CI_COMMIT_TAG"
+    paths:
+      - neurogame-launcher/dist-electron/*.AppImage
+      - neurogame-launcher/dist-electron/*.deb
+      - neurogame-launcher/dist-electron/latest-linux.yml
+    expire_in: 30 days
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - neurogame-launcher/node_modules/
