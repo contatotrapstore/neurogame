@@ -2,6 +2,7 @@
   "name": "neurogame-launcher",
   "version": "1.0.9",
   "description": "NeuroGame Desktop Launcher - Game library and player",
+  "homepage": "https://github.com/contatotrapstore/neurogame",
   "main": "main.js",
   "author": "NeuroGame Team",
   "license": "MIT",
