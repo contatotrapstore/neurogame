@@ -17,7 +17,7 @@ if (typeof electronModule === 'string' || !process.versions?.electron) {
   return;
 }
 
-const { app, BrowserWindow, ipcMain, Menu, dialog } = electronModule;
+const { app, BrowserWindow, ipcMain, Menu, dialog, globalShortcut } = electronModule;
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -28,6 +28,7 @@ const axios = require('axios');
 let store;
 let mainWindow;
 let isDev;
+let isPlayingGame = false;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -321,6 +322,41 @@ function registerIpcHandlers() {
 
   ipcMain.handle('get-app-version', () => {
     return app.getVersion();
+  });
+
+  // Game state management for global shortcuts
+  ipcMain.on('game-started', () => {
+    console.log('[main] Game started, registering ESC shortcut');
+    isPlayingGame = true;
+
+    // Registrar atalho global para ESC
+    try {
+      globalShortcut.register('Escape', () => {
+        console.log('[main] ESC pressed globally, sending exit-game signal');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('force-exit-game');
+        }
+      });
+
+      // Atalho alternativo: Ctrl+Q
+      globalShortcut.register('CommandOrControl+Q', () => {
+        console.log('[main] Ctrl+Q pressed, sending exit-game signal');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('force-exit-game');
+        }
+      });
+    } catch (error) {
+      console.error('[main] Failed to register shortcuts:', error);
+    }
+  });
+
+  ipcMain.on('game-stopped', () => {
+    console.log('[main] Game stopped, unregistering shortcuts');
+    isPlayingGame = false;
+
+    // Desregistrar atalhos
+    globalShortcut.unregister('Escape');
+    globalShortcut.unregister('CommandOrControl+Q');
   });
 }
 

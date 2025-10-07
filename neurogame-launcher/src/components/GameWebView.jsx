@@ -73,17 +73,26 @@ function GameWebView({ gamePath, onExit }) {
           });
         };
 
-        // Listener para ESC dentro do jogo
-        document.addEventListener('keydown', (e) => {
+        // Listener SUPER AGRESSIVO para ESC dentro do jogo
+        // Múltiplos níveis de captura para garantir que funcione
+        const escapeHandler = (e) => {
           if (e.key === 'Escape' || e.keyCode === 27) {
             e.preventDefault();
             e.stopPropagation();
-            // Envia mensagem para o launcher
-            if (window.electronAPI) {
-              window.electronAPI.exitGame();
-            }
+            e.stopImmediatePropagation();
+            console.log('[Game] ESC captured in game, but will be handled by main process');
+            return false;
           }
-        }, true); // useCapture=true para capturar antes do jogo
+        };
+
+        // Capturar em TODOS os níveis possíveis
+        document.addEventListener('keydown', escapeHandler, true); // Capture phase
+        document.addEventListener('keydown', escapeHandler, false); // Bubble phase
+        window.addEventListener('keydown', escapeHandler, true); // Window level
+
+        // Também capturar keyup para prevenir ações
+        document.addEventListener('keyup', escapeHandler, true);
+        window.addEventListener('keyup', escapeHandler, true);
 
         ensureMetaViewport();
         stretch();
@@ -121,6 +130,28 @@ function GameWebView({ gamePath, onExit }) {
       }, 3000);
     }
   }, [isFullscreen]);
+
+  // Notificar main process sobre estado do jogo
+  useEffect(() => {
+    // Notificar que jogo iniciou
+    window.electronAPI.game.notifyStarted();
+    console.log('[GameWebView] Notified main process: game started');
+
+    // Registrar listener para force exit
+    const handleForceExit = () => {
+      console.log('[GameWebView] Received force exit signal from main process');
+      onExit();
+    };
+
+    const unsubscribeForceExit = window.electronAPI.game.onForceExit(handleForceExit);
+
+    return () => {
+      // Cleanup ao desmontar
+      window.electronAPI.game.notifyStopped();
+      console.log('[GameWebView] Notified main process: game stopped');
+      unsubscribeForceExit();
+    };
+  }, [onExit]);
 
   useEffect(() => {
     const webview = webviewRef.current;

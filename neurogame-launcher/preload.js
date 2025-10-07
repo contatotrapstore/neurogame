@@ -52,16 +52,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Event listeners
   on: (channel, callback) => {
-    const validChannels = ['refresh-library', 'show-about'];
+    const validChannels = ['refresh-library', 'show-about', 'force-exit-game'];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (event, ...args) => callback(...args));
     }
   },
 
   removeListener: (channel, callback) => {
-    const validChannels = ['refresh-library', 'show-about'];
+    const validChannels = ['refresh-library', 'show-about', 'force-exit-game'];
     if (validChannels.includes(channel)) {
       ipcRenderer.removeListener(channel, callback);
+    }
+  },
+
+  // Game state management
+  game: {
+    notifyStarted: () => ipcRenderer.send('game-started'),
+    notifyStopped: () => ipcRenderer.send('game-stopped'),
+    onForceExit: (callback) => {
+      if (typeof callback !== 'function') return () => {};
+      const listener = () => callback();
+      ipcRenderer.on('force-exit-game', listener);
+      return () => ipcRenderer.removeListener('force-exit-game', listener);
     }
   }
 });
