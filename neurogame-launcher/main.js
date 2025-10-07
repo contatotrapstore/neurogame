@@ -166,10 +166,8 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('get-games-path', () => {
-    const appPath = app.getAppPath();
-    const gamesPath = isDev
-      ? path.join(path.dirname(appPath), 'Jogos')
-      : path.join(path.dirname(path.dirname(appPath)), 'Jogos');
+    // Usar userData que sempre tem permissão de escrita
+    const gamesPath = path.join(app.getPath('userData'), 'Jogos');
     return gamesPath;
   });
 
@@ -179,10 +177,7 @@ function registerIpcHandlers() {
 
   ipcMain.handle('check-game-exists', async (event, folderPath) => {
     try {
-      const gamesPath = isDev
-        ? path.join(path.dirname(app.getAppPath()), 'Jogos')
-        : path.join(path.dirname(path.dirname(app.getAppPath())), 'Jogos');
-
+      const gamesPath = path.join(app.getPath('userData'), 'Jogos');
       const gamePath = path.join(gamesPath, folderPath, 'index.html');
       const exists = fs.existsSync(gamePath);
 
@@ -211,10 +206,7 @@ function registerIpcHandlers() {
     }
 
     const win = BrowserWindow.fromWebContents(event.sender);
-    const gamesPath = isDev
-      ? path.join(path.dirname(app.getAppPath()), 'Jogos')
-      : path.join(path.dirname(path.dirname(app.getAppPath())), 'Jogos');
-
+    const gamesPath = path.join(app.getPath('userData'), 'Jogos');
     const tempDir = path.join(app.getPath('temp'), 'neurogame-downloads');
     const zipPath = path.join(tempDir, `${gameSlug}.zip`);
     const extractPath = path.join(gamesPath, folderPath);
