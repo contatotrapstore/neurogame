@@ -11,8 +11,13 @@ import {
   Switch,
   MenuItem,
   InputAdornment,
-  Chip
+  Chip,
+  Box,
+  Typography,
+  Alert,
+  LinearProgress
 } from '@mui/material';
+import { CloudUpload, Folder } from '@mui/icons-material';
 
 // Helper para gerar slug automático
 const generateSlug = (name) => {
@@ -43,24 +48,18 @@ const defaultState = {
   slug: '',
   description: '',
   category: '',
-  folderPath: '',
-  coverImage: '',
-  coverImageLocal: '',
   version: '1.0.0',
-  downloadUrl: '',
-  fileSize: null,
-  checksum: '',
-  installerType: 'exe',
-  minimumDiskSpace: null,
   order: 0,
-  isActive: true
+  isActive: true,
+  gameFolder: null,
+  coverImageFile: null
 };
 
 const GameForm = ({ open, onClose, onSave, game }) => {
   const [formData, setFormData] = useState(defaultState);
   const [errors, setErrors] = useState({});
-  const [fileSizeMB, setFileSizeMB] = useState('');
-  const [diskSpaceMB, setDiskSpaceMB] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (game) {
@@ -69,26 +68,18 @@ const GameForm = ({ open, onClose, onSave, game }) => {
         slug: game.slug || '',
         description: game.description || '',
         category: game.category || '',
-        folderPath: game.folderPath || '',
-        coverImage: game.coverImage || '',
-        coverImageLocal: game.coverImageLocal || '',
         version: game.version || '1.0.0',
-        downloadUrl: game.downloadUrl || '',
-        fileSize: game.fileSize || null,
-        checksum: game.checksum || '',
-        installerType: game.installerType || 'exe',
-        minimumDiskSpace: game.minimumDiskSpace || null,
         order: game.order ?? 0,
-        isActive: game.isActive ?? true
+        isActive: game.isActive ?? true,
+        gameFolder: null,
+        coverImageFile: null
       });
-      setFileSizeMB(formatBytes(game.fileSize));
-      setDiskSpaceMB(formatBytes(game.minimumDiskSpace));
     } else {
       setFormData(defaultState);
-      setFileSizeMB('');
-      setDiskSpaceMB('');
     }
     setErrors({});
+    setUploading(false);
+    setUploadProgress(0);
   }, [game, open]);
 
   const handleChange = (event) => {
@@ -114,22 +105,24 @@ const GameForm = ({ open, onClose, onSave, game }) => {
     }
   };
 
-  const handleFileSizeChange = (event) => {
-    const mb = event.target.value;
-    setFileSizeMB(mb);
-    setFormData((prev) => ({
-      ...prev,
-      fileSize: mbToBytes(mb)
-    }));
+  const handleFolderUpload = (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        gameFolder: files
+      }));
+    }
   };
 
-  const handleDiskSpaceChange = (event) => {
-    const mb = event.target.value;
-    setDiskSpaceMB(mb);
-    setFormData((prev) => ({
-      ...prev,
-      minimumDiskSpace: mbToBytes(mb)
-    }));
+  const handleCoverUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        coverImageFile: file
+      }));
+    }
   };
 
   const validate = () => {
@@ -145,43 +138,63 @@ const GameForm = ({ open, onClose, onSave, game }) => {
       nextErrors.slug = 'Use apenas letras minúsculas, números e hífens';
     }
 
-    if (!formData.folderPath.trim()) {
-      nextErrors.folderPath = 'Caminho da pasta é obrigatório';
+    if (!game && !formData.gameFolder) {
+      nextErrors.gameFolder = 'Selecione a pasta do jogo';
     }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
-    const payload = {
-      name: formData.name.trim(),
-      slug: formData.slug.trim(),
-      description: formData.description.trim(),
-      category: formData.category.trim(),
-      folderPath: formData.folderPath.trim(),
-      coverImage: formData.coverImage.trim(),
-      coverImageLocal: formData.coverImageLocal.trim(),
-      version: formData.version.trim() || '1.0.0',
-      downloadUrl: formData.downloadUrl.trim(),
-      fileSize: formData.fileSize,
-      checksum: formData.checksum.trim(),
-      installerType: formData.installerType || 'exe',
-      minimumDiskSpace: formData.minimumDiskSpace,
-      order: Number(formData.order) || 0,
-      isActive: formData.isActive
-    };
+    setUploading(true);
+    setUploadProgress(0);
 
-    onSave(payload);
+    try {
+      const payload = new FormData();
+
+      // Dados básicos do jogo
+      payload.append('name', formData.name.trim());
+      payload.append('slug', formData.slug.trim());
+      payload.append('description', formData.description.trim());
+      payload.append('category', formData.category.trim());
+      payload.append('version', formData.version.trim() || '1.0.0');
+      payload.append('order', Number(formData.order) || 0);
+      payload.append('isActive', formData.isActive);
+
+      // Upload da pasta do jogo (apenas em criação)
+      if (!game && formData.gameFolder) {
+        for (const file of formData.gameFolder) {
+          payload.append('gameFiles', file, file.webkitRelativePath || file.name);
+        }
+      }
+
+      // Upload da imagem de capa
+      if (formData.coverImageFile) {
+        payload.append('coverImage', formData.coverImageFile);
+      }
+
+      // Se for edição, incluir ID
+      if (game) {
+        payload.append('id', game.id);
+      }
+
+      await onSave(payload);
+    } catch (error) {
+      console.error('Erro ao enviar jogo:', error);
+      setErrors({ submit: 'Erro ao enviar dados. Tente novamente.' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      maxWidth="md"
+      onClose={!uploading ? onClose : undefined}
+      maxWidth="sm"
       fullWidth
       PaperProps={{
         sx: { borderRadius: 0 }
@@ -189,8 +202,20 @@ const GameForm = ({ open, onClose, onSave, game }) => {
     >
       <DialogTitle>{game ? 'Editar Jogo' : 'Criar Novo Jogo'}</DialogTitle>
       <DialogContent>
+        {uploading && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" gutterBottom>Enviando arquivos...</Typography>
+            <LinearProgress variant="determinate" value={uploadProgress} />
+          </Box>
+        )}
+
+        {errors.submit && (
+          <Alert severity="error" sx={{ mb: 2 }}>{errors.submit}</Alert>
+        )}
+
         <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} sm={6}>
+          {/* Nome do Jogo */}
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Nome do jogo"
@@ -198,32 +223,28 @@ const GameForm = ({ open, onClose, onSave, game }) => {
               value={formData.name}
               onChange={handleChange}
               error={Boolean(errors.name)}
-              helperText={errors.name}
+              helperText={errors.name || 'Digite o nome completo do jogo'}
               required
+              disabled={uploading}
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          {/* Slug - gerado automaticamente */}
+          <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Slug"
+              label="Identificador (Slug)"
               name="slug"
               value={formData.slug}
               onChange={handleChange}
               error={Boolean(errors.slug)}
-              helperText={errors.slug || (game ? 'URL única do jogo' : '✨ Gerado automaticamente')}
+              helperText={errors.slug || '✨ Gerado automaticamente a partir do nome'}
               required
-              disabled={!game}
-              InputProps={{
-                endAdornment: !game && formData.slug && (
-                  <InputAdornment position="end">
-                    <Chip label="Auto" size="small" color="primary" variant="outlined" />
-                  </InputAdornment>
-                )
-              }}
+              disabled={!game || uploading}
             />
           </Grid>
 
+          {/* Descrição */}
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -232,10 +253,13 @@ const GameForm = ({ open, onClose, onSave, game }) => {
               value={formData.description}
               onChange={handleChange}
               multiline
-              rows={3}
+              rows={2}
+              placeholder="Breve descrição do jogo..."
+              disabled={uploading}
             />
           </Grid>
 
+          {/* Categoria */}
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
@@ -244,7 +268,7 @@ const GameForm = ({ open, onClose, onSave, game }) => {
               name="category"
               value={formData.category}
               onChange={handleChange}
-              helperText="Selecione a categoria do jogo"
+              disabled={uploading}
             >
               <MenuItem value="">Nenhuma</MenuItem>
               <MenuItem value="Ação">Ação</MenuItem>
@@ -257,142 +281,93 @@ const GameForm = ({ open, onClose, onSave, game }) => {
             </TextField>
           </Grid>
 
+          {/* Versão */}
           <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Caminho da Pasta"
-              name="folderPath"
-              value={formData.folderPath}
-              onChange={handleChange}
-              error={Boolean(errors.folderPath)}
-              helperText={errors.folderPath || 'Ex: Jogos/autorama'}
-              required
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="URL da Imagem de Capa"
-              name="coverImage"
-              value={formData.coverImage}
-              onChange={handleChange}
-              helperText="URL externa (opcional)"
-              placeholder="https://exemplo.com/capa.jpg"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Caminho Local da Capa"
-              name="coverImageLocal"
-              value={formData.coverImageLocal}
-              onChange={handleChange}
-              helperText="Caminho no launcher (opcional)"
-              placeholder="assets/covers/autorama.jpg"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
             <TextField
               fullWidth
               label="Versão"
               name="version"
               value={formData.version}
               onChange={handleChange}
-              helperText="Versão do jogo"
               placeholder="1.0.0"
+              disabled={uploading}
             />
           </Grid>
 
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              select
-              label="Tipo de Instalador"
-              name="installerType"
-              value={formData.installerType}
-              onChange={handleChange}
-              helperText="Formato do arquivo"
-            >
-              <MenuItem value="exe">EXE (Windows)</MenuItem>
-              <MenuItem value="msi">MSI (Windows)</MenuItem>
-              <MenuItem value="zip">ZIP (Compactado)</MenuItem>
-              <MenuItem value="dmg">DMG (macOS)</MenuItem>
-              <MenuItem value="deb">DEB (Linux)</MenuItem>
-            </TextField>
-          </Grid>
+          {/* Upload da Pasta do Jogo - apenas em criação */}
+          {!game && (
+            <Grid item xs={12}>
+              <input
+                accept="*"
+                style={{ display: 'none' }}
+                id="game-folder-upload"
+                type="file"
+                webkitdirectory=""
+                directory=""
+                multiple
+                onChange={handleFolderUpload}
+                disabled={uploading}
+              />
+              <label htmlFor="game-folder-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  fullWidth
+                  startIcon={<Folder />}
+                  sx={{ py: 2 }}
+                  disabled={uploading}
+                  color={errors.gameFolder ? 'error' : 'primary'}
+                >
+                  {formData.gameFolder
+                    ? `✓ ${formData.gameFolder.length} arquivos selecionados`
+                    : 'Selecionar Pasta do Jogo *'
+                  }
+                </Button>
+              </label>
+              {errors.gameFolder && (
+                <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                  {errors.gameFolder}
+                </Typography>
+              )}
+              {!errors.gameFolder && (
+                <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                  Selecione a pasta completa contendo todos os arquivos do jogo
+                </Typography>
+              )}
+            </Grid>
+          )}
 
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Ordem"
-              name="order"
-              type="number"
-              value={formData.order}
-              onChange={handleChange}
-              helperText="Posição na lista"
-              InputProps={{ inputProps: { min: 0 } }}
-            />
-          </Grid>
-
+          {/* Upload da Imagem de Capa */}
           <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="URL de Download"
-              name="downloadUrl"
-              value={formData.downloadUrl}
-              onChange={handleChange}
-              helperText="URL completa para download do instalador (opcional)"
-              placeholder="https://cdn.neurogame.com.br/jogos/autorama.exe"
+            <input
+              accept="image/*"
+              style={{ display: 'none' }}
+              id="cover-image-upload"
+              type="file"
+              onChange={handleCoverUpload}
+              disabled={uploading}
             />
+            <label htmlFor="cover-image-upload">
+              <Button
+                variant="outlined"
+                component="span"
+                fullWidth
+                startIcon={<CloudUpload />}
+                sx={{ py: 1.5 }}
+                disabled={uploading}
+              >
+                {formData.coverImageFile
+                  ? `✓ ${formData.coverImageFile.name}`
+                  : game ? 'Alterar Imagem de Capa (opcional)' : 'Imagem de Capa (opcional)'
+                }
+              </Button>
+            </label>
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+              Formatos aceitos: JPG, PNG, WebP
+            </Typography>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Tamanho do Arquivo (MB)"
-              type="number"
-              value={fileSizeMB}
-              onChange={handleFileSizeChange}
-              helperText="Tamanho do instalador em megabytes"
-              placeholder="50"
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 },
-                endAdornment: <InputAdornment position="end">MB</InputAdornment>
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Espaço Mínimo (MB)"
-              type="number"
-              value={diskSpaceMB}
-              onChange={handleDiskSpaceChange}
-              helperText="Espaço necessário para instalar"
-              placeholder="100"
-              InputProps={{
-                inputProps: { min: 0, step: 0.01 },
-                endAdornment: <InputAdornment position="end">MB</InputAdornment>
-              }}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Checksum SHA256 (opcional)"
-              name="checksum"
-              value={formData.checksum}
-              onChange={handleChange}
-              helperText="Hash SHA256 para validar integridade do download"
-              placeholder="a1b2c3d4e5f6..."
-            />
-          </Grid>
-
+          {/* Status Ativo/Inativo */}
           <Grid item xs={12}>
             <FormControlLabel
               control={
@@ -401,17 +376,20 @@ const GameForm = ({ open, onClose, onSave, game }) => {
                   onChange={handleChange}
                   name="isActive"
                   color="primary"
+                  disabled={uploading}
                 />
               }
-              label={`Jogo ${formData.isActive ? 'Ativo' : 'Inativo'} (${formData.isActive ? 'visível para usuários' : 'oculto'})`}
+              label={formData.isActive ? '🟢 Jogo Ativo (visível para usuários)' : '🔴 Jogo Inativo (oculto)'}
             />
           </Grid>
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained">
-          {game ? 'Atualizar' : 'Criar'}
+        <Button onClick={onClose} disabled={uploading}>
+          Cancelar
+        </Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={uploading}>
+          {uploading ? 'Enviando...' : (game ? 'Atualizar' : 'Criar Jogo')}
         </Button>
       </DialogActions>
     </Dialog>

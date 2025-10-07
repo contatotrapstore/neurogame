@@ -26,10 +26,8 @@ import { logout } from '../utils/auth';
 import logoUrl from '../assets/logo-branca.png';
 
 const NAV_LINKS = [
-  { label: 'BIBLIOTECA', path: '/library', disabled: false },
-  { label: 'LOJA', path: '/store', disabled: true },
-  { label: 'COMUNIDADE', path: '/community', disabled: true },
-  { label: 'CONFIGURAÇÕES', path: '/settings', disabled: true }
+  { label: 'BIBLIOTECA', path: '/library', disabled: false }
+  // Loja, Comunidade e Configurações removidos
 ];
 
 function Header({ onLogout }) {

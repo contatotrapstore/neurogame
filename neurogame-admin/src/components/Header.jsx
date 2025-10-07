@@ -19,7 +19,6 @@ import {
   Menu as MenuIcon,
   AccountCircle,
   Logout as LogoutIcon,
-  Settings as SettingsIcon,
   HelpOutline as HelpIcon
 } from '@mui/icons-material'
 import { getUser, clearAuth } from '../utils/auth'
@@ -135,12 +134,6 @@ const Header = ({ onMenuClick, drawerWidth }) => {
             {currentUser?.email || 'Admin'}
           </MenuItem>
           <Divider />
-          <MenuItem onClick={handleClose}>
-            <ListItemIcon>
-              <SettingsIcon fontSize="small" />
-            </ListItemIcon>
-            Configurações
-          </MenuItem>
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
