@@ -33,7 +33,12 @@ jobs:
       - name: Install dependencies
         run: |
           cd neurogame-launcher
-          npm ci
+          npm ci || npm install
+
+      - name: Build React app
+        run: |
+          cd neurogame-launcher
+          npm run build
 
       - name: Build Windows installer
         run: |
@@ -65,7 +70,12 @@ jobs:
       - name: Install dependencies
         run: |
           cd neurogame-launcher
-          npm ci
+          npm ci || npm install
+
+      - name: Build React app
+        run: |
+          cd neurogame-launcher
+          npm run build
 
       - name: Build macOS app
         run: |
@@ -100,7 +110,12 @@ jobs:
       - name: Install dependencies
         run: |
           cd neurogame-launcher
-          npm ci
+          npm ci || npm install
+
+      - name: Build React app
+        run: |
+          cd neurogame-launcher
+          npm run build
 
       - name: Build Linux packages
         run: |
