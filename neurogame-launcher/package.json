@@ -24,7 +24,7 @@
     "@mui/material": "^5.15.15",
     "axios": "^1.6.8",
     "electron-store": "^8.2.0",
-    "electron-updater": "^6.6.2",
+    "extract-zip": "^2.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3"
@@ -83,11 +83,9 @@
       "allowElevation": true,
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "differentialPackage": false
     },
-    "publish": {
-      "provider": "generic",
-      "url": "https://neurogame.onrender.com/api/v1/downloads"
-    }
+    "publish": null
   }
 }

@@ -22,7 +22,8 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const Store = require('electron-store');
-const { autoUpdater } = require('electron-updater');
+const extract = require('extract-zip');
+const axios = require('axios');
 
 let store;
 let mainWindow;
@@ -199,128 +200,136 @@ function registerIpcHandlers() {
     }
   });
 
+  ipcMain.handle('download-and-extract-game', async (event, payload) => {
+    const { gameSlug, folderPath, apiUrl } = payload;
 
-  // Auto-updater handlers
-  ipcMain.handle('check-for-updates', async () => {
-    if (isDev) {
+    if (!gameSlug || !folderPath || !apiUrl) {
       return {
-        available: false,
-        version: app.getVersion(),
-        isDev: true
+        success: false,
+        message: 'Parâmetros incompletos para download'
       };
     }
+
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const gamesPath = isDev
+      ? path.join(path.dirname(app.getAppPath()), 'Jogos')
+      : path.join(path.dirname(path.dirname(app.getAppPath())), 'Jogos');
+
+    const tempDir = path.join(app.getPath('temp'), 'neurogame-downloads');
+    const zipPath = path.join(tempDir, `${gameSlug}.zip`);
+    const extractPath = path.join(gamesPath, folderPath);
 
     try {
-      const result = await autoUpdater.checkForUpdates();
+      // Criar diretórios necessários
+      await fs.promises.mkdir(tempDir, { recursive: true });
+      await fs.promises.mkdir(gamesPath, { recursive: true });
+
+      // Remover arquivos antigos se existirem
+      if (fs.existsSync(zipPath)) {
+        await fs.promises.unlink(zipPath);
+      }
+
+      // Download do ZIP usando axios
+      const downloadUrl = `${apiUrl}/downloads/games/${gameSlug}`;
+      console.log(`[download] Downloading game from: ${downloadUrl}`);
+
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'downloading',
+        message: 'Baixando jogo...'
+      });
+
+      const response = await axios({
+        method: 'get',
+        url: downloadUrl,
+        responseType: 'stream',
+        onDownloadProgress: (progressEvent) => {
+          const percentCompleted = progressEvent.total
+            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            : 0;
+
+          event.sender.send('game-install-progress', {
+            gameSlug,
+            status: 'downloading',
+            progress: percentCompleted,
+            transferred: progressEvent.loaded,
+            total: progressEvent.total || 0
+          });
+        }
+      });
+
+      const writer = fs.createWriteStream(zipPath);
+      response.data.pipe(writer);
+
+      await new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+      });
+
+      const downloadedPath = zipPath;
+      console.log(`[download] Game downloaded to: ${downloadedPath}`);
+
+      // Extrair ZIP
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'extracting',
+        message: 'Extraindo arquivos...'
+      });
+
+      console.log(`[extract] Extracting to: ${extractPath}`);
+      await extract(downloadedPath, { dir: extractPath });
+
+      // Verificar se index.html foi extraído
+      const indexPath = path.join(extractPath, 'index.html');
+      if (!fs.existsSync(indexPath)) {
+        throw new Error('Arquivo index.html não encontrado após extração');
+      }
+
+      // Limpar arquivo ZIP temporário
+      await fs.promises.unlink(downloadedPath).catch(() => {});
+
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'completed',
+        message: 'Instalação concluída!'
+      });
+
       return {
-        available: result.updateInfo.version !== app.getVersion(),
-        version: app.getVersion(),
-        latestVersion: result.updateInfo.version,
-        isDev: false
+        success: true,
+        extractPath,
+        indexPath
       };
     } catch (error) {
-      console.error('Error checking for updates:', error);
+      console.error('[download-extract] Error:', error);
+
+      // Limpar em caso de erro
+      try {
+        if (fs.existsSync(zipPath)) {
+          await fs.promises.unlink(zipPath);
+        }
+        if (fs.existsSync(extractPath)) {
+          await fs.promises.rm(extractPath, { recursive: true, force: true });
+        }
+      } catch (cleanupError) {
+        console.error('[cleanup] Error:', cleanupError);
+      }
+
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'error',
+        message: error.message
+      });
+
       return {
-        available: false,
-        version: app.getVersion(),
-        error: error.message
+        success: false,
+        message: error.message || 'Erro ao baixar e instalar jogo'
       };
     }
-  });
-
-  ipcMain.handle('download-update', async () => {
-    if (isDev) return { success: false, message: 'Updates disabled in dev mode' };
-
-    try {
-      await autoUpdater.downloadUpdate();
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
-  });
-
-  ipcMain.handle('install-update', () => {
-    if (isDev) return;
-    autoUpdater.quitAndInstall();
   });
 
   ipcMain.handle('get-app-version', () => {
     return app.getVersion();
   });
-}
-
-function setupAutoUpdater() {
-  if (isDev) {
-    console.log('[updater] Auto-updater disabled in development mode');
-    return;
-  }
-
-  // Configure auto-updater
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
-
-  autoUpdater.on('checking-for-update', () => {
-    console.log('[updater] Checking for updates...');
-    mainWindow?.webContents.send('update-status', { status: 'checking' });
-  });
-
-  autoUpdater.on('update-available', (info) => {
-    console.log('[updater] Update available:', info.version);
-    mainWindow?.webContents.send('update-status', {
-      status: 'available',
-      version: info.version,
-      releaseNotes: info.releaseNotes
-    });
-  });
-
-  autoUpdater.on('update-not-available', (info) => {
-    console.log('[updater] Update not available');
-    mainWindow?.webContents.send('update-status', { status: 'not-available' });
-  });
-
-  autoUpdater.on('error', (err) => {
-    console.error('[updater] Error:', err);
-    mainWindow?.webContents.send('update-status', {
-      status: 'error',
-      error: err.message
-    });
-  });
-
-  autoUpdater.on('download-progress', (progressObj) => {
-    console.log(`[updater] Download progress: ${progressObj.percent}%`);
-    mainWindow?.webContents.send('update-status', {
-      status: 'downloading',
-      progress: progressObj.percent
-    });
-  });
-
-  autoUpdater.on('update-downloaded', (info) => {
-    console.log('[updater] Update downloaded');
-    mainWindow?.webContents.send('update-status', {
-      status: 'downloaded',
-      version: info.version
-    });
-
-    // Show dialog to install
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Atualização Disponível',
-      message: `Uma nova versão (${info.version}) foi baixada.`,
-      detail: 'O launcher será reiniciado para aplicar a atualização.',
-      buttons: ['Instalar Agora', 'Instalar Depois']
-    }).then((result) => {
-      if (result.response === 0) {
-        autoUpdater.quitAndInstall();
-      }
-    });
-  });
-
-  // Check for updates on startup (after 5 seconds)
-  setTimeout(() => {
-    autoUpdater.checkForUpdates().catch(err => {
-      console.error('[updater] Failed to check for updates:', err);
-    });
-  }, 5000);
 }
 
 // App lifecycle
@@ -335,7 +344,6 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   createWindow();
-  setupAutoUpdater();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
