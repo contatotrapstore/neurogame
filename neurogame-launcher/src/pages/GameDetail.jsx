@@ -23,8 +23,7 @@ import {
   Category,
   Lock,
   Send,
-  Download,
-  LinearProgress
+  Download
 } from '@mui/icons-material';
 import GameWebView from '../components/GameWebView';
 import api from '../services/api';
