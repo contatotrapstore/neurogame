@@ -107,6 +107,11 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install Linux dependencies for electron-builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
       - name: Install dependencies
         run: |
           cd neurogame-launcher
