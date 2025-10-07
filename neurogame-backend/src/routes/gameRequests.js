@@ -161,23 +161,49 @@ router.patch('/:id', authenticate, authorizeAdmin, async (req, res) => {
 
     if (updateError) throw updateError;
 
-    // Se aprovado, criar acesso ao jogo
+    // Se aprovado, liberar TODOS os jogos para o usuário
     if (status === 'approved') {
-      const { error: accessError } = await supabase
-        .from('user_game_access')
-        .insert([{
+      // Buscar todos os jogos ativos
+      const { data: allGames, error: gamesError } = await supabase
+        .from('games')
+        .select('id')
+        .eq('is_active', true);
+
+      if (gamesError) {
+        console.error('Erro ao buscar jogos:', gamesError);
+      } else if (allGames && allGames.length > 0) {
+        // Criar acesso para todos os jogos
+        const gameAccesses = allGames.map(game => ({
           user_id: request.user.id,
-          game_id: request.game.id,
+          game_id: game.id,
           granted_by: req.user.id,
           granted_at: new Date().toISOString()
-        }]);
+        }));
 
-      if (accessError) {
-        console.error('Erro ao criar acesso ao jogo:', accessError);
+        const { error: accessError } = await supabase
+          .from('user_game_access')
+          .upsert(gameAccesses, {
+            onConflict: 'user_id,game_id',
+            ignoreDuplicates: false
+          });
+
+        if (accessError) {
+          console.error('Erro ao criar acesso aos jogos:', accessError);
+        } else {
+          console.log(`✅ Liberados ${allGames.length} jogos para o usuário ${request.user.id}`);
+        }
       }
     }
 
-    res.json(updatedRequest);
+    // Adicionar informação sobre jogos liberados na resposta
+    const response = {
+      ...updatedRequest,
+      message: status === 'approved'
+        ? 'Requisição aprovada! Todos os jogos foram liberados para este usuário.'
+        : 'Requisição rejeitada.'
+    };
+
+    res.json(response);
   } catch (error) {
     console.error('Erro ao atualizar requisição:', error);
     res.status(500).json({ message: 'Erro ao processar requisição' });

@@ -252,7 +252,13 @@ const Requests = () => {
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
             {dialogAction === 'approve'
-              ? `Tem certeza que deseja aprovar o acesso de ${selectedRequest?.user?.email} ao jogo "${selectedRequest?.game?.name}"?`
+              ? (
+                <>
+                  <strong>ATENÇÃO:</strong> Ao aprovar esta requisição, <strong>TODOS OS JOGOS</strong> serão liberados automaticamente para o usuário <strong>{selectedRequest?.user?.email}</strong>.
+                  <br /><br />
+                  O usuário não precisará solicitar acesso aos outros jogos individualmente.
+                </>
+              )
               : `Tem certeza que deseja rejeitar a requisição de ${selectedRequest?.user?.email}?`
             }
           </DialogContentText>
