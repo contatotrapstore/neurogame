@@ -532,9 +532,8 @@ app.whenReady().then(() => {
   store = new Store();
 
   // Check if running in development mode
-  // Considera dev se NODE_ENV=development OU se existe pasta node_modules/electron
-  const hasElectronDevFolder = fs.existsSync(path.join(__dirname, 'node_modules', 'electron'));
-  isDev = process.env.NODE_ENV === 'development' || !app.isPackaged || hasElectronDevFolder;
+  // Usa app.isPackaged como fonte principal de verdade
+  isDev = !app.isPackaged;
   console.log(`[launcher] isDev: ${isDev} | NODE_ENV: ${process.env.NODE_ENV} | isPackaged: ${app.isPackaged}`);
 
   registerIpcHandlers();
