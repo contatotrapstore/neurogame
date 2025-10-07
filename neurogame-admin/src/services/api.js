@@ -155,12 +155,18 @@ const mapSubscription = (subscription) => {
 
 export const authAPI = {
   login: async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
-    const payload = response.data?.data || {};
+    // Suporta login com email ou username
+    // Se o campo 'email' não contém @, assume que é um username
+    const payload = credentials.email?.includes('@')
+      ? { email: credentials.email, password: credentials.password }
+      : { username: credentials.email, password: credentials.password };
+
+    const response = await api.post('/auth/login', payload);
+    const data = response.data?.data || {};
     return {
-      token: payload.token,
-      refreshToken: payload.refreshToken,
-      user: mapUser(payload.user)
+      token: data.token,
+      refreshToken: data.refreshToken,
+      user: mapUser(data.user)
     };
   },
   logout: () => api.post('/auth/logout'),

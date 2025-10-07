@@ -95,16 +95,17 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="E-mail"
+                label="E-mail ou Username"
                 name="email"
-                type="email"
+                type="text"
                 value={formData.email}
                 onChange={handleChange}
                 margin="normal"
                 variant="outlined"
-                autoComplete="email"
+                autoComplete="username"
                 autoFocus
                 disabled={loading}
+                helperText="Digite seu e-mail ou username"
               />
 
               <TextField
