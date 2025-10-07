@@ -1,8 +1,8 @@
-version: 1.0.3
+version: 1.0.4
 files:
-  - url: NeuroGame Launcher Setup 1.0.3.exe
-    sha512: iKAO/mgH7nQjlGuKXgKaQdwCrAbtzbnl3vvQi2Gha1+udWB8VkDXg5qw1NuNx0XDzIgAZVLIKPkyO8rbmW3Mug==
-    size: 86714975
-path: NeuroGame Launcher Setup 1.0.3.exe
-sha512: iKAO/mgH7nQjlGuKXgKaQdwCrAbtzbnl3vvQi2Gha1+udWB8VkDXg5qw1NuNx0XDzIgAZVLIKPkyO8rbmW3Mug==
-releaseDate: '2025-10-07T03:15:40.742Z'
+  - url: NeuroGame Launcher Setup 1.0.4.exe
+    sha512: X09ymzihFsnM8OzXl6ied0Uj1QN3eOjam02l2qdCM7PuN65uZNrPQU8fzX2X2Uj241WTLB5Ra8gj2U6KnhjmhA==
+    size: 86732833
+path: NeuroGame Launcher Setup 1.0.4.exe
+sha512: X09ymzihFsnM8OzXl6ied0Uj1QN3eOjam02l2qdCM7PuN65uZNrPQU8fzX2X2Uj241WTLB5Ra8gj2U6KnhjmhA==
+releaseDate: '2025-10-07T03:36:37.910Z'
