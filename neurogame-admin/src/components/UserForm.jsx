@@ -8,7 +8,10 @@ import {
   Button,
   Grid,
   FormControlLabel,
-  Switch
+  Switch,
+  Divider,
+  Typography,
+  Box
 } from '@mui/material';
 
 const defaultState = {
@@ -17,7 +20,10 @@ const defaultState = {
   fullName: '',
   password: '',
   isAdmin: false,
-  isActive: true
+  isActive: true,
+  enableManualSubscription: false,
+  subscriptionDays: 30,
+  subscriptionValue: 149.90
 };
 
 const UserForm = ({ open, onClose, onSave, user }) => {
@@ -32,7 +38,10 @@ const UserForm = ({ open, onClose, onSave, user }) => {
         fullName: user.fullName || '',
         password: '',
         isAdmin: user.isAdmin || false,
-        isActive: user.isActive !== undefined ? user.isActive : true
+        isActive: user.isActive !== undefined ? user.isActive : true,
+        enableManualSubscription: false,
+        subscriptionDays: 30,
+        subscriptionValue: 149.90
       });
     } else {
       setFormData(defaultState);
@@ -92,6 +101,15 @@ const UserForm = ({ open, onClose, onSave, user }) => {
 
     if (formData.password) {
       payload.password = formData.password;
+    }
+
+    // Adicionar dados de assinatura manual se habilitado
+    if (formData.enableManualSubscription) {
+      payload.manualSubscription = {
+        enabled: true,
+        durationDays: parseInt(formData.subscriptionDays),
+        value: parseFloat(formData.subscriptionValue)
+      };
     }
 
     onSave(payload);
@@ -175,6 +193,69 @@ const UserForm = ({ open, onClose, onSave, user }) => {
               label="Ativo"
             />
           </Grid>
+
+          {user && (
+            <>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" gutterBottom>
+                  Assinatura Manual
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.enableManualSubscription}
+                      onChange={handleChange}
+                      name="enableManualSubscription"
+                      color="success"
+                    />
+                  }
+                  label="Ativar assinatura manual para este usuário"
+                />
+              </Grid>
+
+              {formData.enableManualSubscription && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Duração (dias)"
+                      name="subscriptionDays"
+                      type="number"
+                      value={formData.subscriptionDays}
+                      onChange={handleChange}
+                      inputProps={{ min: 1 }}
+                      helperText="Número de dias de acesso"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Valor (R$)"
+                      name="subscriptionValue"
+                      type="number"
+                      value={formData.subscriptionValue}
+                      onChange={handleChange}
+                      inputProps={{ min: 0, step: 0.01 }}
+                      helperText="Valor da assinatura"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                      <Typography variant="body2" color="success.dark">
+                        ✓ Ao salvar, uma assinatura de {formData.subscriptionDays} dias no valor de R$ {parseFloat(formData.subscriptionValue).toFixed(2)} será criada para este usuário.
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </>
+              )}
+            </>
+          )}
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>

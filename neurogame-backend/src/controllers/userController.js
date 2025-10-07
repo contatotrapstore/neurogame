@@ -139,7 +139,7 @@ exports.updateUser = async (req, res, next) => {
       });
     }
 
-    const { email, fullName, isActive, isAdmin, password } = req.body;
+    const { email, fullName, isActive, isAdmin, password, manualSubscription } = req.body;
     const bcrypt = require('bcrypt');
 
     const updateData = {};
@@ -162,12 +162,55 @@ exports.updateUser = async (req, res, next) => {
 
     if (error) throw error;
 
+    // Se assinatura manual foi habilitada, criar/atualizar assinatura
+    if (manualSubscription && manualSubscription.enabled) {
+      const { v4: uuidv4 } = require('uuid');
+      const durationDays = manualSubscription.durationDays || 30;
+      const value = manualSubscription.value || 149.90;
+
+      // Verificar se já existe uma assinatura ativa
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', req.params.id)
+        .eq('status', 'active')
+        .single();
+
+      if (existingSub) {
+        // Atualizar assinatura existente
+        await supabase
+          .from('subscriptions')
+          .update({
+            next_due_date: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            plan_value: value,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingSub.id);
+      } else {
+        // Criar nova assinatura
+        await supabase
+          .from('subscriptions')
+          .insert({
+            user_id: req.params.id,
+            asaas_subscription_id: `manual-admin-${uuidv4()}`,
+            status: 'active',
+            plan_value: value,
+            billing_cycle: 'MONTHLY',
+            started_at: new Date().toISOString(),
+            next_due_date: new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            payment_method: 'manual'
+          });
+      }
+    }
+
     // Remove password from response
     delete updatedUser.password;
 
     res.json({
       success: true,
-      message: 'User updated successfully',
+      message: manualSubscription && manualSubscription.enabled
+        ? 'User updated and subscription activated successfully'
+        : 'User updated successfully',
       data: { user: updatedUser }
     });
   } catch (error) {

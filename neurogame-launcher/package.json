@@ -77,10 +77,9 @@
       ],
       "icon": "build/icon.png",
       "category": "public.app-category.games",
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
+      "identity": null,
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "linux": {
@@ -116,12 +115,19 @@
           "y": 220,
           "type": "link",
           "path": "/Applications"
+        },
+        {
+          "x": 270,
+          "y": 340,
+          "type": "file",
+          "path": "build/Instalar NeuroGame.command"
         }
       ],
       "window": {
         "width": 540,
-        "height": 380
-      }
+        "height": 480
+      },
+      "sign": false
     },
     "nsis": {
       "oneClick": false,
