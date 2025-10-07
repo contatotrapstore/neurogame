@@ -43,6 +43,7 @@ jobs:
           path: |
             neurogame-launcher/dist-electron/*.exe
             neurogame-launcher/dist-electron/*.exe.blockmap
+            neurogame-launcher/dist-electron/latest.yml
           retention-days: 30
 
   build-macos:
@@ -77,7 +78,9 @@ jobs:
           name: macos-installer
           path: |
             neurogame-launcher/dist-electron/*.dmg
+            neurogame-launcher/dist-electron/*.dmg.blockmap
             neurogame-launcher/dist-electron/*.zip
+            neurogame-launcher/dist-electron/latest-mac.yml
           retention-days: 30
 
   build-linux:
@@ -111,6 +114,7 @@ jobs:
           path: |
             neurogame-launcher/dist-electron/*.AppImage
             neurogame-launcher/dist-electron/*.deb
+            neurogame-launcher/dist-electron/latest-linux.yml
           retention-days: 30
 
   create-release:

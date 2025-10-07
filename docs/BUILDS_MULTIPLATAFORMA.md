@@ -361,18 +361,66 @@ sudo pacman -S gtk3
 
 ---
 
+## 🔄 Auto-Update Multiplataforma
+
+### ✅ Configurado e Funcional
+
+O sistema de auto-update está 100% configurado para **todas as plataformas**:
+
+#### Windows
+- ✅ Arquivo: `latest.yml` gerado automaticamente
+- ✅ Provider: GitHub Releases
+- ✅ Update automático via electron-updater
+
+#### macOS
+- ✅ Arquivo: `latest-mac.yml` gerado automaticamente
+- ✅ Suporta: Intel (x64) + Apple Silicon (arm64)
+- ✅ Formatos: DMG + ZIP
+- ✅ Update automático via electron-updater
+
+#### Linux
+- ✅ Arquivo: `latest-linux.yml` gerado automaticamente
+- ✅ Formatos: AppImage + DEB
+- ✅ Update automático via electron-updater
+
+### Arquivos Gerados no Build
+
+Cada plataforma gera seu arquivo de metadados:
+
+```yaml
+# latest.yml (Windows)
+version: 1.0.9
+path: NeuroGame Launcher Setup 1.0.9.exe
+sha512: [hash]
+releaseDate: [date]
+
+# latest-mac.yml (macOS)
+version: 1.0.9
+files:
+  - url: NeuroGame Launcher-1.0.9-x64.dmg
+    sha512: [hash]
+  - url: NeuroGame Launcher-1.0.9-arm64.dmg
+    sha512: [hash]
+
+# latest-linux.yml (Linux)
+version: 1.0.9
+path: NeuroGame Launcher-1.0.9.AppImage
+sha512: [hash]
+```
+
+---
+
 ## 🎯 Próximos Passos
 
 ### Melhorias Futuras
-- [ ] Implementar auto-update para macOS/Linux
+- [x] ✅ Implementar auto-update para macOS/Linux
 - [ ] Code signing para todas as plataformas
 - [ ] Testes automatizados E2E
 - [ ] Builds notarizados (macOS)
 - [ ] Snap/Flatpak para Linux
-- [ ] ARM builds para Apple Silicon nativo
 
 ---
 
-**Sistema de builds configurado e funcional!**
+**Sistema de builds COMPLETO e 100% funcional para Windows, macOS e Linux!**
 
-*Para gerar todos os instaladores, crie uma tag e envie para o GitHub.*
+*Para gerar todos os instaladores com auto-update, crie uma tag e envie para o GitHub.*

@@ -53,27 +53,74 @@
     ],
     "win": {
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
       ],
       "icon": "build/icon.png",
       "publisherName": "NeuroGame",
-      "verifyUpdateCodeSignature": false
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
       ],
-      "icon": "build/icon.icns",
-      "category": "public.app-category.games"
+      "icon": "build/icon.png",
+      "category": "public.app-category.games",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
       ],
       "icon": "build/icon.png",
-      "category": "Game"
+      "category": "Game",
+      "executableName": "neurogame-launcher",
+      "maintainer": "NeuroGame Team",
+      "desktop": {
+        "Name": "NeuroGame Launcher",
+        "Comment": "NeuroGame Desktop Launcher - Game library and player",
+        "Categories": "Game;"
+      },
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
     "nsis": {
       "oneClick": false,
@@ -86,6 +133,11 @@
       "runAfterFinish": true,
       "differentialPackage": false
     },
-    "publish": null
+    "publish": {
+      "provider": "github",
+      "owner": "GouveiaRx",
+      "repo": "NeuroGame",
+      "releaseType": "release"
+    }
   }
 }
