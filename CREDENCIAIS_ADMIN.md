@@ -8,7 +8,8 @@
 
 ### 🎯 Como Fazer Login
 
-#### Opção 1: Login com Username (RECOMENDADO)
+**⚠️ IMPORTANTE: Use APENAS o USERNAME para login no painel admin!**
+
 ```json
 {
   "username": "psitalessales",
@@ -16,15 +17,17 @@
 }
 ```
 
-#### Opção 2: Login com Email
+**❌ NÃO USE o email** (existe um bug no backend de produção com este usuário específico):
 ```json
 {
-  "email": "psitales.sales@gmail.com",
+  "email": "psitales.sales@gmail.com",  // ❌ NÃO FUNCIONA
   "password": "23112018Vt!"
 }
 ```
 
-**⚠️ Observação:** Caso o login com email não funcione imediatamente, use o **username** (`psitalessales`).
+**✅ SOLUÇÃO:** No painel admin (https://neuro-game-nu.vercel.app/login), digite no campo "E-mail":
+- **Digite:** `psitalessales` (o username)
+- **Senha:** `23112018Vt!`
 
 ---
 
@@ -52,9 +55,10 @@
 ### Painel Admin
 https://neuro-game-nu.vercel.app/login
 
-**Login:**
-- Username: `psitalessales`
-- Senha: `23112018Vt!`
+**Login (ATENÇÃO - leia com cuidado!):**
+- **No campo "E-mail"**: digite `psitalessales` (sim, o username!)
+- **No campo "Senha"**: digite `23112018Vt!`
+- ⚠️ O backend aceita username no campo email!
 
 ### API Backend
 https://neurogame-7av9.onrender.com
@@ -116,4 +120,16 @@ curl -X POST https://neurogame-7av9.onrender.com/api/v1/auth/login \
 
 ---
 
-**Última Atualização:** 07/10/2025 16:40
+---
+
+## 🐛 Problema Conhecido
+
+**Bug:** O login com email `psitales.sales@gmail.com` não funciona no backend de produção, mas o login com username `psitalessales` funciona perfeitamente.
+
+**Causa:** Possível cache ou problema de sincronização no Render.
+
+**Workaround:** Use sempre o username `psitalessales` no campo de email do painel admin.
+
+---
+
+**Última Atualização:** 07/10/2025 17:00
