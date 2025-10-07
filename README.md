@@ -49,10 +49,12 @@ Sistema completo de distribuição e gerenciamento de jogos com launcher desktop
 ### 3️⃣ **Launcher Desktop** (Electron)
 - **Distribuição:** Instalador Windows (.exe)
 - **Repositório:** `neurogame-launcher/`
+- **Versão Atual:** 1.0.5
 - **Funções:**
-  - Biblioteca de jogos
-  - Download e instalação automática
-  - Auto-atualização
+  - Biblioteca de 13 jogos embedados
+  - Download automático com axios + fs
+  - Extração de jogos com extract-zip
+  - Jogos salvos em %APPDATA%
   - Proteção por assinatura
   - Interface moderna (Material-UI)
 
@@ -75,10 +77,12 @@ Sistema completo de distribuição e gerenciamento de jogos com launcher desktop
 - ✅ Conectado ao backend de produção
 
 ### Launcher
-- ✅ Instalador criado (82MB)
-- ✅ Sistema de auto-atualização ativo
-- ✅ Proteção de conteúdo implementada
-- ✅ Downloads funcionando
+- ✅ Instalador v1.0.5 (262MB com 13 jogos embedados)
+- ✅ Download com axios (sem dependências ESM)
+- ✅ Extração com extract-zip
+- ✅ Jogos salvos em %APPDATA% (sem necessidade de admin)
+- ✅ Sistema 100% CommonJS compatível
+- ✅ Downloads e extração funcionando perfeitamente
 
 ### Banco de Dados
 - ✅ 13 jogos com metadados completos
@@ -130,10 +134,12 @@ Todos os jogos estão disponíveis para download em produção:
 - **Deploy:** Vercel
 
 ### Launcher
-- **Framework:** Electron 33
+- **Framework:** Electron 29
 - **UI:** React 18 + Material-UI v5
-- **Build:** Electron Builder
-- **Updates:** electron-updater
+- **Build:** Electron Builder 24
+- **Downloads:** Axios + fs streams
+- **Extração:** extract-zip v2.0.1
+- **Storage:** %APPDATA%/neurogame-launcher/Jogos
 - **Distribuição:** NSIS Installer (Windows)
 
 ---
@@ -182,8 +188,10 @@ Todos os jogos estão disponíveis para download em produção:
 ### Performance
 - API Response Time: ~150-200ms
 - Admin Load Time: ~1.2s
-- Launcher Install Size: 82MB
+- Launcher Install Size: 262MB (com 13 jogos embedados)
 - Database: 13 jogos + usuários
+- Download Speed: Limitado apenas pela conexão do usuário
+- Extração: ~2-5s por jogo
 
 ### Infraestrutura
 - **Backend:** Render Free Tier (upgradeável)
@@ -199,8 +207,9 @@ Todos os jogos estão disponíveis para download em produção:
 
 1. **Baixar o Launcher**
    - Acesse o site ou link de download
-   - Execute o instalador `NeuroGame Launcher Setup 1.0.0.exe`
+   - Execute o instalador `NeuroGame Launcher Setup 1.0.5.exe` (262 MB)
    - Siga o assistente de instalação
+   - **Nota:** Não requer permissões de administrador
 
 2. **Fazer Login**
    - Abra o NeuroGame Launcher
@@ -266,5 +275,6 @@ Proprietary - © 2025 NeuroGame
 
 **Sistema desenvolvido e mantido pela equipe NeuroGame**
 
-*Última atualização: 06/10/2025*
+*Última atualização: 07/10/2025*
 *Status: Produção ✅*
+*Versão Launcher: 1.0.5*
