@@ -49,14 +49,22 @@ function App() {
 
   const checkContentUpdates = async () => {
     try {
-      const updates = await contentUpdater.checkForUpdates();
+      // Verificar e baixar automaticamente jogos novos
+      const result = await contentUpdater.checkAndDownloadNewGames({
+        autoDownload: true,  // Download automático
+        showProgress: true
+      });
 
-      if (updates.hasUpdates) {
-        // Mostrar dialog de atualização
-        setShowContentUpdate(true);
+      if (result.hasNewGames) {
+        console.log(`[App] ${result.downloadedCount} jogos novos foram baixados automaticamente`);
+
+        // Se houver jogos novos, mostrar notificação (opcional)
+        if (result.downloadedCount > 0) {
+          setShowContentUpdate(true);
+        }
       }
     } catch (error) {
-      console.error('Erro ao verificar atualizações de conteúdo:', error);
+      console.error('Erro ao verificar/baixar atualizações de conteúdo:', error);
     }
   };
 

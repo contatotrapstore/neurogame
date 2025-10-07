@@ -317,6 +317,61 @@ class ContentUpdater {
       throw error;
     }
   }
+
+  /**
+   * Verifica e baixa jogos novos automaticamente
+   * Usado ao iniciar o launcher pela primeira vez ou quando há novos jogos
+   */
+  async checkAndDownloadNewGames(options = {}) {
+    const { showProgress = true, autoDownload = true } = options;
+
+    try {
+      log('[ContentUpdater] Verificando novos jogos...');
+
+      const updates = await this.checkForUpdates();
+
+      if (!updates.hasUpdates || updates.newGamesCount === 0) {
+        log('[ContentUpdater] Nenhum jogo novo encontrado');
+        return {
+          hasNewGames: false,
+          downloadedCount: 0,
+          games: []
+        };
+      }
+
+      log(`[ContentUpdater] ${updates.newGamesCount} jogos novos encontrados`);
+
+      if (!autoDownload) {
+        return {
+          hasNewGames: true,
+          downloadedCount: 0,
+          games: updates.games,
+          requiresUserAction: true
+        };
+      }
+
+      // Download automático
+      log('[ContentUpdater] Iniciando download automático de jogos novos...');
+      const results = await this.downloadNewGames(updates.games);
+
+      // Atualizar versão do conteúdo
+      await this.updateContentVersion(updates.contentVersion);
+
+      const successCount = results.filter(r => r.success).length;
+      log(`[ContentUpdater] Download concluído: ${successCount}/${results.length} jogos`);
+
+      return {
+        hasNewGames: true,
+        downloadedCount: successCount,
+        failedCount: results.length - successCount,
+        games: updates.games,
+        results
+      };
+    } catch (error) {
+      logError('[ContentUpdater] Erro ao verificar/baixar novos jogos:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ContentUpdater();
