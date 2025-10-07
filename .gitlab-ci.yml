@@ -10,24 +10,31 @@ variables:
 build-linux:
   stage: build
   only:
-    - tags
     - master
+    - tags
   before_script:
     - npm --version
     - node --version
+    - echo "Starting Linux build..."
   script:
     - cd neurogame-launcher
-    - npm ci --legacy-peer-deps
+    - echo "Installing dependencies..."
+    - npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+    - echo "Building React app..."
     - npm run build
+    - echo "Building Linux installers..."
     - npm run build:linux
+    - echo "Listing generated files..."
+    - ls -lah dist-electron/ || echo "No dist-electron folder"
+    - find dist-electron/ -type f 2>/dev/null || echo "No files found"
   artifacts:
-    name: "neurogame-linux-$CI_COMMIT_TAG"
+    name: "neurogame-linux-${CI_COMMIT_SHORT_SHA}"
+    when: always
     paths:
-      - neurogame-launcher/dist-electron/*.AppImage
-      - neurogame-launcher/dist-electron/*.deb
-      - neurogame-launcher/dist-electron/latest-linux.yml
+      - neurogame-launcher/dist-electron/
     expire_in: 30 days
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
       - neurogame-launcher/node_modules/
+  timeout: 30m
