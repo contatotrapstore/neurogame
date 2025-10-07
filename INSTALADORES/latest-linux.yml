@@ -1,0 +1,11 @@
+version: 1.0.9
+files:
+  - url: NeuroGame Launcher-1.0.9.AppImage
+    sha512: PLACEHOLDER_SHA512_APPIMAGE
+    size: 285000000
+  - url: neurogame-launcher_1.0.9_amd64.deb
+    sha512: PLACEHOLDER_SHA512_DEB
+    size: 275000000
+path: NeuroGame Launcher-1.0.9.AppImage
+sha512: PLACEHOLDER_SHA512_APPIMAGE
+releaseDate: '2025-10-07T06:00:00.000Z'
