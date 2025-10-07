@@ -1,7 +1,8 @@
-# 🎮 Como Funciona o Launcher - Download Automático
+# 🎮 Como Funciona o Launcher - Download Automático e Fullscreen
 
-**Data:** 06/10/2025
+**Data:** 07/10/2025
 **Status:** ✅ Implementado e Funcionando
+**Versão:** 1.0.5
 
 ---
 
@@ -320,6 +321,153 @@ C:\Users\{Usuario}\AppData\Roaming\NeuroGame\
 
 ---
 
-**Última atualização:** 06/10/2025
-**Status:** ✅ Implementado e Funcionando
-**Repositórios:** GitHub + GitLab
+## 🖥️ Sistema de Fullscreen (v1.0.5)
+
+### **Características do Fullscreen**
+
+O launcher possui um sistema avançado de fullscreen com controles inteligentes:
+
+#### **1. Ativação do Fullscreen**
+- **Botão:** Click no ícone de fullscreen (canto superior direito)
+- **Tecla:** Pressione F11 a qualquer momento
+- **Automático:** Alguns jogos podem ativar fullscreen internamente
+
+#### **2. Controles Auto-Hide**
+```
+Ao entrar em fullscreen:
+1. Hint aparece: "Pressione ESC para sair do jogo" (4 segundos)
+2. Controles ficam visíveis por 3 segundos
+3. Controles desaparecem automaticamente
+4. Mover o mouse traz os controles de volta
+5. Controles desaparecem novamente após 3s de inatividade
+```
+
+#### **3. Saída do Fullscreen**
+- **ESC:** Sai do jogo completamente
+- **F11:** Sai apenas do fullscreen (continua no jogo)
+- **Botão X:** Fecha o jogo
+- **Botão Fullscreen:** Alterna entre fullscreen/normal
+
+### **Implementação Técnica**
+
+#### **a) Auto-Hide de Controles**
+```javascript
+// GameWebView.jsx
+- Overlay com opacity 0-1 (não display none)
+- z-index máximo: 2147483647
+- Timer de 3 segundos de inatividade
+- Reaparece instantaneamente com movimento do mouse
+```
+
+#### **b) ESC em Múltiplos Níveis**
+```javascript
+// Captura em TODOS os níveis:
+1. window.addEventListener('keydown', handler, true) // useCapture=true
+2. Script injetado no webview com useCapture=true
+3. Dupla proteção para garantir funcionalidade
+```
+
+#### **c) Indicador Visual**
+```javascript
+// Hint de ESC
+- Aparece por 4 segundos ao entrar em fullscreen
+- Fade in/out suave
+- position: fixed com z-index máximo
+- Não bloqueia interação
+```
+
+### **Estados do Fullscreen**
+
+| Estado | Overlay Visível | ESC Funciona | F11 Funciona |
+|--------|-----------------|--------------|--------------|
+| Normal | ✅ Sempre | ✅ Sim | ✅ Sim |
+| Fullscreen (mouse parado) | ⚠️ Oculto (3s) | ✅ Sim | ✅ Sim |
+| Fullscreen (mouse movendo) | ✅ Visível | ✅ Sim | ✅ Sim |
+| Fullscreen (hover botão) | ✅ Visível | ✅ Sim | ✅ Sim |
+
+### **Troubleshooting Fullscreen**
+
+#### **Controles não aparecem ao mover mouse**
+**Causa:** Mouse não está se movendo suficientemente
+
+**Solução:**
+- Mova o mouse mais vigorosamente
+- Os controles devem aparecer instantaneamente
+- Se não aparecerem, pressione ESC (sempre funciona)
+
+#### **ESC não funciona**
+**Causa:** Muito raro, mas pode acontecer se o jogo capturar o evento
+
+**Solução:**
+1. Pressione ESC novamente (múltiplas vezes se necessário)
+2. Pressione F11 para sair do fullscreen
+3. Click no botão X vermelho (mova o mouse para aparecer)
+4. Alt+Tab para sair do launcher
+
+#### **Fullscreen não ativa**
+**Causa:** Navegador do jogo pode bloquear fullscreen
+
+**Solução:**
+- Use F11 ao invés do botão
+- Alguns jogos precisam de interação do usuário primeiro
+- Click dentro do jogo antes de tentar fullscreen
+
+### **Benefícios do Sistema**
+
+✅ **Imersão total** - Controles desaparecem para não distrair
+✅ **Sempre acessível** - ESC funciona em TODOS os cenários
+✅ **UX intuitiva** - Movimento do mouse traz controles de volta
+✅ **Feedback visual** - Hint mostra como sair
+✅ **Performance** - Usando opacity, não display (sem reflow)
+✅ **Compatibilidade** - Funciona com todos os jogos
+
+---
+
+## 📁 Estrutura de Arquivos v1.0.5
+
+### **Onde os Jogos São Salvos:**
+
+```
+Windows:
+C:\Users\{Usuario}\AppData\Roaming\neurogame-launcher\
+├── config.json              # Configurações (electron-store)
+└── Jogos\
+    ├── autorama\
+    │   └── index.html
+    ├── balao\
+    │   └── index.html
+    ├── batalha-de-tanques\
+    │   └── index.html
+    ├── cabeca-de-metal\
+    │   └── index.html
+    ├── coleta-de-lixo\
+    │   └── index.html
+    ├── jogo-da-velha\
+    │   └── index.html
+    ├── labirinto\
+    │   └── index.html
+    ├── memoria\
+    │   └── index.html
+    ├── quebra-cabeca\
+    │   └── index.html
+    ├── quiz\
+    │   └── index.html
+    ├── snake\
+    │   └── index.html
+    ├── space-invaders\
+    │   └── index.html
+    └── tetris\
+        └── index.html
+
+Downloads Temporários:
+C:\Users\{Usuario}\AppData\Local\Temp\neurogame-downloads\
+└── {game-slug}.zip  # Removido após extração
+```
+
+**Nota:** Os jogos agora são salvos em `%APPDATA%\Roaming\neurogame-launcher\Jogos` ao invés de `Program Files`, eliminando a necessidade de permissões de administrador.
+
+---
+
+**Última atualização:** 07/10/2025
+**Status:** ✅ v1.0.5 - Implementado e Funcionando
+**Repositório:** https://github.com/GouveiaZx/NeuroGame

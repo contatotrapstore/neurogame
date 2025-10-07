@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Box, IconButton, Tooltip, Alert } from '@mui/material';
+import { Box, IconButton, Tooltip, Alert, Typography, Fade } from '@mui/material';
 import { Close, Fullscreen, FullscreenExit } from '@mui/icons-material';
 
 function GameWebView({ gamePath, onExit }) {
   const webviewRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [error, setError] = useState('');
+  const [showOverlay, setShowOverlay] = useState(true);
+  const [showEscHint, setShowEscHint] = useState(false);
+  const mouseTimerRef = useRef(null);
 
   const applyViewportFixes = useCallback((webview) => {
     if (!webview) {
@@ -104,6 +107,21 @@ function GameWebView({ gamePath, onExit }) {
       webview.executeJavaScript(viewportScript, false).catch(() => {});
     }
   }, []);
+  // Mouse movement handler for auto-hide overlay in fullscreen
+  const handleMouseMove = useCallback(() => {
+    if (isFullscreen) {
+      setShowOverlay(true);
+
+      if (mouseTimerRef.current) {
+        clearTimeout(mouseTimerRef.current);
+      }
+
+      mouseTimerRef.current = setTimeout(() => {
+        setShowOverlay(false);
+      }, 3000);
+    }
+  }, [isFullscreen]);
+
   useEffect(() => {
     const webview = webviewRef.current;
 
@@ -129,9 +147,10 @@ function GameWebView({ gamePath, onExit }) {
     };
 
     const handleKeyDown = (event) => {
-      // ESC para sair do jogo
-      if (event.key === 'Escape') {
+      // ESC para sair do jogo - capturado em TODOS os níveis
+      if (event.key === 'Escape' || event.keyCode === 27) {
         event.preventDefault();
+        event.stopPropagation();
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
@@ -148,10 +167,33 @@ function GameWebView({ gamePath, onExit }) {
     webview.addEventListener('did-start-loading', handleStartLoading);
     webview.addEventListener('console-message', handleConsoleMessage);
     webview.addEventListener('dom-ready', handleDomReady);
-    document.addEventListener('keydown', handleKeyDown);
+
+    // Adicionar listener em window com capture=true para garantir captura antes do webview
+    window.addEventListener('keydown', handleKeyDown, true);
 
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isNowFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isNowFullscreen);
+
+      // Mostrar hint de ESC ao entrar em fullscreen
+      if (isNowFullscreen) {
+        setShowEscHint(true);
+        setTimeout(() => setShowEscHint(false), 4000);
+        setShowOverlay(true);
+
+        // Iniciar timer de auto-hide
+        if (mouseTimerRef.current) {
+          clearTimeout(mouseTimerRef.current);
+        }
+        mouseTimerRef.current = setTimeout(() => {
+          setShowOverlay(false);
+        }, 3000);
+      } else {
+        setShowOverlay(true);
+        if (mouseTimerRef.current) {
+          clearTimeout(mouseTimerRef.current);
+        }
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -161,10 +203,14 @@ function GameWebView({ gamePath, onExit }) {
       webview.removeEventListener('did-start-loading', handleStartLoading);
       webview.removeEventListener('console-message', handleConsoleMessage);
       webview.removeEventListener('dom-ready', handleDomReady);
-      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+
+      if (mouseTimerRef.current) {
+        clearTimeout(mouseTimerRef.current);
+      }
     };
-  }, [applyViewportFixes, gamePath]);
+  }, [applyViewportFixes, gamePath, isFullscreen, handleMouseMove]);
 
 
   const handleFullscreenToggle = () => {
@@ -184,6 +230,7 @@ function GameWebView({ gamePath, onExit }) {
 
   return (
     <Box
+      onMouseMove={handleMouseMove}
       sx={{
         position: 'fixed',
         top: 0,
@@ -199,22 +246,48 @@ function GameWebView({ gamePath, onExit }) {
         overflow: 'hidden'
       }}
     >
-      {/* Controls overlay - SEMPRE visível */}
+      {/* ESC Hint - aparece ao entrar em fullscreen */}
+      <Fade in={showEscHint} timeout={500}>
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2147483647,
+            bgcolor: 'rgba(0,0,0,0.9)',
+            color: 'white',
+            px: 3,
+            py: 2,
+            borderRadius: 2,
+            border: '2px solid rgba(255,255,255,0.3)',
+            pointerEvents: 'none'
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600, textAlign: 'center' }}>
+            Pressione ESC para sair do jogo
+          </Typography>
+        </Box>
+      </Fade>
+
+      {/* Controls overlay - auto-hide em fullscreen */}
       <Box
         sx={{
-          position: 'absolute',
+          position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 1000,
+          zIndex: 2147483646,
           display: 'flex',
           justifyContent: 'space-between',
           p: 2,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%)',
-          transition: 'all 0.3s ease-in-out'
+          opacity: showOverlay ? 1 : 0,
+          pointerEvents: showOverlay ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease-in-out'
         }}
       >
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, pointerEvents: 'auto' }}>
           <Tooltip title="Sair do Jogo (ESC)">
             <IconButton
               onClick={handleExit}
@@ -243,6 +316,7 @@ function GameWebView({ gamePath, onExit }) {
               bgcolor: 'rgba(0,0,0,0.9)',
               width: 56,
               height: 56,
+              pointerEvents: 'auto',
               '&:hover': {
                 bgcolor: 'rgba(0,0,0,1)',
                 transform: 'scale(1.1)'

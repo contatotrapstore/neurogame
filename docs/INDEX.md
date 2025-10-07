@@ -8,12 +8,16 @@
 
 - **Backend:** https://neurogame.onrender.com
 - **Admin:** https://neurogame-admin.vercel.app
+- **Launcher:** v1.0.5 (262MB - 13 jogos embedados)
 - **Database:** Supabase (btsarxzpiroprpdcrpcx)
 - **Status:** ✅ 100% Operacional
 
 ---
 
 ## 🚀 Início Rápido
+
+### Status de Produção
+- **[STATUS_PRODUCAO.md](STATUS_PRODUCAO.md)** ⭐ - Status completo do sistema
 
 ### Guias de Deploy
 - **[BACKEND_PRONTO_RENDER.md](BACKEND_PRONTO_RENDER.md)** - Backend no Render
@@ -30,8 +34,8 @@
 
 ## 🎮 Sistema de Jogos
 
-### Launcher Desktop
-- **[FUNCIONAMENTO_LAUNCHER.md](FUNCIONAMENTO_LAUNCHER.md)** ⭐ - Como funciona o auto-download
+### Launcher Desktop (v1.0.5)
+- **[FUNCIONAMENTO_LAUNCHER.md](FUNCIONAMENTO_LAUNCHER.md)** ⭐ - Auto-download + Fullscreen
 - **[IMPLEMENTACAO_LAUNCHER.md](IMPLEMENTACAO_LAUNCHER.md)** - Implementação técnica
 - **[README_INSTALADOR.md](README_INSTALADOR.md)** - Sistema de instalador
 
@@ -106,8 +110,10 @@
 | Backend (Render) | ✅ Online |
 | Admin (Vercel) | ✅ Online |
 | Database (Supabase) | ✅ Ativo |
-| Downloads | ✅ Funcionando |
-| Auto-Download Launcher | ✅ Implementado |
+| Launcher | ✅ v1.0.5 (262MB) |
+| Downloads | ✅ Funcionando (axios) |
+| Auto-Download | ✅ Implementado |
+| Fullscreen | ✅ Auto-hide + ESC |
 | Jogos Cadastrados | ✅ 13 jogos |
 
 ---
@@ -130,10 +136,12 @@
 - Gerenciamento de usuários
 - Dashboard com métricas
 
-### ✅ Launcher Desktop
+### ✅ Launcher Desktop (v1.0.5)
 - Interface Material-UI
-- **Download automático de jogos novos**
-- Auto-atualização (electron-updater)
+- **Download automático com axios + fs streams**
+- **Fullscreen com auto-hide de controles**
+- **ESC funciona em todos os níveis**
+- Jogos em %APPDATA% (sem permissão admin)
 - Proteção por assinatura
 
 ---
@@ -172,8 +180,8 @@
 
 ---
 
-**Última atualização:** 06/10/2025
-**Versão:** 1.0.0
-**Status:** ✅ Produção
+**Última atualização:** 07/10/2025
+**Versão Launcher:** 1.0.5
+**Status:** ✅ Produção - 100% Operacional
 
 **Sistema desenvolvido pela equipe NeuroGame**
