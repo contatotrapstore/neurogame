@@ -72,6 +72,22 @@ if (process.env.NODE_ENV === 'development') {
   app.use('/games', express.static(gamesDir));
 }
 
+// Serve game downloads (ZIP files)
+const downloadsDir = path.resolve(__dirname, '..', 'downloads');
+if (fs.existsSync(downloadsDir)) {
+  app.use('/downloads', express.static(downloadsDir, {
+    setHeaders: (res, filePath) => {
+      if (path.extname(filePath) === '.zip') {
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
+      }
+    }
+  }));
+  console.log(`📦 Serving game downloads from: ${downloadsDir}`);
+} else {
+  console.warn(`⚠️  Downloads directory not found: ${downloadsDir}`);
+}
+
 // API routes
 app.use('/api/v1', routes);
 
