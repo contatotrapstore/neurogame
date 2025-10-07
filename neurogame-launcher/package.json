@@ -133,11 +133,6 @@
       "runAfterFinish": true,
       "differentialPackage": false
     },
-    "publish": {
-      "provider": "github",
-      "owner": "GouveiaRx",
-      "repo": "NeuroGame",
-      "releaseType": "release"
-    }
+    "publish": null
   }
 }
