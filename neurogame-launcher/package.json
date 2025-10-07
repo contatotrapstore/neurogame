@@ -80,7 +80,13 @@
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "identity": null,
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "type": "distribution",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "NeuroGame needs microphone access for some games.",
+        "NSCameraUsageDescription": "NeuroGame needs camera access for some games.",
+        "LSApplicationCategoryType": "public.app-category.games"
+      }
     },
     "linux": {
       "target": [

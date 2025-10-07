@@ -1,29 +1,34 @@
-# Como Instalar o NeuroGame Launcher no macOS
+# 🎮 Como Instalar o NeuroGame Launcher no macOS
 
-O NeuroGame Launcher não é assinado com certificado da Apple, mas incluímos um instalador automático para facilitar!
-
-## Instruções de Instalação
-
-### Método 1: Instalação Automática (RECOMENDADO - MAIS FÁCIL!) 🚀
-
-1. **Baixe o instalador** apropriado para seu Mac:
-   - **Intel Mac (x64)**: `NeuroGame Launcher-X.X.X-x64.dmg`
-   - **Apple Silicon/M1/M2/M3 (arm64)**: `NeuroGame Launcher-X.X.X-arm64.dmg`
-
-2. **Abra o arquivo .dmg** baixado
-
-3. **Clique duas vezes no arquivo "Instalar NeuroGame.command"** dentro do DMG
-
-4. **Pronto!** O instalador automático vai:
-   - Copiar o app para Applications
-   - Remover os bloqueios de segurança do macOS
-   - Abrir o launcher automaticamente
-
-**Observação**: Na primeira vez que clicar no arquivo `.command`, pode aparecer um aviso. Basta ir em **Configurações do Sistema > Privacidade e Segurança** e clicar em **"Abrir Mesmo Assim"** (só precisa fazer isso UMA vez para o instalador).
+⚠️ **IMPORTANTE**: O macOS bloqueia apps não assinados. Mas temos a solução! **É super rápido (30 segundos)**.
 
 ---
 
-### Método 2: Instalação Manual
+## 🚀 MÉTODO RÁPIDO - 1 COMANDO (RECOMENDADO)
+
+### O jeito mais fácil e garantido:
+
+1. **Baixe o instalador** apropriado para seu Mac:
+   - **Intel Mac (antigos)**: `NeuroGame Launcher-X.X.X-x64.zip` ou `.dmg`
+   - **Apple Silicon M1/M2/M3**: `NeuroGame Launcher-X.X.X-arm64.zip` ou `.dmg`
+
+2. **Arraste `NeuroGame Launcher.app` para Applications**
+
+3. **Abra o Terminal** (Aplicativos > Utilitários > Terminal)
+
+4. **COPIE E COLE este comando e pressione ENTER:**
+
+```bash
+sudo xattr -cr "/Applications/NeuroGame Launcher.app" && sudo chmod -R 755 "/Applications/NeuroGame Launcher.app" && open "/Applications/NeuroGame Launcher.app"
+```
+
+5. **Digite sua senha do Mac** (não aparece enquanto digita - é normal!)
+
+6. **PRONTO! 🎉** O launcher abre automaticamente e está pronto para usar!
+
+---
+
+## 📝 Método Alternativo (Interface Gráfica)
 
 1. **Baixe o instalador** apropriado para seu Mac:
    - **Intel Mac (x64)**: `NeuroGame Launcher-X.X.X-x64.dmg`
