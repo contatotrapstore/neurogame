@@ -20,11 +20,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Download operations
   downloads: {
     downloadGame: (options) => ipcRenderer.invoke('download-game', options),
+    checkGameExists: (folderPath) => ipcRenderer.invoke('check-game-exists', folderPath),
+    downloadAndExtractGame: (options) => ipcRenderer.invoke('download-and-extract-game', options),
     onProgress: (callback) => {
       if (typeof callback !== 'function') return () => {};
       const listener = (_event, data) => callback(data);
       ipcRenderer.on('game-download-progress', listener);
       return () => ipcRenderer.removeListener('game-download-progress', listener);
+    },
+    onInstallProgress: (callback) => {
+      if (typeof callback !== 'function') return () => {};
+      const listener = (_event, data) => callback(data);
+      ipcRenderer.on('game-install-progress', listener);
+      return () => ipcRenderer.removeListener('game-install-progress', listener);
     }
   },
 

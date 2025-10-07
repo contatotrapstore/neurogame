@@ -24,6 +24,7 @@ const crypto = require('crypto');
 const Store = require('electron-store');
 const { autoUpdater } = require('electron-updater');
 const { download } = require('electron-dl');
+const extract = require('extract-zip');
 
 let store;
 let mainWindow;
@@ -175,6 +176,144 @@ function registerIpcHandlers() {
 
   ipcMain.handle('get-user-data-path', () => {
     return app.getPath('userData');
+  });
+
+  ipcMain.handle('check-game-exists', async (event, folderPath) => {
+    try {
+      const gamesPath = isDev
+        ? path.join(path.dirname(app.getAppPath()), 'Jogos')
+        : path.join(path.dirname(path.dirname(app.getAppPath())), 'Jogos');
+
+      const gamePath = path.join(gamesPath, folderPath, 'index.html');
+      const exists = fs.existsSync(gamePath);
+
+      return {
+        exists,
+        path: gamePath,
+        gamesPath
+      };
+    } catch (error) {
+      console.error('[check-game] Error checking game files:', error);
+      return {
+        exists: false,
+        error: error.message
+      };
+    }
+  });
+
+  ipcMain.handle('download-and-extract-game', async (event, payload) => {
+    const { gameSlug, folderPath, apiUrl } = payload;
+
+    if (!gameSlug || !folderPath || !apiUrl) {
+      return {
+        success: false,
+        message: 'Parâmetros incompletos para download'
+      };
+    }
+
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const gamesPath = isDev
+      ? path.join(path.dirname(app.getAppPath()), 'Jogos')
+      : path.join(path.dirname(path.dirname(app.getAppPath())), 'Jogos');
+
+    const tempDir = path.join(app.getPath('temp'), 'neurogame-downloads');
+    const zipPath = path.join(tempDir, `${gameSlug}.zip`);
+    const extractPath = path.join(gamesPath, folderPath);
+
+    try {
+      // Criar diretórios necessários
+      await fs.promises.mkdir(tempDir, { recursive: true });
+      await fs.promises.mkdir(gamesPath, { recursive: true });
+
+      // Remover arquivos antigos se existirem
+      if (fs.existsSync(zipPath)) {
+        await fs.promises.unlink(zipPath);
+      }
+
+      // Download do ZIP
+      const downloadUrl = `${apiUrl}/downloads/games/${gameSlug}`;
+      console.log(`[download] Downloading game from: ${downloadUrl}`);
+
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'downloading',
+        message: 'Baixando jogo...'
+      });
+
+      const downloadResult = await download(win, downloadUrl, {
+        directory: tempDir,
+        filename: `${gameSlug}.zip`,
+        overwrite: true,
+        onProgress: (progress) => {
+          event.sender.send('game-install-progress', {
+            gameSlug,
+            status: 'downloading',
+            progress: progress.percent * 100,
+            transferred: progress.transferredBytes,
+            total: progress.totalBytes
+          });
+        }
+      });
+
+      const downloadedPath = downloadResult.getSavePath();
+      console.log(`[download] Game downloaded to: ${downloadedPath}`);
+
+      // Extrair ZIP
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'extracting',
+        message: 'Extraindo arquivos...'
+      });
+
+      console.log(`[extract] Extracting to: ${extractPath}`);
+      await extract(downloadedPath, { dir: extractPath });
+
+      // Verificar se index.html foi extraído
+      const indexPath = path.join(extractPath, 'index.html');
+      if (!fs.existsSync(indexPath)) {
+        throw new Error('Arquivo index.html não encontrado após extração');
+      }
+
+      // Limpar arquivo ZIP temporário
+      await fs.promises.unlink(downloadedPath).catch(() => {});
+
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'completed',
+        message: 'Instalação concluída!'
+      });
+
+      return {
+        success: true,
+        extractPath,
+        indexPath
+      };
+    } catch (error) {
+      console.error('[download-extract] Error:', error);
+
+      // Limpar em caso de erro
+      try {
+        if (fs.existsSync(zipPath)) {
+          await fs.promises.unlink(zipPath);
+        }
+        if (fs.existsSync(extractPath)) {
+          await fs.promises.rm(extractPath, { recursive: true, force: true });
+        }
+      } catch (cleanupError) {
+        console.error('[cleanup] Error:', cleanupError);
+      }
+
+      event.sender.send('game-install-progress', {
+        gameSlug,
+        status: 'error',
+        message: error.message
+      });
+
+      return {
+        success: false,
+        message: error.message || 'Erro ao baixar e instalar jogo'
+      };
+    }
   });
 
   ipcMain.handle('download-game', async (event, payload) => {

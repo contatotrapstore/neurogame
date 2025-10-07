@@ -22,7 +22,9 @@ import {
   Folder,
   Category,
   Lock,
-  Send
+  Send,
+  Download,
+  LinearProgress
 } from '@mui/icons-material';
 import GameWebView from '../components/GameWebView';
 import api from '../services/api';
@@ -71,10 +73,24 @@ function GameDetail() {
   const [gamePath, setGamePath] = useState('');
   const [requesting, setRequesting] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installProgress, setInstallProgress] = useState({ status: '', progress: 0, message: '' });
 
   useEffect(() => {
     fetchGameDetails();
   }, [id]);
+
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.downloads.onInstallProgress((data) => {
+      if (data.gameSlug === game?.slug) {
+        setInstallProgress(data);
+      }
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [game?.slug]);
 
   const fetchGameDetails = async () => {
     setLoading(true);
@@ -119,6 +135,32 @@ function GameDetail() {
       if (!game.folderPath) {
         setError('Este jogo ainda não está disponível para download. Entre em contato com o administrador.');
         return;
+      }
+
+      // Verificar se os arquivos do jogo existem localmente
+      const checkResult = await window.electronAPI.downloads.checkGameExists(game.folderPath);
+      if (!checkResult.exists) {
+        // Jogo não está instalado - fazer download automático
+        setInstalling(true);
+        setError('');
+
+        const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+        const apiUrl = settings.apiUrl || 'https://neurogame.onrender.com/api/v1';
+
+        const downloadResult = await window.electronAPI.downloads.downloadAndExtractGame({
+          gameSlug: game.slug,
+          folderPath: game.folderPath,
+          apiUrl
+        });
+
+        setInstalling(false);
+
+        if (!downloadResult.success) {
+          setError(`Falha ao instalar o jogo: ${downloadResult.message}`);
+          return;
+        }
+
+        // Download concluído com sucesso, continuar para jogar
       }
 
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -302,6 +344,44 @@ function GameDetail() {
       >
         Voltar à Biblioteca
       </Button>
+
+      {installing && installProgress.status && (
+        <Alert
+          severity={installProgress.status === 'error' ? 'error' : 'info'}
+          icon={<Download />}
+          sx={{ mb: 3 }}
+        >
+          <Box>
+            <Typography variant="body2" fontWeight="600">
+              {installProgress.status === 'downloading' ? 'Baixando Jogo' : installProgress.status === 'extracting' ? 'Instalando Jogo' : installProgress.message}
+            </Typography>
+            {installProgress.status === 'downloading' && installProgress.progress > 0 && (
+              <Box sx={{ mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="caption">
+                    {(installProgress.transferred / 1024 / 1024).toFixed(2)} MB / {(installProgress.total / 1024 / 1024).toFixed(2)} MB
+                  </Typography>
+                  <Typography variant="caption">{Math.round(installProgress.progress)}%</Typography>
+                </Box>
+                <Box sx={{ width: '100%', bgcolor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}>
+                  <Box sx={{
+                    width: `${Math.round(installProgress.progress)}%`,
+                    bgcolor: 'primary.main',
+                    height: 6,
+                    borderRadius: 1,
+                    transition: 'width 0.3s ease'
+                  }} />
+                </Box>
+              </Box>
+            )}
+            {installProgress.status === 'extracting' && (
+              <Box sx={{ mt: 1 }}>
+                <CircularProgress size={20} />
+              </Box>
+            )}
+          </Box>
+        </Alert>
+      )}
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>

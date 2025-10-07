@@ -140,6 +140,51 @@ router.get('/:filename', async (req, res) => {
 });
 
 /**
+ * GET /downloads/games/:slug
+ * Download de jogos em formato ZIP
+ */
+router.get('/games/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Validar slug para segurança
+    if (!slug || slug.includes('..') || slug.includes('/')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome de jogo inválido'
+      });
+    }
+
+    const filename = `${slug}.zip`;
+    const filePath = path.join(__dirname, '../../downloads', filename);
+    const exists = await fs.access(filePath).then(() => true).catch(() => false);
+
+    if (!exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Jogo não encontrado'
+      });
+    }
+
+    // Obter tamanho do arquivo para Content-Length
+    const stats = await fs.stat(filePath);
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Length', stats.size);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const fileContent = await fs.readFile(filePath);
+    res.send(fileContent);
+  } catch (error) {
+    console.error('Error downloading game:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao fazer download do jogo'
+    });
+  }
+});
+
+/**
  * GET /downloads
  * Lista todos os arquivos disponíveis para download
  */
