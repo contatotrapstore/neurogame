@@ -1,6 +1,6 @@
 {
   "name": "neurogame-launcher",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "NeuroGame Desktop Launcher - Game library and player",
   "main": "main.js",
   "author": "NeuroGame Team",
@@ -23,10 +23,8 @@
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
     "axios": "^1.6.8",
-    "electron-dl": "^3.5.2",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.6.2",
-    "extract-zip": "^2.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3"
@@ -50,7 +48,8 @@
       "dist/**/*",
       "main.js",
       "preload.js",
-      "package.json"
+      "package.json",
+      "Jogos/**/*"
     ],
     "win": {
       "target": [
