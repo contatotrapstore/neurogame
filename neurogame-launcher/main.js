@@ -29,6 +29,42 @@ let store;
 let mainWindow;
 let isDev;
 let isPlayingGame = false;
+let logStream;
+
+// Sistema de logs
+function initLogger() {
+  const logDir = path.join(app.getPath('userData'), 'logs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
+  const logFile = path.join(logDir, `launcher-${new Date().toISOString().split('T')[0]}.log`);
+  logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+
+  console.log = (...args) => {
+    const message = `[${new Date().toISOString()}] [LOG] ${args.join(' ')}\n`;
+    logStream.write(message);
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = (...args) => {
+    const message = `[${new Date().toISOString()}] [ERROR] ${args.join(' ')}\n`;
+    logStream.write(message);
+    originalConsoleError.apply(console, args);
+  };
+
+  console.warn = (...args) => {
+    const message = `[${new Date().toISOString()}] [WARN] ${args.join(' ')}\n`;
+    logStream.write(message);
+    originalConsoleWarn.apply(console, args);
+  };
+
+  console.log('[Logger] Log system initialized at:', logFile);
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -51,11 +87,35 @@ function createWindow() {
   // Load app
   if (isDev) {
     mainWindow.loadURL('http://localhost:5174');
-        if (process.env.OPEN_DEVTOOLS === '1') {
+    if (process.env.OPEN_DEVTOOLS === '1') {
       mainWindow.webContents.openDevTools();
     }
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+    const indexPath = path.join(__dirname, 'dist/index.html');
+    console.log('[main] Loading index.html from:', indexPath);
+    console.log('[main] File exists:', fs.existsSync(indexPath));
+
+    mainWindow.loadFile(indexPath).catch((err) => {
+      console.error('[main] CRITICAL: Failed to load index.html:', err);
+      // Tentar carregar página de erro
+      const errorPath = path.join(__dirname, 'error.html');
+      if (fs.existsSync(errorPath)) {
+        console.log('[main] Loading error.html as fallback');
+        mainWindow.loadFile(errorPath);
+      } else {
+        console.error('[main] CRITICAL: error.html not found! Showing alert');
+        dialog.showErrorBox(
+          'Erro Crítico',
+          'O NeuroGame Launcher não conseguiu inicializar.\n\n' +
+          'Possíveis causas:\n' +
+          '• Arquivos corrompidos ou incompletos\n' +
+          '• Instalação incompleta\n\n' +
+          'Solução: Reinstale o launcher.\n\n' +
+          'Suporte: suporte@neurogame.com.br'
+        );
+        app.quit();
+      }
+    });
   }
 
   // Mostrar janela quando estiver pronta
@@ -66,8 +126,25 @@ function createWindow() {
     }
   });
 
+  // Timeout para mostrar janela mesmo se houver problemas
+  setTimeout(() => {
+    if (!mainWindow.isVisible()) {
+      console.warn('[main] Window not visible after 5s, forcing show');
+      mainWindow.show();
+    }
+  }, 5000);
+
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error(`[main] Failed to load ${validatedURL}: ${errorCode} ${errorDescription}`);
+
+    // Se falhar ao carregar, tentar página de erro
+    if (!validatedURL.includes('error.html')) {
+      const errorPath = path.join(__dirname, 'error.html');
+      if (fs.existsSync(errorPath)) {
+        console.log('[main] Loading error.html after failed load');
+        mainWindow.loadFile(errorPath);
+      }
+    }
   });
 
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
@@ -362,6 +439,16 @@ function registerIpcHandlers() {
 
 // App lifecycle
 app.whenReady().then(() => {
+  // Initialize logger first
+  initLogger();
+  console.log('[launcher] NeuroGame Launcher starting...');
+  console.log('[launcher] App version:', app.getVersion());
+  console.log('[launcher] Electron version:', process.versions.electron);
+  console.log('[launcher] Chrome version:', process.versions.chrome);
+  console.log('[launcher] Node version:', process.versions.node);
+  console.log('[launcher] Platform:', process.platform);
+  console.log('[launcher] Architecture:', process.arch);
+
   // Initialize store after app is ready
   store = new Store();
 

@@ -1,16 +1,22 @@
 ╔════════════════════════════════════════════════════════════════╗
-║             NEUROGAME LAUNCHER - INSTALADOR v1.0.1            ║
+║             NEUROGAME LAUNCHER - INSTALADOR v1.1.0            ║
 ╚════════════════════════════════════════════════════════════════╝
 
 📦 ARQUIVOS NESTA PASTA:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ NeuroGame Launcher Setup 1.0.1.exe (82MB) ⭐ VERSÃO MAIS RECENTE
+✅ NeuroGame Launcher-Setup-1.1.0.exe (261MB) ⭐ VERSÃO MAIS RECENTE
    → Instalador completo do NeuroGame Launcher
+   → CORREÇÕES IMPORTANTES:
+     • Corrigido bug de tela branca após instalação
+     • Implementado sistema de logs para diagnóstico
+     • Adicionada página de erro com instruções de troubleshooting
+     • Melhorada detecção e recuperação de falhas ao iniciar
+     • Configuração adequada para servidor de produção
    → Inclui Electron + React + todos os componentes necessários
    → Conecta automaticamente ao servidor de produção
 
-⚠️ NeuroGame Launcher Setup 1.0.0.exe (82MB) - VERSÃO ANTIGA
+⚠️ NeuroGame Launcher Setup 1.0.9.exe (262MB) - VERSÃO ANTIGA
    → Manter para referência ou deletar
 
 ✅ latest.yml
@@ -21,7 +27,7 @@
 🚀 COMO INSTALAR:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. Dê duplo clique em "NeuroGame Launcher Setup 1.0.1.exe"
+1. Dê duplo clique em "NeuroGame Launcher-Setup-1.1.0.exe"
 
 2. O instalador irá:
    ✓ Permitir escolher o local de instalação
@@ -49,13 +55,16 @@
 ⚠️  Após instalar, você pode mover ou deletar este arquivo .exe
     O NeuroGame Launcher já estará instalado no seu computador
 
+⚠️  Se o Windows Defender bloquear: clique em "Mais informações"
+    e depois em "Executar assim mesmo"
+
 
 📋 REQUISITOS DO SISTEMA:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-• Sistema Operacional: Windows 7 ou superior
+• Sistema Operacional: Windows 7 ou superior (64-bit)
 • Memória RAM: Mínimo 2GB (recomendado 4GB)
-• Espaço em Disco: 200MB para o launcher + espaço para jogos
+• Espaço em Disco: 500MB para o launcher + espaço para jogos
 • Internet: Conexão estável para download de jogos
 
 
@@ -68,13 +77,16 @@
    • C:\Users\[SeuUsuário]\AppData\Local\Programs\neurogame-launcher
 
 2. Na primeira execução:
-   • Faça login com seu usuário e senha
+   • Faça login com seu e-mail/username e senha
    • Navegue pela biblioteca de jogos
    • Clique em um jogo para baixar e instalar
 
 3. Os jogos serão instalados em:
-   • Pasta padrão: C:\NeuroGame\Jogos\
-   • Você pode alterar nas configurações
+   • Pasta padrão: C:\Users\[SeuUsuário]\AppData\Roaming\neurogame-launcher\Jogos\
+   • Gerenciado automaticamente pelo launcher
+
+4. Logs para diagnóstico são salvos em:
+   • C:\Users\[SeuUsuário]\AppData\Roaming\neurogame-launcher\logs\
 
 
 🔄 ATUALIZAÇÕES AUTOMÁTICAS:
@@ -84,6 +96,19 @@
 ✓ Você será notificado quando houver nova versão
 ✓ Download e instalação em segundo plano
 ✓ Não é necessário reinstalar manualmente
+
+
+🐛 SOLUÇÃO DE PROBLEMAS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se o launcher mostrar tela branca ou não iniciar:
+
+1. Verifique sua conexão com a internet
+2. Reinicie o launcher completamente
+3. Verifique se o firewall/antivírus está bloqueando
+4. Veja os logs em: C:\Users\[Usuário]\AppData\Roaming\neurogame-launcher\logs
+5. Reinstale se o problema persistir
+6. Entre em contato com o suporte
 
 
 🛠️ DESINSTALAR:

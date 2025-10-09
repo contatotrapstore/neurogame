@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroGame Launcher - Erro de Inicialização</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+        }
+
+        .error-box {
+            background: rgba(255, 59, 48, 0.2);
+            border: 2px solid rgba(255, 59, 48, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .error-box h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+        }
+
+        .error-box p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .solutions {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .solutions h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #4CAF50;
+        }
+
+        .solutions ol {
+            padding-left: 20px;
+        }
+
+        .solutions li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .solutions code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        button.primary {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        button.primary:hover {
+            background: #45a049;
+            border-color: #45a049;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .footer a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🎮</div>
+        <h1>NeuroGame Launcher</h1>
+        <p class="subtitle">Erro ao Inicializar</p>
+
+        <div class="error-box">
+            <h2>⚠️ Não foi possível carregar o launcher</h2>
+            <p>O launcher não conseguiu se conectar ao servidor ou carregar os arquivos necessários.</p>
+        </div>
+
+        <div class="solutions">
+            <h3>✅ Possíveis Soluções:</h3>
+            <ol>
+                <li><strong>Verifique sua conexão com a internet</strong><br>
+                    O launcher precisa de conexão para funcionar.</li>
+
+                <li><strong>Reinicie o launcher</strong><br>
+                    Feche completamente e abra novamente.</li>
+
+                <li><strong>Verifique o firewall/antivírus</strong><br>
+                    Permita o <code>NeuroGame Launcher.exe</code> nas exceções.</li>
+
+                <li><strong>Reinstale o launcher</strong><br>
+                    Desinstale e baixe a versão mais recente do site.</li>
+
+                <li><strong>Entre em contato com o suporte</strong><br>
+                    Se o problema persistir, nossa equipe pode ajudar!</li>
+            </ol>
+        </div>
+
+        <div class="buttons">
+            <button class="primary" onclick="location.reload()">🔄 Tentar Novamente</button>
+            <button onclick="window.electronAPI && window.electronAPI.app && window.electronAPI.app.quit()">❌ Fechar</button>
+        </div>
+
+        <div class="footer">
+            <p>Precisa de ajuda? <a href="mailto:suporte@neurogame.com.br">suporte@neurogame.com.br</a></p>
+            <p style="margin-top: 10px;">📍 Logs salvos em: <code>C:\Users\[Seu Usuário]\AppData\Roaming\neurogame-launcher\logs</code></p>
+        </div>
+    </div>
+
+    <script>
+        // Tentar obter informações de erro se disponível
+        if (window.electronAPI && window.electronAPI.getErrorInfo) {
+            window.electronAPI.getErrorInfo().then(errorInfo => {
+                if (errorInfo) {
+                    console.log('Error Info:', errorInfo);
+                }
+            });
+        }
+
+        // Log para debug
+        console.log('Error page loaded at:', new Date().toISOString());
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Online Status:', navigator.onLine);
+    </script>
+</body>
+</html>

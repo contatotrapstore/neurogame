@@ -1,6 +1,6 @@
 {
   "name": "neurogame-launcher",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "NeuroGame Desktop Launcher - Game library and player",
   "homepage": "https://github.com/contatotrapstore/neurogame",
   "main": "main.js",
@@ -11,7 +11,7 @@
     "dev:react": "vite",
     "dev:electron": "wait-on tcp:5174 && cross-env NODE_ENV=development npx electron .",
     "start": "electron .",
-    "build": "vite build",
+    "build": "vite build --mode production",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
@@ -50,6 +50,7 @@
       "main.js",
       "preload.js",
       "package.json",
+      "error.html",
       "Jogos/**/*"
     ],
     "win": {
