@@ -1,23 +1,20 @@
 ╔════════════════════════════════════════════════════════════════╗
-║             NEUROGAME LAUNCHER - INSTALADOR v1.1.0            ║
+║             BIOSYNC LAUNCHER - INSTALADOR v2.0.0              ║
 ╚════════════════════════════════════════════════════════════════╝
 
 📦 ARQUIVOS NESTA PASTA:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ NeuroGame Launcher-Setup-1.1.0.exe (261MB) ⭐ VERSÃO MAIS RECENTE
-   → Instalador completo do NeuroGame Launcher
-   → CORREÇÕES IMPORTANTES:
-     • Corrigido bug de tela branca após instalação
-     • Implementado sistema de logs para diagnóstico
-     • Adicionada página de erro com instruções de troubleshooting
-     • Melhorada detecção e recuperação de falhas ao iniciar
-     • Configuração adequada para servidor de produção
+✅ BioSync Launcher Setup 2.0.0.exe ⭐ VERSÃO MAIS RECENTE
+   → Instalador completo do BioSync Launcher
+   → NOVIDADES v2.0.0:
+     • Novo design azul BioSync (substituindo verde NeuroGame)
+     • Migração completa de marca NeuroGame → BioSync
+     • Sistema de logs melhorado para diagnóstico
+     • Interface otimizada e moderna
+     • Configuração para servidor de produção BioSync
    → Inclui Electron + React + todos os componentes necessários
    → Conecta automaticamente ao servidor de produção
-
-⚠️ NeuroGame Launcher Setup 1.0.9.exe (262MB) - VERSÃO ANTIGA
-   → Manter para referência ou deletar
 
 ✅ latest.yml
    → Arquivo de metadados para sistema de auto-atualização
@@ -27,7 +24,7 @@
 🚀 COMO INSTALAR:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. Dê duplo clique em "NeuroGame Launcher-Setup-1.1.0.exe"
+1. Dê duplo clique em "BioSync Launcher Setup 2.0.0.exe"
 
 2. O instalador irá:
    ✓ Permitir escolher o local de instalação
@@ -37,7 +34,7 @@
 
 3. Após a instalação, o launcher será aberto automaticamente
 
-4. Faça login com suas credenciais NeuroGame
+4. Faça login com suas credenciais BioSync
 
 
 💡 IMPORTANTE:
@@ -53,7 +50,7 @@
     • Instalar na pasta de Programas (se escolhido)
 
 ⚠️  Após instalar, você pode mover ou deletar este arquivo .exe
-    O NeuroGame Launcher já estará instalado no seu computador
+    O BioSync Launcher já estará instalado no seu computador
 
 ⚠️  Se o Windows Defender bloquear: clique em "Mais informações"
     e depois em "Executar assim mesmo"
@@ -71,10 +68,10 @@
 🎮 APÓS A INSTALAÇÃO:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. O NeuroGame Launcher ficará disponível em:
+1. O BioSync Launcher ficará disponível em:
    • Atalho na Área de Trabalho
-   • Menu Iniciar → NeuroGame Launcher
-   • C:\Users\[SeuUsuário]\AppData\Local\Programs\neurogame-launcher
+   • Menu Iniciar → BioSync Launcher
+   • C:\Users\[SeuUsuário]\AppData\Local\Programs\biosync-launcher
 
 2. Na primeira execução:
    • Faça login com seu e-mail/username e senha
@@ -82,11 +79,11 @@
    • Clique em um jogo para baixar e instalar
 
 3. Os jogos serão instalados em:
-   • Pasta padrão: C:\Users\[SeuUsuário]\AppData\Roaming\neurogame-launcher\Jogos\
+   • Pasta padrão: C:\Users\[SeuUsuário]\AppData\Roaming\biosync-launcher\Jogos\
    • Gerenciado automaticamente pelo launcher
 
 4. Logs para diagnóstico são salvos em:
-   • C:\Users\[SeuUsuário]\AppData\Roaming\neurogame-launcher\logs\
+   • C:\Users\[SeuUsuário]\AppData\Roaming\biosync-launcher\logs\
 
 
 🔄 ATUALIZAÇÕES AUTOMÁTICAS:
@@ -106,7 +103,7 @@ Se o launcher mostrar tela branca ou não iniciar:
 1. Verifique sua conexão com a internet
 2. Reinicie o launcher completamente
 3. Verifique se o firewall/antivírus está bloqueando
-4. Veja os logs em: C:\Users\[Usuário]\AppData\Roaming\neurogame-launcher\logs
+4. Veja os logs em: C:\Users\[Usuário]\AppData\Roaming\biosync-launcher\logs
 5. Reinstale se o problema persistir
 6. Entre em contato com o suporte
 
@@ -115,7 +112,7 @@ Se o launcher mostrar tela branca ou não iniciar:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Windows 10/11:
-  Configurações → Aplicativos → NeuroGame Launcher → Desinstalar
+  Configurações → Aplicativos → BioSync Launcher → Desinstalar
 
 Windows 7/8:
   Painel de Controle → Programas → Desinstalar um programa
@@ -124,12 +121,12 @@ Windows 7/8:
 📞 SUPORTE:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🌐 Site: https://neurogame.com.br
-📧 Email: suporte@neurogame.com.br
+🌐 Site: https://biosync.com.br
+📧 Email: suporte@biosync.com.br
 💬 WhatsApp: (XX) XXXXX-XXXX
 
 
 ══════════════════════════════════════════════════════════════════
-         Desenvolvido por NeuroGame Team - 2025
+         Desenvolvido por BioSync Team - 2025
               Todos os direitos reservados
 ══════════════════════════════════════════════════════════════════

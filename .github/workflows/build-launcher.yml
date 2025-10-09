@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build (e.g., 1.0.9)'
+        description: 'Version to build (e.g., 2.0.0)'
         required: true
-        default: '1.0.9'
+        default: '2.0.0'
 
 permissions:
   contents: write
@@ -32,17 +32,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm ci || npm install
 
       - name: Build React app
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm run build
 
       - name: Build Windows installer
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm run build:win
 
       - name: Upload Windows artifacts
@@ -50,9 +50,9 @@ jobs:
         with:
           name: windows-installer
           path: |
-            neurogame-launcher/dist-electron/*.exe
-            neurogame-launcher/dist-electron/*.exe.blockmap
-            neurogame-launcher/dist-electron/latest.yml
+            biosync-launcher/dist-electron/*.exe
+            biosync-launcher/dist-electron/*.exe.blockmap
+            biosync-launcher/dist-electron/latest.yml
           retention-days: 30
 
   build-macos:
@@ -69,17 +69,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm ci || npm install
 
       - name: Build React app
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm run build
 
       - name: Build macOS app
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm run build:mac
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -89,10 +89,10 @@ jobs:
         with:
           name: macos-installer
           path: |
-            neurogame-launcher/dist-electron/*.dmg
-            neurogame-launcher/dist-electron/*.dmg.blockmap
-            neurogame-launcher/dist-electron/*.zip
-            neurogame-launcher/dist-electron/latest-mac.yml
+            biosync-launcher/dist-electron/*.dmg
+            biosync-launcher/dist-electron/*.dmg.blockmap
+            biosync-launcher/dist-electron/*.zip
+            biosync-launcher/dist-electron/latest-mac.yml
           retention-days: 30
 
   build-linux:
@@ -114,17 +114,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm ci || npm install
 
       - name: Build React app
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm run build
 
       - name: Build Linux packages
         run: |
-          cd neurogame-launcher
+          cd biosync-launcher
           npm run build:linux
 
       - name: Upload Linux artifacts
@@ -132,9 +132,9 @@ jobs:
         with:
           name: linux-packages
           path: |
-            neurogame-launcher/dist-electron/*.AppImage
-            neurogame-launcher/dist-electron/*.deb
-            neurogame-launcher/dist-electron/latest-linux.yml
+            biosync-launcher/dist-electron/*.AppImage
+            biosync-launcher/dist-electron/*.deb
+            biosync-launcher/dist-electron/latest-linux.yml
           retention-days: 30
 
   create-release:

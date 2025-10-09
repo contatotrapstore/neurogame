@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=BioSync Launcher
+Comment=BioSync Desktop Launcher - Game library and player
+Exec=biosync-launcher %U
+Terminal=false
+Type=Application
+Icon=biosync-launcher
+StartupWMClass=BioSync Launcher
+Categories=Game;
+MimeType=x-scheme-handler/biosync;
