@@ -50,7 +50,7 @@ export const setStoredSettings = async (settings) => {
 export const getStoredSettings = async () => {
   // Use production URL by default
   const defaultSettings = {
-    apiUrl: 'https://neurogame.onrender.com/api/v1'
+    apiUrl: 'https://neurogame-7av9.onrender.com/api/v1'
   };
 
   if (window.electronAPI) {
