@@ -24,36 +24,27 @@ const logAsaasError = (context, error) => {
   console.error(`[Asaas] ${context}: ${formatted}`);
 };
 
-const validateWebhook = (payload, signature) => {
+const validateWebhook = (accessToken) => {
   const secret = process.env.ASAAS_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.warn('[Asaas] ASAAS_WEBHOOK_SECRET not configured. Skipping webhook signature validation.');
+    console.warn('[Asaas] ASAAS_WEBHOOK_SECRET not configured. Skipping webhook validation.');
     return true;
   }
 
-  if (!signature) {
+  if (!accessToken) {
+    console.warn('[Asaas] No access token received in webhook request.');
     return false;
   }
 
-  const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
-  const digest = crypto.createHmac('sha256', secret).update(payloadString).digest();
-  const normalizedSignature = signature.trim();
+  // Comparação direta do token (Asaas usa token de acesso simples, não HMAC)
+  const isValid = accessToken === secret;
 
-  const possibilities = [];
-  possibilities.push(Buffer.from(normalizedSignature));
-
-  if (normalizedSignature.length === digest.length * 2) {
-    possibilities.push(Buffer.from(normalizedSignature, 'hex'));
+  if (!isValid) {
+    console.warn('[Asaas] Invalid access token received.');
   }
 
-  try {
-    possibilities.push(Buffer.from(normalizedSignature, 'base64'));
-  } catch (error) {
-    // ignorar tentativa invalida de base64
-  }
-
-  return possibilities.some((candidate) => candidate.length === digest.length && crypto.timingSafeEqual(candidate, digest));
+  return isValid;
 };
 
 /**
