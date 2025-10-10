@@ -73,12 +73,24 @@ exports.getUserGames = async (req, res, next) => {
 
     const individualGameIds = individualAccess ? individualAccess.map(ug => ug.game_id) : [];
 
+    // Check if user has active subscription in new subscriptions table
+    const { data: activeNewSubscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .gte('next_due_date', new Date().toISOString())
+      .single();
+
+    const hasActiveAsaasSubscription = !!activeNewSubscription;
+
     // Combine and mark accessible games
     const gamesWithAccess = allGames.map(game => ({
       ...game,
-      hasAccess: subscriptionGameIds.includes(game.id) || individualGameIds.includes(game.id),
+      hasAccess: subscriptionGameIds.includes(game.id) || individualGameIds.includes(game.id) || hasActiveAsaasSubscription,
       accessType: subscriptionGameIds.includes(game.id) ? 'subscription' :
-                   individualGameIds.includes(game.id) ? 'individual' : null
+                   individualGameIds.includes(game.id) ? 'individual' :
+                   hasActiveAsaasSubscription ? 'asaas_subscription' : null
     }));
 
     res.json({
@@ -173,6 +185,27 @@ exports.getGameById = async (req, res, next) => {
           accessExpiresAt = individualAccess.expires_at;
         }
       }
+
+      // Check if user has active subscription in new subscriptions table (Asaas integration)
+      if (!hasAccess) {
+        const { data: activeNewSubscription, error: newSubError } = await supabase
+          .from('subscriptions')
+          .select('next_due_date')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .gte('next_due_date', nowIso)
+          .maybeSingle();
+
+        if (newSubError) {
+          throw newSubError;
+        }
+
+        if (activeNewSubscription) {
+          hasAccess = true;
+          accessType = 'asaas_subscription';
+          accessExpiresAt = activeNewSubscription.next_due_date;
+        }
+      }
     }
 
     const gameWithAccess = {
@@ -246,6 +279,22 @@ exports.validateAccess = async (req, res, next) => {
         .single();
 
       if (individualAccess) hasAccess = true;
+    }
+
+    // Check if user has active subscription in new subscriptions table (Asaas integration)
+    if (!hasAccess) {
+      const { data: activeNewSubscription } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .gte('next_due_date', new Date().toISOString())
+        .single();
+
+      if (activeNewSubscription) {
+        hasAccess = true;
+        console.log(`✅ [Game Access] Acesso concedido via assinatura ativa (ID: ${activeNewSubscription.id}) para usuário ${userId} no jogo ${gameId}`);
+      }
     }
 
     // Log access attempt
