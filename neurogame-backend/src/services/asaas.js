@@ -84,17 +84,23 @@ const createPayment = async (customerId, paymentData) => {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 1);
 
-    const response = await asaasClient.post('/payments', {
+    const payload = {
       customer: customerId,
       billingType: paymentData.paymentMethod || 'PIX',
       value: parseFloat(paymentData.value || process.env.SUBSCRIPTION_VALUE || 149.90),
       dueDate: dueDate.toISOString().split('T')[0],
       description: paymentData.description || 'NeuroGame - Mensalidade',
-      creditCard: paymentData.creditCard || undefined,
-      creditCardHolderInfo: paymentData.creditCardHolder || undefined,
       externalReference: paymentData.userId,
       postalService: false
-    });
+    };
+
+    // Adicionar dados do cartão se for pagamento com cartão
+    if (paymentData.paymentMethod === 'CREDIT_CARD' && paymentData.creditCard) {
+      payload.creditCard = paymentData.creditCard;
+      payload.creditCardHolderInfo = paymentData.creditCardHolderInfo || undefined;
+    }
+
+    const response = await asaasClient.post('/payments', payload);
 
     return response.data;
   } catch (error) {

@@ -75,13 +75,9 @@ function RenewPayment() {
           ccv: cardData.ccv
         };
 
+        // Dados do titular - email e name serão preenchidos pelo backend
         payload.creditCardHolderInfo = {
-          name: cardData.holderName,
-          email: '', // Será preenchido pelo backend com email do usuário
-          cpfCnpj: '', // Opcional
-          postalCode: '', // Opcional
-          addressNumber: '', // Opcional
-          phone: '' // Opcional
+          name: cardData.holderName
         };
       }
 

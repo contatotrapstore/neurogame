@@ -12,6 +12,8 @@ const handleCreatePayment = async (req, res) => {
     const paymentMethod = req.body.paymentMethod;
     const userId = req.user.id;
 
+    console.log(`[Payment] Iniciando criacao de pagamento - Usuario: ${userId}, Metodo: ${paymentMethod}`);
+
     if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
       return res.status(400).json({
         success: false,
@@ -19,11 +21,24 @@ const handleCreatePayment = async (req, res) => {
       });
     }
 
-    if (paymentMethod === 'CREDIT_CARD' && (!creditCard || !creditCardHolderInfo)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Dados do cartao sao obrigatorios'
-      });
+    if (paymentMethod === 'CREDIT_CARD') {
+      if (!creditCard) {
+        return res.status(400).json({
+          success: false,
+          message: 'Dados do cartao sao obrigatorios'
+        });
+      }
+
+      // Validar campos do cartão
+      const requiredCardFields = ['holderName', 'number', 'expiryMonth', 'expiryYear', 'ccv'];
+      const missingFields = requiredCardFields.filter(field => !creditCard[field]);
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Campos obrigatorios do cartao faltando: ${missingFields.join(', ')}`
+        });
+      }
     }
 
     const { data: user, error: userError } = await supabase
@@ -68,14 +83,27 @@ const handleCreatePayment = async (req, res) => {
     };
 
     if (paymentMethod === 'CREDIT_CARD') {
+      // Adicionar email do usuário aos dados do titular se não fornecido
+      const holderInfo = creditCardHolderInfo || {};
+      if (!holderInfo.email) {
+        holderInfo.email = user.email;
+      }
+      if (!holderInfo.name && user.full_name) {
+        holderInfo.name = user.full_name;
+      }
+
       paymentData.creditCard = creditCard;
-      paymentData.creditCardHolderInfo = creditCardHolderInfo;
+      paymentData.creditCardHolderInfo = holderInfo;
     }
+
+    console.log(`[Payment] Criando pagamento no Asaas - Customer: ${asaasCustomerId}`);
 
     const asaasPayment = await asaasService.createPayment(
       asaasCustomerId,
       paymentData
     );
+
+    console.log(`[Payment] Pagamento criado no Asaas - ID: ${asaasPayment.id}, Status: ${asaasPayment.status}`);
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
@@ -136,11 +164,13 @@ const handleCreatePayment = async (req, res) => {
 
     if (paymentMethod === 'PIX') {
       try {
+        console.log(`[Payment] Buscando QR Code PIX - Payment: ${asaasPayment.id}`);
         const pixData = await asaasService.getPixQrCode(asaasPayment.id);
         response.pixQrCode = pixData.encodedImage;
         response.pixCopyPaste = pixData.payload;
+        console.log(`[Payment] QR Code PIX gerado com sucesso`);
       } catch (pixError) {
-        console.error('Erro ao buscar QR Code PIX:', pixError);
+        console.error('[Payment] Erro ao buscar QR Code PIX:', pixError.message);
       }
     }
 
@@ -155,9 +185,19 @@ const handleCreatePayment = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao criar pagamento:', error);
+
+    // Extrair mensagem de erro do Asaas se disponível
+    let errorMessage = 'Erro ao criar pagamento';
+
+    if (error.response?.data?.errors?.[0]?.description) {
+      errorMessage = error.response.data.errors[0].description;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro ao criar pagamento'
+      message: errorMessage
     });
   }
 };
