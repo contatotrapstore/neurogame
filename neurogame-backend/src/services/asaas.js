@@ -27,8 +27,14 @@ const logAsaasError = (context, error) => {
 const validateWebhook = (accessToken) => {
   const secret = process.env.ASAAS_WEBHOOK_SECRET;
 
+  // BYPASS para debug emergencial (remover depois!)
+  if (process.env.ASAAS_WEBHOOK_BYPASS === 'true') {
+    console.warn('[Asaas] ⚠️ WEBHOOK VALIDATION BYPASSED - DEBUG MODE ACTIVE');
+    return true;
+  }
+
   if (!secret) {
-    console.warn('[Asaas] ASAAS_WEBHOOK_SECRET not configured. Skipping webhook validation.');
+    console.warn('[Asaas] ASAAS_WEBHOOK_SECRET not configured. Accepting all webhooks.');
     return true;
   }
 
@@ -37,11 +43,29 @@ const validateWebhook = (accessToken) => {
     return false;
   }
 
+  // Normalizar tokens (remover espaços)
+  const tokenReceived = accessToken.trim();
+  const secretConfigured = secret.trim();
+
+  // Debug: mostrar primeiros caracteres
+  const tokenPreview = tokenReceived ? tokenReceived.substring(0, 10) + '...' : 'NENHUM';
+  const secretPreview = secretConfigured ? secretConfigured.substring(0, 10) + '...' : 'NENHUM';
+
+  console.log('[Asaas] Token Debug:', {
+    received: tokenPreview,
+    configured: secretPreview,
+    lengthReceived: tokenReceived.length,
+    lengthConfigured: secretConfigured.length,
+    match: tokenReceived === secretConfigured
+  });
+
   // Comparação direta do token (Asaas usa token de acesso simples, não HMAC)
-  const isValid = accessToken === secret;
+  const isValid = tokenReceived === secretConfigured;
 
   if (!isValid) {
-    console.warn('[Asaas] Invalid access token received.');
+    console.warn('[Asaas] ❌ Invalid access token - tokens do not match!');
+  } else {
+    console.log('[Asaas] ✅ Access token validated successfully');
   }
 
   return isValid;

@@ -11,22 +11,29 @@ router.post('/asaas', async (req, res) => {
   try {
     const event = req.body;
 
+    const accessToken = req.headers['asaas-access-token'];
+    const tokenPreview = accessToken ? accessToken.substring(0, 10) + '...' : 'AUSENTE';
+
     console.log(`[Webhook Asaas] Evento recebido: ${event.event}`, {
       eventId: event.id,
       paymentId: event.payment?.id,
+      timestamp: new Date().toISOString(),
       headers: {
-        'asaas-access-token': req.headers['asaas-access-token'] ? 'presente' : 'ausente'
+        'asaas-access-token': tokenPreview,
+        'content-type': req.headers['content-type'],
+        'user-agent': req.headers['user-agent']
       }
     });
 
-    const accessToken = req.headers['asaas-access-token'];
-
     if (!asaasService.validateWebhook(accessToken)) {
-      console.error('[Webhook Asaas] Validacao falhou - token invalido ou ausente');
-      return res.status(401).json({ error: 'Invalid access token' });
+      console.error('[Webhook Asaas] ❌ Validacao falhou - retornando 401');
+      return res.status(401).json({
+        error: 'Invalid access token',
+        message: 'Token invalido ou ausente. Verifique ASAAS_WEBHOOK_SECRET no servidor.'
+      });
     }
 
-    console.log('[Webhook Asaas] Validacao OK - processando evento...');
+    console.log('[Webhook Asaas] ✅ Validacao OK - processando evento...');
 
 
     // Salvar webhook no banco para log

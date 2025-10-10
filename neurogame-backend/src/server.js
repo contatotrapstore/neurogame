@@ -32,7 +32,15 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
-app.use('/api/', limiter);
+
+// Apply rate limiting to all API routes EXCEPT webhooks
+app.use('/api/', (req, res, next) => {
+  // Skip rate limiting for webhooks (Asaas needs reliable delivery)
+  if (req.path.startsWith('/v1/webhooks/')) {
+    return next();
+  }
+  limiter(req, res, next);
+});
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
